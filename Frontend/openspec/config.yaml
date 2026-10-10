@@ -1,0 +1,81 @@
+schema: spec-driven
+
+context: |
+  Frontend (PWA) de un sistema de gestión odontológica. Este directorio es apps/web dentro de un monorepo.
+  El backend está en apps/api con su propio OpenSpec y es dueño de las reglas de negocio.
+  Uso principal en iPad (horizontal y vertical, con Apple Pencil). También funciona en computador y celular.
+  Stack: React, TypeScript estricto y Vite como PWA (vite-plugin-pwa), TanStack Router y TanStack Query,
+  Zustand solo para lo mínimo, React Hook Form con Zod, Tailwind CSS con shadcn/ui, Dexie para el modo
+  sin conexión, Vitest, Testing Library, MSW y Playwright (WebKit).
+  Arquitectura: Clean Architecture completa en CADA feature (domain, application, infrastructure,
+  presentation). Domain y application son TypeScript puro y no importan React, TanStack Query, fetch ni Dexie.
+  Los componentes no llaman a fetch ni a casos de uso, usan los hooks de su feature.
+  Una feature solo importa el index.ts público de otra. El ensamblaje va en el archivo container de cada feature.
+  Principios SOLID, TDD (la prueba se escribe primero) y código en inglés.
+  El cliente de la API se genera desde el OpenAPI del backend. Las reglas de negocio no se duplican aquí.
+  Experiencia de uso: zonas táctiles de al menos 44 por 44 puntos, estado de guardado siempre visible,
+  agenda del día legible sin conexión, borradores guardados en Dexie, textos centralizados,
+  español de Colombia y fechas mostradas en America/Bogota.
+  Requisitos de origen: RF-F y RNF-F (documento de requerimientos del frontend) y calidad RC-xxx.
+  Write all artifacts in Spanish.
+
+rules:
+  proposal:
+    - Cita los IDs de requisito que cubre el cambio (RF-F, RNF-F y RC)
+    - Cita el change del backend con el mismo nombre cuando exista, como fuente de las reglas de negocio
+    - Máximo 400 palabras
+  specs:
+    - Cada requisito lleva al menos un escenario Dado/Cuando/Entonces desde la perspectiva de la doctora
+    - Describe lo que la persona ve y hace en la interfaz, sin repetir las reglas de negocio del backend
+    - Incluye el comportamiento sin conexión y los estados de carga y de error cuando apliquen
+  design:
+    - Indica la feature, las capas afectadas, los puertos, los hooks y los componentes
+    - Indica qué se probará en el iPad real cuando el cambio toque la interfaz
+    - Señala cualquier decisión que merezca un ADR
+  tasks:
+    - Ordena las tareas de adentro hacia afuera (domain, application, infrastructure, presentation)
+    - Cada caso de uso y cada componente crítico empiezan con su prueba, luego el código y luego el refactor
+    - Incluye una tarea para regenerar el cliente de la API cuando cambie el contrato del backend
+    - Cada tarea termina con lint, tipos, pruebas y axe sin violaciones críticas
+
+operations:
+  apply:
+    guidance:
+      - Ejecuta lint, tsc y Vitest antes de marcar una tarea como completa
+      - Verifica que no se rompa la regla de dependencia entre capas
+      - Si una prueba falla, corrige la causa y no la elimines ni la debilites
+      - Si la tarea toca la interfaz, deja anotado qué debe probarse en el iPad
+  archive:
+    guidance:
+      - Confirma que el change del backend con el mismo nombre ya está archivado
+      - Resume lo entregado y los IDs de requisito cubiertos
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

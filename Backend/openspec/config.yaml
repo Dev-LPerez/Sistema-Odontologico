@@ -1,0 +1,79 @@
+schema: spec-driven
+
+context: |
+  Backend de un sistema de gestión odontológica (consultorio de una doctora, 1 a 3 usuarios).
+  Este directorio es apps/api dentro de un monorepo. El frontend está en apps/web con su propio OpenSpec.
+  Stack: TypeScript estricto, NestJS como monolito modular, PostgreSQL con Prisma, pg-boss para tareas
+  en segundo plano, Cloudflare R2 por API S3 detrás de un puerto StoragePort, Jest y Supertest.
+  Arquitectura: Clean Architecture completa en TODOS los módulos (domain, application, infrastructure,
+  presentation). Las dependencias solo apuntan hacia adentro. Domain no importa Nest ni Prisma.
+  Los puertos se declaran en domain o application y los adaptadores viven en infrastructure.
+  Un caso de uso por clase con un único método execute. Los controladores no tienen lógica de negocio.
+  Un módulo solo importa el index.ts público de otro módulo.
+  Principios SOLID, TDD (la prueba se escribe primero) y código en inglés (clases, métodos, rutas).
+  Restricciones: datos clínicos nunca en logs ni en URLs, fechas en UTC, la base admite máximo
+  20 conexiones (pool de Prisma 5 y de pg-boss 3), las historias clínicas no se eliminan físicamente.
+  Requisitos de origen: RF-B y RNF-B (documento de requerimientos del backend) y calidad RC-xxx.
+  Este backend es dueño de las reglas de negocio y del contrato OpenAPI.
+  Write all artifacts in Spanish.
+
+rules:
+  proposal:
+    - Cita los IDs de requisito que cubre el cambio (RF-B, RNF-B y RC)
+    - Si la rebanada toca la interfaz, indica el nombre del change pareja en apps/web
+    - Máximo 400 palabras
+  specs:
+    - Cada requisito lleva al menos un escenario Dado/Cuando/Entonces
+    - Describe comportamiento observable de la API (entradas, salidas, errores y permisos por rol), no la implementación
+    - Incluye siempre los casos de error y los permisos por rol
+  design:
+    - Indica el módulo, las capas afectadas, los puertos nuevos o modificados y los eventos de dominio
+    - Describe los cambios en el esquema de Prisma y en el contrato OpenAPI
+    - Señala cualquier decisión que merezca un ADR
+  tasks:
+    - Ordena las tareas de adentro hacia afuera (domain, application, infrastructure, presentation)
+    - Cada caso de uso empieza con su prueba (rojo), luego el código (verde) y luego el refactor
+    - Cada tarea termina con lint, tipos y pruebas en verde
+    - Incluye una tarea para regenerar el documento OpenAPI cuando cambie el contrato
+
+operations:
+  apply:
+    guidance:
+      - Ejecuta lint, tsc y las pruebas antes de marcar una tarea como completa
+      - Verifica que no se rompa la regla de dependencia entre capas
+      - Si una prueba falla, corrige la causa y no la elimines ni la debilites
+  archive:
+    guidance:
+      - Confirma que el documento OpenAPI está regenerado y sin cambios pendientes
+      - Resume lo entregado y los IDs de requisito cubiertos
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

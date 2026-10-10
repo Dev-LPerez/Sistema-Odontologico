@@ -1,0 +1,19 @@
+# Documentación privada (excluida a petición)
+/docs/
+docs/
+
+# Entornos y secretos
+.env
+.env.*
+!.env.example
+
+# Dependencias y compilación
+node_modules/
+dist/
+build/
+bin/
+obj/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
