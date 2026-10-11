@@ -2,7 +2,7 @@ schema: spec-driven
 
 context: |
   Backend de un sistema de gestión odontológica (consultorio de una doctora, 1 a 3 usuarios).
-  Este directorio es apps/api dentro de un monorepo. El frontend está en apps/web con su propio OpenSpec.
+  Este directorio es Backend dentro de un monorepo. El frontend está en Frontend con su propio OpenSpec.
   Stack: TypeScript estricto, NestJS como monolito modular, PostgreSQL con Prisma, pg-boss para tareas
   en segundo plano, Cloudflare R2 por API S3 detrás de un puerto StoragePort, Jest y Supertest.
   Arquitectura: Clean Architecture completa en TODOS los módulos (domain, application, infrastructure,
@@ -20,7 +20,7 @@ context: |
 rules:
   proposal:
     - Cita los IDs de requisito que cubre el cambio (RF-B, RNF-B y RC)
-    - Si la rebanada toca la interfaz, indica el nombre del change pareja en apps/web
+    - Si la rebanada toca la interfaz, indica el nombre del change pareja en Frontend
     - Máximo 400 palabras
   specs:
     - Cada requisito lleva al menos un escenario Dado/Cuando/Entonces
@@ -46,34 +46,3 @@ operations:
     guidance:
       - Confirma que el documento OpenAPI está regenerado y sin cambios pendientes
       - Resume lo entregado y los IDs de requisito cubiertos
-
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
-
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
-
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing

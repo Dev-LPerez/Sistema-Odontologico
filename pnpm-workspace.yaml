@@ -1,0 +1,14 @@
+packages:
+  - 'Backend'
+  - 'Frontend'
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  prisma: true
+overrides:
+  js-yaml: '^4.3.2'
+  multer: '^2.4.0'
+  lodash: '^4.18.1'
+  deepmerge-ts: '^8.0.2'

@@ -1,0 +1,56 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_getHealth",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Servidor activo en memoria"
+          }
+        },
+        "summary": "Liveness probe (comprueba si el proceso está activo)",
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "HealthController_getReady",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Base de datos disponible"
+          },
+          "503": {
+            "description": "Base de datos no disponible"
+          }
+        },
+        "summary": "Readiness probe (comprueba conectividad con PostgreSQL)",
+        "tags": [
+          "Health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Sistema Odontológico API",
+    "description": "API REST del Sistema de Gestión para Consultorio Odontológico",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {}
+  }
+}

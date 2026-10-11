@@ -1,8 +1,8 @@
 schema: spec-driven
 
 context: |
-  Frontend (PWA) de un sistema de gestión odontológica. Este directorio es apps/web dentro de un monorepo.
-  El backend está en apps/api con su propio OpenSpec y es dueño de las reglas de negocio.
+  Frontend (PWA) de un sistema de gestión odontológica. Este directorio es Frontend dentro de un monorepo.
+  El backend está en Backend con su propio OpenSpec y es dueño de las reglas de negocio.
   Uso principal en iPad (horizontal y vertical, con Apple Pencil). También funciona en computador y celular.
   Stack: React, TypeScript estricto y Vite como PWA (vite-plugin-pwa), TanStack Router y TanStack Query,
   Zustand solo para lo mínimo, React Hook Form con Zod, Tailwind CSS con shadcn/ui, Dexie para el modo
@@ -49,33 +49,3 @@ operations:
     guidance:
       - Confirma que el change del backend con el mismo nombre ya está archivado
       - Resume lo entregado y los IDs de requisito cubiertos
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
-
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
-
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
