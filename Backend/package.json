@@ -18,7 +18,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/jest/bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "openapi:generate": "ts-node -r tsconfig-paths/register src/generate-openapi.ts",
+    "openapi:generate": "ts-node --transpile-only -r tsconfig-paths/register src/generate-openapi.ts",
     "deps:check": "depcruise --config .dependency-cruiser.js src",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev"
