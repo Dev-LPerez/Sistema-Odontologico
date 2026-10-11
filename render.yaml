@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: sistema-odontologico-backend
+    runtime: docker
+    rootDir: Backend
+    plan: free
+    region: ohio
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        sync: false

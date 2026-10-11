@@ -1,0 +1,17 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm, uuid_ossp(map: "uuid-ossp")]
+}
+
+model SystemCheck {
+  id        String   @id @default(uuid())
+  checkedAt DateTime @default(now()) @map("checked_at")
+
+  @@map("system_checks")
+}
