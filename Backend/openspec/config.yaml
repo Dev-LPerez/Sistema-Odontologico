@@ -20,7 +20,7 @@ context: |
 rules:
   proposal:
     - Cita los IDs de requisito que cubre el cambio (RF-B, RNF-B y RC)
-    - Si la rebanada toca la interfaz, indica el nombre del change pareja en Frontend
+    - Indica el nombre del change que tendrá este módulo en Frontend, con el mismo nombre
     - Máximo 400 palabras
   specs:
     - Cada requisito lleva al menos un escenario Dado/Cuando/Entonces

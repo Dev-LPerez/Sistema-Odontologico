@@ -32,7 +32,7 @@ Si un requisito contradice a los documentos, falta información o es ambiguo, pr
 
 ## 3. Flujo de trabajo con OpenSpec
 
-1. Un change por rebanada vertical, con nombre en kebab-case (por ejemplo `add-patients`). Su pareja en `Frontend` lleva el mismo nombre.
+1. Un change por módulo, con nombre en kebab-case (por ejemplo `add-patients`). Su pareja en el otro lado lleva el mismo nombre y se construye después: el change del backend se cierra antes de empezar el del frontend.
 2. Orden: explore, propose, revisión humana, apply, archive. Las reglas de cada artefacto están en `openspec/config.yaml`; síguelas.
 3. No implementes nada hasta que el desarrollador apruebe el proposal, las specs y el design.
 4. Cita siempre los IDs de requisito (RF-B, RNF-B y RC) en el proposal, las specs y las tareas.
@@ -91,7 +91,7 @@ Módulos: `identity`, `patients`, `clinical`, `scheduling`, `billing`, `files`, 
 
 - TypeScript estricto, sin `any` explícito salvo excepción comentada. ESLint y Prettier sin errores ni advertencias.
 - Complejidad ciclomática máxima de 10 por función.
-- Commits con Conventional Commits. Cambios de unas 400 líneas como máximo, sin contar código generado.
+- Commits con Conventional Commits en español. Cambios de unas 400 líneas como máximo, sin contar código generado.
 - Usa los scripts de `package.json` (lint, tipos, pruebas, build). No inventes comandos; si falta un script, propón crearlo.
 - No instales dependencias fuera del stack sin proponerlo y esperar aprobación.
 - Si cambia el contrato, regenera el documento OpenAPI en el mismo change.

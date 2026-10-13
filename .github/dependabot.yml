@@ -32,3 +32,17 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  
+  # Frontend (comentado temporalmente hasta que se inicialice con su package.json)
+  # - package-ecosystem: 'npm'
+  #   directory: '/Frontend'
+  #   schedule:
+  #     interval: 'weekly'
+  #   open-pull-requests-limit: 5
+  #   groups:
+  #     minor-and-patch:
+  #       patterns: ["*"]
+  #       update-types: ["minor", "patch"]
+  #   ignore:
+  #     - dependency-name: "*"
+  #       update-types: ["version-update:semver-major"]

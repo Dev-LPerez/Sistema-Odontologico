@@ -34,7 +34,7 @@ Si un requisito contradice a los documentos, falta información o es ambiguo, pr
 
 ## 3. Flujo de trabajo con OpenSpec
 
-1. Un change por rebanada vertical, con nombre en kebab-case. Si existe el change del backend con el mismo nombre, cítalo como fuente de las reglas de negocio y no las repitas.
+1. Un change por módulo, con nombre en kebab-case (por ejemplo add-patients). Su pareja en el otro lado lleva el mismo nombre y se construye después: el change del backend se cierra antes de empezar el del frontend.
 2. Orden: explore, propose, revisión humana, apply, archive. Las reglas de cada artefacto están en `openspec/config.yaml`; síguelas.
 3. No implementes nada hasta que el desarrollador apruebe el proposal, las specs y el design.
 4. Cita siempre los IDs de requisito (RF-F, RNF-F y RC).
@@ -70,6 +70,7 @@ Reglas:
 - Las pruebas son deterministas: sin hora real ni red real; la API se simula con MSW.
 - Cobertura mínima del 80 % global y del 90 % en `domain` y `application`.
 - Si una prueba falla, corrige la causa. Nunca la elimines ni la debilites para que pase.
+- Durante el desarrollo se usa la API real del backend; MSW se usa solo en las pruebas automáticas.
 
 ## 6. Experiencia de uso (criterios de aceptación)
 
@@ -93,7 +94,7 @@ Reglas:
 
 - TypeScript estricto, sin `any` explícito salvo excepción comentada. ESLint y Prettier sin errores ni advertencias.
 - Complejidad ciclomática máxima de 10 por función.
-- Commits con Conventional Commits. Cambios de unas 400 líneas como máximo, sin contar código generado.
+- Commits con Conventional Commits en español. Cambios de unas 400 líneas como máximo, sin contar código generado.
 - Usa los scripts de `package.json` (lint, tipos, pruebas, build). No inventes comandos; si falta un script, propón crearlo.
 - No instales dependencias fuera del stack sin proponerlo y esperar aprobación.
 - No hagas commit ni push salvo que el desarrollador lo pida.
