@@ -1,26 +1,62 @@
 version: 2
 updates:
+  # Dependencias raíz (Husky, commitlint, lint-staged)
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'weekly'
+    open-pull-requests-limit: 2
+    groups:
+      root-dependencies:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
+  # Backend (NestJS, Prisma, etc.)
   - package-ecosystem: 'npm'
     directory: '/Backend'
     schedule:
       interval: 'weekly'
+    open-pull-requests-limit: 5
+    groups:
+      nestjs:
+        patterns: ["@nestjs/*"]
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
-  - package-ecosystem: 'npm'
-    directory: '/Frontend'
-    schedule:
-      interval: 'weekly'
+  # Frontend (comentado temporalmente hasta que se inicialice con su package.json)
+  # - package-ecosystem: 'npm'
+  #   directory: '/Frontend'
+  #   schedule:
+  #     interval: 'weekly'
+  #   open-pull-requests-limit: 5
+  #   groups:
+  #     minor-and-patch:
+  #       patterns: ["*"]
+  #       update-types: ["minor", "patch"]
+  #   ignore:
+  #     - dependency-name: "*"
+  #       update-types: ["version-update:semver-major"]
 
+  # Dockerfile de Backend
   - package-ecosystem: 'docker'
     directory: '/Backend'
     schedule:
       interval: 'weekly'
+    open-pull-requests-limit: 2
 
+  # Flujos de GitHub Actions
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'weekly'
+    open-pull-requests-limit: 2
+    groups:
+      actions:
+        patterns: ["*"]
