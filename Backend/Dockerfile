@@ -1,5 +1,5 @@
 # Etapa 1: Base con Node y PNPM
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN pnpm build
 RUN pnpm prune --prod
 
 # Etapa 3: Runner ligero de producción
-FROM node:22-alpine AS runner
+FROM node:26-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
