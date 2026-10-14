@@ -29,8 +29,8 @@
 - [x] 6.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(shared): wire DomainExceptionFilter, SharedModule and HTTP security headers"`
 
 ## 7. Glosario clínico, ADR-0001, Plop y Workflow Keep-Alive
-- [ ] 7.1 Crear `Backend/docs/glosario.md`, `Backend/docs/adr/0001-clean-architecture-and-shared-kernel.md`, `Backend/plopfile.js` y `.github/workflows/db-keepalive.yml`.
-- [ ] 7.2 Verificar formato con Prettier/ESLint y hacer commit: `git add Backend/docs Backend/plopfile.js .github/workflows/db-keepalive.yml && git commit -m "docs(shared): add clinical glossary, ADR-0001, plop generators and db-keepalive workflow"`
+- [x] 7.1 Crear `Backend/docs/glosario.md`, `Backend/docs/adr/0001-clean-architecture-and-shared-kernel.md`, `Backend/plopfile.js` y `.github/workflows/db-keepalive.yml`.
+- [x] 7.2 Verificar formato con Prettier/ESLint y hacer commit: `git add Backend/docs Backend/plopfile.js .github/workflows/db-keepalive.yml && git commit -m "docs(shared): add clinical glossary, ADR-0001, plop generators and db-keepalive workflow"`
 
 ## 8. Regeneración de contrato OpenAPI y verificación final
 - [ ] 8.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend test:arch`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e` verificando que todos pasen en verde.

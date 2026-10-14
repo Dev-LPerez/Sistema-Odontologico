@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "openapi:generate": "ts-node --transpile-only -r tsconfig-paths/register src/generate-openapi.ts",
     "deps:check": "depcruise --config .dependency-cruiser.js src",
+    "plop": "plop",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev"
   },
