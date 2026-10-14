@@ -14,10 +14,10 @@
 
 ## 3. Capa application de identity (Casos de Uso) con TDD
 
-- [ ] 3.1 Definir los puertos `password-hasher.port.ts` (`PASSWORD_HASHER_PORT`) y `token-service.port.ts` (`TOKEN_SERVICE_PORT`) en `Backend/src/modules/identity/application/ports/`.
-- [ ] 3.2 Escribir las pruebas unitarias en rojo `login.use-case.spec.ts`, `refresh-session.use-case.spec.ts`, `logout.use-case.spec.ts` y `get-authenticated-user.query.spec.ts` usando dobles en memoria, `ClockPort` fijo e `IdGeneratorPort` determinista.
-- [ ] 3.3 Implementar `login.use-case.ts`, `refresh-session.use-case.ts`, `logout.use-case.ts` y `get-authenticated-user.query.ts` (un único método público `execute` por clase, RC-015) hasta pasar todas las pruebas en verde con cobertura >= 90%.
-- [ ] 3.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/application && git commit -m "feat(identity): implement Login, RefreshSession, Logout and GetAuthenticatedUser use cases"`
+- [x] 3.1 Definir los puertos `password-hasher.port.ts` (`PASSWORD_HASHER_PORT`) y `token-service.port.ts` (`TOKEN_SERVICE_PORT`) en `Backend/src/modules/identity/application/ports/`.
+- [x] 3.2 Escribir las pruebas unitarias en rojo `login.use-case.spec.ts`, `refresh-session.use-case.spec.ts`, `logout.use-case.spec.ts` y `get-authenticated-user.query.spec.ts` usando dobles en memoria, `ClockPort` fijo e `IdGeneratorPort` determinista.
+- [x] 3.3 Implementar `login.use-case.ts`, `refresh-session.use-case.ts`, `logout.use-case.ts` y `get-authenticated-user.query.ts` (un único método público `execute` por clase, RC-015) hasta pasar todas las pruebas en verde con cobertura >= 90%.
+- [x] 3.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/application && git commit -m "feat(identity): implement Login, RefreshSession, Logout and GetAuthenticatedUser use cases"`
 
 ## 4. Adaptadores de infraestructura y suite de contrato (RC-018)
 
