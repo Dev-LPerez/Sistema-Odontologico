@@ -10,8 +10,8 @@
 - [x] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/domain && git commit -m "feat(shared): add DomainError, DomainEvent and AggregateRoot base classes"`
 
 ## 3. Definición de puertos en shared/application
-- [ ] 3.1 Crear los puertos `clock.port.ts` (`CLOCK_PORT`), `id-generator.port.ts` (`ID_GENERATOR_PORT`), `unit-of-work.port.ts` (`UNIT_OF_WORK_PORT`) y `event-bus.port.ts` (`EVENT_BUS_PORT`) en `Backend/src/shared/application/ports/`.
-- [ ] 3.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test:arch` en verde, y hacer commit: `git add Backend/src/shared/application && git commit -m "feat(shared): define Clock, IdGenerator, UnitOfWork and EventBus ports"`
+- [x] 3.1 Crear los puertos `clock.port.ts` (`CLOCK_PORT`), `id-generator.port.ts` (`ID_GENERATOR_PORT`), `unit-of-work.port.ts` (`UNIT_OF_WORK_PORT`) y `event-bus.port.ts` (`EVENT_BUS_PORT`) en `Backend/src/shared/application/ports/`.
+- [x] 3.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test:arch` en verde, y hacer commit: `git add Backend/src/shared/application && git commit -m "feat(shared): define Clock, IdGenerator, UnitOfWork and EventBus ports"`
 
 ## 4. Adaptadores de shared/infrastructure con TDD
 - [ ] 4.1 Escribir las pruebas unitarias en rojo `system-clock.adapter.spec.ts` (incluyendo bordes de cambio de día a las 23:59 y 00:01 en `America/Bogota`) y `uuid-generator.adapter.spec.ts`, e implementar `system-clock.adapter.ts` y `uuid-generator.adapter.ts`.
