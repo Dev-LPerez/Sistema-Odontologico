@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
@@ -36,6 +37,7 @@ async function bootstrap(): Promise<void> {
 
   // Seguridad HTTP (RNF-B-005, RNF-B-006)
   app.use(helmet());
+  app.use(cookieParser());
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',

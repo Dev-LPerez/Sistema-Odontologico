@@ -27,10 +27,10 @@
 
 ## 5. Guards, decoradores, AuthController y pruebas E2E (RC-005)
 
-- [ ] 5.1 Escribir las pruebas unitarias en rojo para `jwt-auth.guard.spec.ts` y `roles.guard.spec.ts`, e implementar los decoradores `@Public()`, `@Roles()`, `@CurrentUser()` y `@CurrentClinic()` y los guards `JwtAuthGuard` y `RolesGuard` en `Backend/src/shared/presentation/`.
-- [ ] 5.2 Implementar los DTOs con `class-validator` y `@nestjs/swagger` (`login.dto.ts`, `auth-response.dto.ts`), el controlador `auth.controller.ts` (`/v1/auth/login` con `@Throttle`, `/v1/auth/refresh`, `/v1/auth/logout`, `/v1/auth/me` y un endpoint o ruta protegida por rol para verificar `ADMIN` vs `AUXILIARY`), `identity.module.ts` e `index.ts` público, y registrar `cookieParser()` e `IdentityModule` en `main.ts` y `app.module.ts`.
-- [ ] 5.3 Escribir y ejecutar la suite E2E `Backend/test/auth.e2e-spec.ts` probando login exitoso, credenciales inválidas, usuario inactivo, cookie `httpOnly` en refresh y logout, acceso a `/v1/auth/me` y bloqueo `403` para rol `AUXILIARY` en ruta exclusiva de `ADMIN` (RC-005).
-- [ ] 5.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(identity): add AuthController, JWT/Roles guards, decorators and E2E role tests"`
+- [x] 5.1 Escribir las pruebas unitarias en rojo para `jwt-auth.guard.spec.ts` y `roles.guard.spec.ts`, e implementar los decoradores `@Public()`, `@Roles()`, `@CurrentUser()` y `@CurrentClinic()` y los guards `JwtAuthGuard` y `RolesGuard` en `Backend/src/shared/presentation/`.
+- [x] 5.2 Implementar los DTOs con `class-validator` y `@nestjs/swagger` (`login.dto.ts`, `auth-response.dto.ts`), el controlador `auth.controller.ts` (`/v1/auth/login` con `@Throttle`, `/v1/auth/refresh`, `/v1/auth/logout`, `/v1/auth/me` y un endpoint o ruta protegida por rol para verificar `ADMIN` vs `AUXILIARY`), `identity.module.ts` e `index.ts` público, y registrar `cookieParser()` e `IdentityModule` en `main.ts` y `app.module.ts`.
+- [x] 5.3 Escribir y ejecutar la suite E2E `Backend/test/auth.e2e-spec.ts` probando login exitoso, credenciales inválidas, usuario inactivo, cookie `httpOnly` en refresh y logout, acceso a `/v1/auth/me` y bloqueo `403` para rol `AUXILIARY` en ruta exclusiva de `ADMIN` (RC-005).
+- [x] 5.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(identity): add AuthController, JWT/Roles guards, decorators and E2E role tests"`
 
 ## 6. Regeneración del contrato OpenAPI y cierre del change
 

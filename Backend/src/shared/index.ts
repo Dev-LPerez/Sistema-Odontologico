@@ -23,3 +23,5 @@ export * from './infrastructure/sentry/sentry.sanitizer';
 
 // Presentation
 export * from './presentation/filters/domain-exception.filter';
+export * from './presentation/decorators';
+export * from './presentation/guards';

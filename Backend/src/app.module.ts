@@ -2,6 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { HealthModule } from './health/health.module';
+import { IdentityModule } from './modules/identity';
 import { SharedModule, CorrelationIdMiddleware, createPinoHttpConfig } from './shared';
 
 @Module({
@@ -16,6 +17,7 @@ import { SharedModule, CorrelationIdMiddleware, createPinoHttpConfig } from './s
       },
     ]),
     SharedModule,
+    IdentityModule,
     HealthModule,
   ],
 })
