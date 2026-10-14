@@ -5,9 +5,9 @@
 - [x] 1.2 Confirmar los cambios de dependencias con un commit de Conventional Commits: `git add Backend/package.json pnpm-lock.yaml && git commit -m "chore(shared): install observability, security and plop dependencies"`
 
 ## 2. Implementación de shared/domain con TDD
-- [ ] 2.1 Escribir las pruebas unitarias en rojo `Backend/src/shared/domain/domain-error.spec.ts` y `Backend/src/shared/domain/aggregate-root.spec.ts` cubriendo categorías de error, metadatos y cola de eventos de dominio.
-- [ ] 2.2 Implementar `Backend/src/shared/domain/domain-error.ts`, `Backend/src/shared/domain/domain-event.ts` y `Backend/src/shared/domain/aggregate-root.ts` hasta poner las pruebas en verde con cobertura $\ge 90\%$.
-- [ ] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/domain && git commit -m "feat(shared): add DomainError, DomainEvent and AggregateRoot base classes"`
+- [x] 2.1 Escribir las pruebas unitarias en rojo `Backend/src/shared/domain/domain-error.spec.ts` y `Backend/src/shared/domain/aggregate-root.spec.ts` cubriendo categorías de error, metadatos y cola de eventos de dominio.
+- [x] 2.2 Implementar `Backend/src/shared/domain/domain-error.ts`, `Backend/src/shared/domain/domain-event.ts` y `Backend/src/shared/domain/aggregate-root.ts` hasta poner las pruebas en verde con cobertura $\ge 90\%$.
+- [x] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/domain && git commit -m "feat(shared): add DomainError, DomainEvent and AggregateRoot base classes"`
 
 ## 3. Definición de puertos en shared/application
 - [ ] 3.1 Crear los puertos `clock.port.ts` (`CLOCK_PORT`), `id-generator.port.ts` (`ID_GENERATOR_PORT`), `unit-of-work.port.ts` (`UNIT_OF_WORK_PORT`) y `event-bus.port.ts` (`EVENT_BUS_PORT`) en `Backend/src/shared/application/ports/`.
