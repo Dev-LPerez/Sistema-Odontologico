@@ -8,9 +8,9 @@
 
 ## 2. Capa domain de identity con TDD
 
-- [ ] 2.1 Escribir las pruebas unitarias en rojo en `Backend/src/modules/identity/domain/` para el objeto de valor `email.vo.spec.ts` y las entidades `clinic.entity.spec.ts`, `user.entity.spec.ts` y `refresh-session.entity.spec.ts` (validando formato de correo, usuario inactivo, expiración y revocación de sesión).
-- [ ] 2.2 Implementar `role.enum.ts`, `email.vo.ts`, `clinic.entity.ts`, `user.entity.ts`, `refresh-session.entity.ts`, `identity.errors.ts` (`InvalidCredentialsError`, `UserInactiveError`, `InvalidRefreshTokenError`, `ForbiddenRoleError` heredando de `DomainError`) y los puertos `clinic.repository.port.ts`, `user.repository.port.ts` y `refresh-session.repository.port.ts` (importando de `@shared/domain/...` para respetar `.dependency-cruiser.js`).
-- [ ] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/domain && git commit -m "feat(identity): add Clinic, User and RefreshSession domain entities and repository ports"`
+- [x] 2.1 Escribir las pruebas unitarias en rojo en `Backend/src/modules/identity/domain/` para el objeto de valor `email.vo.spec.ts` y las entidades `clinic.entity.spec.ts`, `user.entity.spec.ts` y `refresh-session.entity.spec.ts` (validando formato de correo, usuario inactivo, expiración y revocación de sesión).
+- [x] 2.2 Implementar `role.enum.ts`, `email.vo.ts`, `clinic.entity.ts`, `user.entity.ts`, `refresh-session.entity.ts`, `identity.errors.ts` (`InvalidCredentialsError`, `UserInactiveError`, `InvalidRefreshTokenError`, `ForbiddenRoleError` heredando de `DomainError`) y los puertos `clinic.repository.port.ts`, `user.repository.port.ts` y `refresh-session.repository.port.ts` (importando de `@shared/domain/...` para respetar `.dependency-cruiser.js`).
+- [x] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/domain && git commit -m "feat(identity): add Clinic, User and RefreshSession domain entities and repository ports"`
 
 ## 3. Capa application de identity (Casos de Uso) con TDD
 
