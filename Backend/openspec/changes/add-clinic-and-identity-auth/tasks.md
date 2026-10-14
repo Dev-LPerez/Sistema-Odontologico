@@ -2,9 +2,9 @@
 
 ## 1. Dependencias y esquema Prisma inicial
 
-- [ ] 1.1 Instalar en `Backend/package.json` las dependencias de producción (`@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `argon2`, `cookie-parser`) y de desarrollo (`@types/passport-jwt`, `@types/cookie-parser`).
-- [ ] 1.2 Definir en `Backend/prisma/schema.prisma` el enum `UserRole` (`ADMIN`, `AUXILIARY`) y los modelos `Clinic`, `User` y `RefreshSession` (todos con `clinicId`), generar la migración inicial en `Backend/prisma/migrations/` y ejecutar `pnpm --filter backend prisma:generate` verificando que compile sin errores.
-- [ ] 1.3 Ejecutar `pnpm --filter backend typecheck` y confirmar con un commit: `git add Backend/package.json pnpm-lock.yaml Backend/prisma && git commit -m "feat(identity): add auth dependencies and initial Clinic, User and RefreshSession schema"`
+- [x] 1.1 Instalar en `Backend/package.json` las dependencias de producción (`@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`, `argon2`, `cookie-parser`) y de desarrollo (`@types/passport-jwt`, `@types/cookie-parser`).
+- [x] 1.2 Definir en `Backend/prisma/schema.prisma` el enum `UserRole` (`ADMIN`, `AUXILIARY`) y los modelos `Clinic`, `User` y `RefreshSession` (todos con `clinicId`), generar la migración inicial en `Backend/prisma/migrations/` y ejecutar `pnpm --filter backend prisma:generate` verificando que compile sin errores.
+- [x] 1.3 Ejecutar `pnpm --filter backend typecheck` y confirmar con un commit: `git add Backend/package.json pnpm-lock.yaml Backend/prisma && git commit -m "feat(identity): add auth dependencies and initial Clinic, User and RefreshSession schema"`
 
 ## 2. Capa domain de identity con TDD
 

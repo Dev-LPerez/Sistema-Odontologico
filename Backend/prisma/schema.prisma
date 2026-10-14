@@ -15,3 +15,57 @@ model SystemCheck {
 
   @@map("system_checks")
 }
+
+enum UserRole {
+  ADMIN
+  AUXILIARY
+}
+
+model Clinic {
+  id              String           @id @default(uuid())
+  name            String
+  address         String?
+  phone           String?
+  email           String?
+  logoUrl         String?          @map("logo_url")
+  settings        Json?
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  users           User[]
+  refreshSessions RefreshSession[]
+
+  @@map("clinics")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  clinicId        String           @map("clinic_id")
+  email           String           @unique
+  passwordHash    String           @map("password_hash")
+  fullName        String           @map("full_name")
+  role            UserRole
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  clinic          Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  refreshSessions RefreshSession[]
+
+  @@index([clinicId, role])
+  @@map("users")
+}
+
+model RefreshSession {
+  id        String    @id @default(uuid())
+  clinicId  String    @map("clinic_id")
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  clinic    Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([clinicId])
+  @@map("refresh_sessions")
+}
