@@ -33,17 +33,19 @@ rules:
     - Describe los componentes UI, las zonas táctiles de 44x44 pt y el impacto en el límite de 300 KB gzip
   tasks:
     - Agrupa las tareas bajo encabezados numerados de nivel 2 (## 1. Nombre del grupo) de adentro hacia afuera
+    - Mapea explícitamente cada Scenario de spec.md al archivo de prueba y nombre exacto del test it(...)
     - Cada bloque funcional empieza con su prueba en rojo, luego el código en verde y luego el refactor
     - Incluye verificación de accesibilidad con axe en los componentes de interfaz
-    - Cada grupo de tareas termina con lint, tsc, pruebas en verde y un commit con Conventional Commits
+    - Incluye una tarea final para guardar en evidence.md la salida literal de lint, typecheck, test:cov y build
 
 operations:
   apply:
     guidance:
       - Ejecuta lint, tsc, pruebas con Vitest/axe y build antes de marcar un grupo como completo
-      - Verifica que no se rompa eslint-plugin-boundaries ni los umbrales de cobertura
+      - Usa exactamente los nombres de prueba it(...) mapeados en tasks.md para cada Scenario de la spec
+      - Pega la salida literal de consola de lint, typecheck, test:cov y build en evidence.md y en tu respuesta final
       - Realiza un git commit usando formato Conventional Commits al cerrar cada grupo de tareas de tasks.md
   archive:
     guidance:
-      - Confirma que el cliente OpenAPI está sincronizado, el build no supera 300 KB gzip y git status está limpio
+      - Confirma que evidence.md existe, el cliente OpenAPI está sincronizado, el build no supera 300 KB gzip y git status está limpio
       - Resume lo entregado, los commits realizados y los IDs de requisito cubiertos
