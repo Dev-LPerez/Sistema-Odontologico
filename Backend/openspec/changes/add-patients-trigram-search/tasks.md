@@ -13,8 +13,8 @@ Cada escenario de `specs/patients-management/spec.md` DEBE estar cubierto por la
 ---
 
 ## 1. Migración de índices GIN `pg_trgm` en Prisma
-- [ ] 1.1 Crear la migración `Backend/prisma/migrations/20261014010000_add_patients_trigram_indexes/migration.sql` con los índices GIN `CREATE INDEX IF NOT EXISTS "patients_first_name_trgm_idx" ON "patients" USING GIN ("first_name" gin_trgm_ops);`, `CREATE INDEX IF NOT EXISTS "patients_last_name_trgm_idx" ON "patients" USING GIN ("last_name" gin_trgm_ops);`, `CREATE INDEX IF NOT EXISTS "patients_document_number_trgm_idx" ON "patients" USING GIN ("document_number" gin_trgm_ops);` y `CREATE INDEX IF NOT EXISTS "patients_phone_trgm_idx" ON "patients" USING GIN ("phone" gin_trgm_ops);`.
-- [ ] 1.2 Ejecutar `pnpm --filter backend typecheck` y confirmar con commit: `git add Backend/prisma && git commit -m "feat(patients): add pg_trgm GIN indexes migration for fast fuzzy patient search"`
+- [x] 1.1 Crear la migración `Backend/prisma/migrations/20261014010000_add_patients_trigram_indexes/migration.sql` con los índices GIN `CREATE INDEX IF NOT EXISTS "patients_first_name_trgm_idx" ON "patients" USING GIN ("first_name" gin_trgm_ops);`, `CREATE INDEX IF NOT EXISTS "patients_last_name_trgm_idx" ON "patients" USING GIN ("last_name" gin_trgm_ops);`, `CREATE INDEX IF NOT EXISTS "patients_document_number_trgm_idx" ON "patients" USING GIN ("document_number" gin_trgm_ops);` y `CREATE INDEX IF NOT EXISTS "patients_phone_trgm_idx" ON "patients" USING GIN ("phone" gin_trgm_ops);`.
+- [x] 1.2 Ejecutar `pnpm --filter backend typecheck` y confirmar con commit: `git add Backend/prisma && git commit -m "feat(patients): add pg_trgm GIN indexes migration for fast fuzzy patient search"`
 
 ## 2. Puerto segregado `PatientQueriesPort` y `SearchPatientsQuery` en `application` con TDD
 - [ ] 2.1 Definir en `Backend/src/modules/patients/application/ports/patient.queries.port.ts` el token `PATIENT_QUERIES_TOKEN`, la interfaz `SearchPatientsByTrigramParams` (`clinicId`, `query`, `normalizedDigits`, `includeInactive`, `limit`), el DTO `PatientSearchItemDto` y el puerto `PatientQueriesPort` (1 método `searchByTrigram`, cumpliendo ISP).
