@@ -1,4 +1,5 @@
-import { CLINICAL_REDACT_PATHS } from './logger.config';
+import { IncomingMessage, ServerResponse } from 'http';
+import { CLINICAL_REDACT_PATHS, createPinoHttpConfig } from './logger.config';
 import pino from 'pino';
 
 describe('Logger Clinical Redaction', () => {
@@ -68,5 +69,62 @@ describe('Logger Clinical Redaction', () => {
     expect(parsed.patient.antecedents).toBe('[REDACTED]');
     expect(parsed.patient.findings).toBe('[REDACTED]');
     expect(parsed.patient.odontogram).toBe('[REDACTED]');
+  });
+
+  describe('createPinoHttpConfig', () => {
+    it('debe usar x-correlation-id existente en genReqId', () => {
+      const config = createPinoHttpConfig();
+      const mockReq = { headers: { 'x-correlation-id': 'existing-corr-123' } };
+      const mockRes = { setHeader: jest.fn() };
+
+      const id = config.genReqId(
+        mockReq as unknown as IncomingMessage,
+        mockRes as unknown as ServerResponse,
+      );
+
+      expect(id).toBe('existing-corr-123');
+      expect(mockRes.setHeader).toHaveBeenCalledWith('x-correlation-id', 'existing-corr-123');
+    });
+
+    it('debe usar x-request-id si x-correlation-id no está presente', () => {
+      const config = createPinoHttpConfig();
+      const mockReq = { headers: { 'x-request-id': 'req-id-456' } };
+      const mockRes = { setHeader: jest.fn() };
+
+      const id = config.genReqId(
+        mockReq as unknown as IncomingMessage,
+        mockRes as unknown as ServerResponse,
+      );
+
+      expect(id).toBe('req-id-456');
+      expect(mockRes.setHeader).toHaveBeenCalledWith('x-correlation-id', 'req-id-456');
+    });
+
+    it('debe generar un UUID nuevo si no hay cabeceras previas', () => {
+      const config = createPinoHttpConfig();
+      const mockReq = { headers: {} };
+      const mockRes = { setHeader: jest.fn() };
+
+      const id = config.genReqId(
+        mockReq as unknown as IncomingMessage,
+        mockRes as unknown as ServerResponse,
+      );
+
+      expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+      expect(mockRes.setHeader).toHaveBeenCalledWith('x-correlation-id', id);
+    });
+
+    it('debe configurar transport pino-pretty fuera de production', () => {
+      const prevEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+      const devConfig = createPinoHttpConfig();
+      expect(devConfig.transport).toBeDefined();
+
+      process.env.NODE_ENV = 'production';
+      const prodConfig = createPinoHttpConfig();
+      expect(prodConfig.transport).toBeUndefined();
+
+      process.env.NODE_ENV = prevEnv;
+    });
   });
 });

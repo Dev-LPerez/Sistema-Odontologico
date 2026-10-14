@@ -67,4 +67,16 @@ describe('sanitizeSentryEvent', () => {
     const minimalEvent = { message: 'Simple error' };
     expect(sanitizeSentryEvent(minimalEvent)).toEqual(minimalEvent);
   });
+
+  it('debe manejar campos con valores null o undefined dentro de objetos', () => {
+    const eventWithNulls = {
+      user: null,
+      details: {
+        info: undefined,
+        active: true,
+        count: 42,
+      },
+    };
+    expect(sanitizeSentryEvent(eventWithNulls)).toEqual(eventWithNulls);
+  });
 });

@@ -33,8 +33,8 @@
 - [x] 7.2 Verificar formato con Prettier/ESLint y hacer commit: `git add Backend/docs Backend/plopfile.js .github/workflows/db-keepalive.yml && git commit -m "docs(shared): add clinical glossary, ADR-0001, plop generators and db-keepalive workflow"`
 
 ## 8. Regeneración de contrato OpenAPI y verificación final
-- [ ] 8.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend test:arch`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e` verificando que todos pasen en verde.
-- [ ] 8.2 Hacer commit de los artefactos de OpenSpec o cambios en `openapi.json` (`git add -A && git commit -m "chore(shared): finalize B-02 shared kernel artifacts and openapi contract"`) dejando `git status` completamente limpio.
+- [x] 8.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend test:arch`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e` verificando que todos pasen en verde.
+- [x] 8.2 Hacer commit de los artefactos de OpenSpec o cambios en `openapi.json` (`git add -A && git commit -m "chore(shared): finalize B-02 shared kernel artifacts and openapi contract"`) dejando `git status` completamente limpio.
 
 ## Workflow follow-up
 - Ejecutar `/opsx-sync` y `/opsx-archive` una vez completadas y verificadas todas las tareas anteriores.

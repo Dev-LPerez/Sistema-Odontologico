@@ -81,4 +81,53 @@ describe('DomainExceptionFilter', () => {
       }),
     );
   });
+
+  it('debe usar x-request-id si x-correlation-id no está presente en las cabeceras', () => {
+    mockRequest = {
+      headers: { 'x-request-id': 'req-id-fallback' },
+    };
+
+    const error = new CustomDomainError('CONFLICT', 'CONFLICT_CODE', 'Conflicto');
+
+    filter.catch(error, mockHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        correlationId: 'req-id-fallback',
+      }),
+    );
+  });
+
+  it('debe usar "unknown" si no hay ninguna cabecera de correlación', () => {
+    mockRequest = {
+      headers: {},
+    };
+
+    const error = new CustomDomainError('VALIDATION', 'INVALID_INPUT', 'Datos inválidos');
+
+    filter.catch(error, mockHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        correlationId: 'unknown',
+      }),
+    );
+  });
+
+  it('debe usar INTERNAL_SERVER_ERROR si la categoría no está en el mapa', () => {
+    mockRequest = {
+      correlationId: 'corr-fallback-500',
+      headers: {},
+    };
+
+    const error = new CustomDomainError(
+      'UNKNOWN_CAT' as unknown as DomainErrorCategory,
+      'UNKNOWN_ERR',
+      'Error desconocido',
+    );
+
+    filter.catch(error, mockHost);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
+  });
 });

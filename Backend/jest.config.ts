@@ -11,6 +11,8 @@ const config: Config = {
     '**/*.(t|j)s',
     '!**/node_modules/**',
     '!**/*.module.ts',
+    '!**/*.port.ts',
+    '!**/index.ts',
     '!main.ts',
     '!generate-openapi.ts',
   ],
