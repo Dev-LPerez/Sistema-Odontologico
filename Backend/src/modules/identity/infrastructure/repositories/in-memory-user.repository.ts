@@ -24,6 +24,16 @@ export class InMemoryUserRepository implements UserRepositoryPort {
     return null;
   }
 
+  async findAllByClinicId(clinicId: string): Promise<User[]> {
+    const result: User[] = [];
+    for (const user of this.items.values()) {
+      if (user.clinicId === clinicId) {
+        result.push(user);
+      }
+    }
+    return result;
+  }
+
   async save(user: User): Promise<void> {
     this.items.set(user.id, user);
   }

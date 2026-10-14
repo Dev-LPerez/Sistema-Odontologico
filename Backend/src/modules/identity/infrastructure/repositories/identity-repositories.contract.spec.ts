@@ -74,6 +74,22 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
             }
             return null;
           }),
+          findMany: jest.fn(
+            async ({
+              where,
+            }: {
+              where: { clinicId: string };
+              orderBy?: { createdAt: 'asc' | 'desc' };
+            }) => {
+              const list: PrismaUser[] = [];
+              for (const u of userStore.values()) {
+                if (u.clinicId === where.clinicId) {
+                  list.push(u);
+                }
+              }
+              return list;
+            },
+          ),
           upsert: jest.fn(
             async ({
               where,
@@ -265,6 +281,61 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
 
           const notFound = await repo.findByEmail(Email.create('desconocido@clinica.com'));
           expect(notFound).toBeNull();
+        });
+
+        it('debe listar todos los usuarios pertenecientes al clinicId garantizando aislamiento multitenant (RNF-B-032, RC-018)', async () => {
+          const now = new Date('2026-10-13T10:00:00.000Z');
+          const userClinic1A = User.create({
+            id: 'user-c1-a',
+            clinicId: 'clinic-tenant-1',
+            email: Email.create('admin@tenant1.com'),
+            passwordHash: 'hash-1',
+            fullName: 'Dra. Tenant 1',
+            role: UserRole.ADMIN,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+          const userClinic1B = User.create({
+            id: 'user-c1-b',
+            clinicId: 'clinic-tenant-1',
+            email: Email.create('aux@tenant1.com'),
+            passwordHash: 'hash-2',
+            fullName: 'Auxiliar Tenant 1',
+            role: UserRole.AUXILIARY,
+            isActive: true,
+            createdAt: new Date('2026-10-13T11:00:00.000Z'),
+            updatedAt: new Date('2026-10-13T11:00:00.000Z'),
+          });
+          const userClinic2 = User.create({
+            id: 'user-c2',
+            clinicId: 'clinic-tenant-2',
+            email: Email.create('admin@tenant2.com'),
+            passwordHash: 'hash-3',
+            fullName: 'Dra. Tenant 2',
+            role: UserRole.ADMIN,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+
+          await repo.save(userClinic1A);
+          await repo.save(userClinic1B);
+          await repo.save(userClinic2);
+
+          const tenant1Users = await repo.findAllByClinicId('clinic-tenant-1');
+          expect(tenant1Users).toHaveLength(2);
+          const tenant1Ids = tenant1Users.map((u) => u.id);
+          expect(tenant1Ids).toContain('user-c1-a');
+          expect(tenant1Ids).toContain('user-c1-b');
+          expect(tenant1Ids).not.toContain('user-c2');
+
+          const tenant2Users = await repo.findAllByClinicId('clinic-tenant-2');
+          expect(tenant2Users).toHaveLength(1);
+          expect(tenant2Users[0].id).toBe('user-c2');
+
+          const emptyTenantUsers = await repo.findAllByClinicId('clinic-sin-usuarios');
+          expect(emptyTenantUsers).toEqual([]);
         });
       });
 

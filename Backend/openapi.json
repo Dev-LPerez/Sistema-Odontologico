@@ -123,6 +123,285 @@
         ]
       }
     },
+    "/v1/users": {
+      "get": {
+        "operationId": "UsersController_listUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios pertenecientes al consultorio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Requiere rol ADMIN"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar todos los usuarios del consultorio",
+        "tags": [
+          "Users"
+        ]
+      },
+      "post": {
+        "operationId": "UsersController_createUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Requiere rol ADMIN"
+          },
+          "409": {
+            "description": "El correo electrónico ya se encuentra registrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Crear un nuevo usuario para el consultorio",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/v1/users/{id}": {
+      "patch": {
+        "operationId": "UsersController_updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Requiere rol ADMIN"
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "409": {
+            "description": "El nuevo correo ya se encuentra registrado por otro usuario"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar perfil de un usuario del consultorio",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/v1/users/{id}/status": {
+      "patch": {
+        "operationId": "UsersController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeUserStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del usuario actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Requiere rol ADMIN"
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "422": {
+            "description": "Un usuario no puede desactivar su propia cuenta"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Activar o desactivar cuenta de usuario y revocar sesiones activas si se desactiva",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/v1/clinic": {
+      "get": {
+        "operationId": "ClinicController_getProfile",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Perfil y configuración del consultorio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicProfileResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Rol sin permisos"
+          },
+          "404": {
+            "description": "Consultorio no encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener datos y configuración del consultorio autenticado",
+        "tags": [
+          "Clinic"
+        ]
+      },
+      "patch": {
+        "operationId": "ClinicController_updateProfile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClinicDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil y configuración del consultorio actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicProfileResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nombre de consultorio inválido o datos incorrectos"
+          },
+          "401": {
+            "description": "No autenticado"
+          },
+          "403": {
+            "description": "Requiere rol ADMIN"
+          },
+          "404": {
+            "description": "Consultorio no encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar perfil y configuración del consultorio autenticado",
+        "tags": [
+          "Clinic"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -263,6 +542,242 @@
           "user",
           "accessToken"
         ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "email": {
+            "type": "string",
+            "example": "auxiliar@consultorio.com"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Laura Gómez"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMIN",
+              "AUXILIARY"
+            ],
+            "example": "AUXILIARY"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-13T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-13T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "email",
+          "fullName",
+          "role",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Correo electrónico único del nuevo usuario",
+            "example": "auxiliar@consultorio.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña de acceso inicial (mínimo 8 caracteres)",
+            "example": "SecurePassword123!",
+            "minLength": 8
+          },
+          "fullName": {
+            "type": "string",
+            "description": "Nombre completo del usuario",
+            "example": "Laura Gómez"
+          },
+          "role": {
+            "type": "string",
+            "description": "Rol asignado al usuario dentro del consultorio",
+            "enum": [
+              "ADMIN",
+              "AUXILIARY"
+            ],
+            "example": "AUXILIARY"
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "fullName",
+          "role"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "fullName": {
+            "type": "string",
+            "description": "Nombre completo actualizado",
+            "example": "Laura Gómez Martínez"
+          },
+          "email": {
+            "type": "string",
+            "description": "Nuevo correo electrónico",
+            "example": "laura.nueva@consultorio.com"
+          },
+          "role": {
+            "type": "string",
+            "description": "Rol actualizado en el consultorio",
+            "enum": [
+              "ADMIN",
+              "AUXILIARY"
+            ],
+            "example": "AUXILIARY"
+          },
+          "password": {
+            "type": "string",
+            "description": "Nueva contraseña (opcional)",
+            "example": "NewSecurePass2026!",
+            "minLength": 8
+          }
+        }
+      },
+      "ChangeUserStatusDto": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "description": "Nuevo estado activo o inactivo del usuario",
+            "example": false
+          }
+        },
+        "required": [
+          "isActive"
+        ]
+      },
+      "ClinicProfileResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "name": {
+            "type": "string",
+            "example": "Consultorio Odontológico Dra. Angelee Pacheco"
+          },
+          "address": {
+            "type": "object",
+            "example": "Calle 100 # 15-20, Consultorio 501",
+            "nullable": true
+          },
+          "phone": {
+            "type": "object",
+            "example": "+573001234567",
+            "nullable": true
+          },
+          "email": {
+            "type": "object",
+            "example": "contacto@draangeleepacheco.com",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "object",
+            "example": "https://r2.draangeleepacheco.com/branding/logo.png",
+            "nullable": true
+          },
+          "settings": {
+            "type": "object",
+            "example": {
+              "operatingHours": {
+                "weekdays": "08:00-18:00"
+              },
+              "templates": {
+                "prescriptionHeader": "Dra. Angelee Pacheco"
+              }
+            },
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-13T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-13T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateClinicDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Nombre comercial o razón social del consultorio",
+            "example": "Consultorio Odontológico Dra. Angelee Pacheco"
+          },
+          "address": {
+            "type": "string",
+            "description": "Dirección física del consultorio",
+            "example": "Calle 100 # 15-20, Consultorio 501"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Teléfono o celular de contacto",
+            "example": "+573001234567"
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo electrónico de contacto institucional",
+            "example": "contacto@draangeleepacheco.com"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "URL o ruta del logo institucional",
+            "example": "https://r2.draangeleepacheco.com/branding/logo.png"
+          },
+          "settings": {
+            "type": "object",
+            "description": "Configuración personalizada del consultorio (horarios, plantillas, etc.)",
+            "example": {
+              "operatingHours": {
+                "weekdays": "08:00-18:00",
+                "saturday": "08:00-13:00"
+              },
+              "templates": {
+                "prescriptionHeader": "Dra. Angelee Pacheco - Odontología Integral"
+              }
+            }
+          }
+        }
       }
     }
   }

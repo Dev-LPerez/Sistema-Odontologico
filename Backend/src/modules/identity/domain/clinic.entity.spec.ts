@@ -1,4 +1,5 @@
 import { Clinic } from './clinic.entity';
+import { InvalidClinicNameError } from './identity.errors';
 
 describe('Clinic Entity', () => {
   it('debe instanciar una entidad Clinic con sus propiedades requeridas y opcionales', () => {
@@ -45,5 +46,51 @@ describe('Clinic Entity', () => {
     expect(clinic.name).toBe('Nombre Nuevo');
     expect(clinic.phone).toBe('3109998877');
     expect(clinic.updatedAt).toEqual(updatedDate);
+  });
+
+  it('debe rechazar la creación de una clínica con nombre vacío o solo espacios', () => {
+    const now = new Date('2026-10-13T12:00:00.000Z');
+
+    expect(() =>
+      Clinic.create({
+        id: 'clinic-empty-1',
+        name: '',
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ).toThrow(InvalidClinicNameError);
+
+    expect(() =>
+      Clinic.create({
+        id: 'clinic-empty-2',
+        name: '    ',
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ).toThrow(InvalidClinicNameError);
+  });
+
+  it('debe rechazar la actualización de una clínica con nombre vacío o solo espacios', () => {
+    const now = new Date('2026-10-13T12:00:00.000Z');
+    const clinic = Clinic.create({
+      id: 'clinic-123',
+      name: 'Nombre Válido',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    expect(() =>
+      clinic.updateDetails({
+        name: '',
+        updatedAt: new Date('2026-10-13T13:00:00.000Z'),
+      }),
+    ).toThrow(InvalidClinicNameError);
+
+    expect(() =>
+      clinic.updateDetails({
+        name: '   ',
+        updatedAt: new Date('2026-10-13T13:00:00.000Z'),
+      }),
+    ).toThrow(InvalidClinicNameError);
   });
 });

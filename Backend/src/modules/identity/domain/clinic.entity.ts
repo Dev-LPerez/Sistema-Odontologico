@@ -1,4 +1,5 @@
 import { AggregateRoot } from '../../../shared/domain/aggregate-root';
+import { InvalidClinicNameError } from './identity.errors';
 
 export interface ClinicProps {
   id: string;
@@ -38,9 +39,12 @@ export class Clinic extends AggregateRoot<string> {
   }
 
   static create(props: ClinicProps): Clinic {
+    if (!props.name || props.name.trim().length === 0) {
+      throw new InvalidClinicNameError();
+    }
     return new Clinic(
       props.id,
-      props.name,
+      props.name.trim(),
       props.address ?? null,
       props.phone ?? null,
       props.email ?? null,
@@ -80,7 +84,12 @@ export class Clinic extends AggregateRoot<string> {
   }
 
   updateDetails(props: UpdateClinicDetailsProps): void {
-    if (props.name !== undefined) this._name = props.name;
+    if (props.name !== undefined) {
+      if (props.name.trim().length === 0) {
+        throw new InvalidClinicNameError();
+      }
+      this._name = props.name.trim();
+    }
     if (props.address !== undefined) this._address = props.address;
     if (props.phone !== undefined) this._phone = props.phone;
     if (props.email !== undefined) this._email = props.email;
