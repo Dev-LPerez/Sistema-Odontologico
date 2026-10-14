@@ -402,6 +402,265 @@
         ]
       }
     },
+    "/v1/patients": {
+      "post": {
+        "operationId": "PatientsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePatientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Paciente registrado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registrar un nuevo paciente",
+        "tags": [
+          "Patients"
+        ]
+      },
+      "get": {
+        "operationId": "PatientsController_list",
+        "parameters": [
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de pacientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatientResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar pacientes de la clínica",
+        "tags": [
+          "Patients"
+        ]
+      }
+    },
+    "/v1/patients/check-duplicates": {
+      "get": {
+        "operationId": "PatientsController_checkDuplicates",
+        "parameters": [
+          {
+            "name": "documentNumber",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "1020304050",
+              "type": "string"
+            }
+          },
+          {
+            "name": "phone",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "3001234567",
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludePatientId",
+            "required": false,
+            "in": "query",
+            "description": "ID de paciente a excluir durante edición",
+            "schema": {
+              "example": "550e8400-e29b-41d4-a716-446655440000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de posibles duplicados encontrados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DuplicatePatientResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verificar posibles pacientes duplicados por documento o teléfono",
+        "tags": [
+          "Patients"
+        ]
+      }
+    },
+    "/v1/patients/{id}": {
+      "get": {
+        "operationId": "PatientsController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle del paciente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar detalle de un paciente por ID",
+        "tags": [
+          "Patients"
+        ]
+      },
+      "patch": {
+        "operationId": "PatientsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePatientDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paciente actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar datos demográficos de un paciente",
+        "tags": [
+          "Patients"
+        ]
+      }
+    },
+    "/v1/patients/{id}/status": {
+      "patch": {
+        "operationId": "PatientsController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePatientStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del paciente actualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatientResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cambiar estado activo/inactivo del paciente (solo ADMIN)",
+        "tags": [
+          "Patients"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -687,22 +946,22 @@
             "example": "Consultorio Odontológico Dra. Angelee Pacheco"
           },
           "address": {
-            "type": "object",
+            "type": "string",
             "example": "Calle 100 # 15-20, Consultorio 501",
             "nullable": true
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "example": "+573001234567",
             "nullable": true
           },
           "email": {
-            "type": "object",
+            "type": "string",
             "example": "contacto@draangeleepacheco.com",
             "nullable": true
           },
           "logoUrl": {
-            "type": "object",
+            "type": "string",
             "example": "https://r2.draangeleepacheco.com/branding/logo.png",
             "nullable": true
           },
@@ -778,6 +1037,393 @@
             }
           }
         }
+      },
+      "CreatePatientDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Carlos"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Gómez"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CC",
+              "TI",
+              "RC",
+              "CE",
+              "PAS",
+              "OTHER"
+            ],
+            "example": "CC"
+          },
+          "documentNumber": {
+            "type": "string",
+            "example": "1020304050"
+          },
+          "birthDate": {
+            "type": "string",
+            "example": "1990-05-15"
+          },
+          "phone": {
+            "type": "string",
+            "example": "3001234567"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "carlos@example.com"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": "Calle 100 # 15-20"
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "María Gómez"
+          },
+          "emergencyContactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "3109876543"
+          },
+          "acquisitionSource": {
+            "type": "string",
+            "enum": [
+              "REFERRAL",
+              "INSTAGRAM",
+              "WHATSAPP",
+              "DIRECT",
+              "OTHER"
+            ],
+            "default": "DIRECT",
+            "example": "INSTAGRAM"
+          },
+          "dataTreatmentConsent": {
+            "type": "boolean",
+            "example": true,
+            "description": "Consentimiento explícito de tratamiento de datos según Ley 1581 de 2012"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "documentType",
+          "documentNumber",
+          "birthDate",
+          "phone",
+          "dataTreatmentConsent"
+        ]
+      },
+      "PatientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-123"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Carlos"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Gómez"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CC",
+              "TI",
+              "RC",
+              "CE",
+              "PAS",
+              "OTHER"
+            ],
+            "example": "CC"
+          },
+          "documentNumber": {
+            "type": "string",
+            "example": "1020304050"
+          },
+          "birthDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "1990-05-15T00:00:00.000Z"
+          },
+          "phone": {
+            "type": "string",
+            "example": "3001234567"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "carlos@example.com"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": "Calle 100 # 15-20"
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "María Gómez"
+          },
+          "emergencyContactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "3109876543"
+          },
+          "acquisitionSource": {
+            "type": "string",
+            "enum": [
+              "REFERRAL",
+              "INSTAGRAM",
+              "WHATSAPP",
+              "DIRECT",
+              "OTHER"
+            ],
+            "example": "INSTAGRAM"
+          },
+          "dataTreatmentConsent": {
+            "type": "boolean",
+            "example": true
+          },
+          "dataTreatmentConsentAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "firstName",
+          "lastName",
+          "documentType",
+          "documentNumber",
+          "birthDate",
+          "phone",
+          "acquisitionSource",
+          "dataTreatmentConsent",
+          "dataTreatmentConsentAt",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "DuplicatePatientResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-123"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Carlos"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Gómez"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CC",
+              "TI",
+              "RC",
+              "CE",
+              "PAS",
+              "OTHER"
+            ],
+            "example": "CC"
+          },
+          "documentNumber": {
+            "type": "string",
+            "example": "1020304050"
+          },
+          "birthDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "1990-05-15T00:00:00.000Z"
+          },
+          "phone": {
+            "type": "string",
+            "example": "3001234567"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "carlos@example.com"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": "Calle 100 # 15-20"
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "María Gómez"
+          },
+          "emergencyContactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "3109876543"
+          },
+          "acquisitionSource": {
+            "type": "string",
+            "enum": [
+              "REFERRAL",
+              "INSTAGRAM",
+              "WHATSAPP",
+              "DIRECT",
+              "OTHER"
+            ],
+            "example": "INSTAGRAM"
+          },
+          "dataTreatmentConsent": {
+            "type": "boolean",
+            "example": true
+          },
+          "dataTreatmentConsentAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "matchReason": {
+            "type": "string",
+            "enum": [
+              "DOCUMENT",
+              "PHONE",
+              "BOTH"
+            ],
+            "example": "PHONE",
+            "description": "Motivo por el cual se detectó la coincidencia"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "firstName",
+          "lastName",
+          "documentType",
+          "documentNumber",
+          "birthDate",
+          "phone",
+          "acquisitionSource",
+          "dataTreatmentConsent",
+          "dataTreatmentConsentAt",
+          "isActive",
+          "createdAt",
+          "updatedAt",
+          "matchReason"
+        ]
+      },
+      "UpdatePatientDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "Carlos Alberto"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Gómez Pérez"
+          },
+          "phone": {
+            "type": "string",
+            "example": "3009998877"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "carlos.alberto@example.com"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": "Carrera 7 # 120-10"
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedro Gómez"
+          },
+          "emergencyContactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "3201112233"
+          },
+          "acquisitionSource": {
+            "type": "string",
+            "enum": [
+              "REFERRAL",
+              "INSTAGRAM",
+              "WHATSAPP",
+              "DIRECT",
+              "OTHER"
+            ],
+            "example": "INSTAGRAM"
+          }
+        }
+      },
+      "ChangePatientStatusDto": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "example": false,
+            "description": "Estado activo o inactivo del paciente"
+          }
+        },
+        "required": [
+          "isActive"
+        ]
       }
     }
   }
