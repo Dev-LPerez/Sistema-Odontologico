@@ -48,6 +48,31 @@ describe('Clinic Entity', () => {
     expect(clinic.updatedAt).toEqual(updatedDate);
   });
 
+  it('debe permitir actualizar dirección, email, logoUrl y settings de la clínica', () => {
+    const now = new Date('2026-10-13T12:00:00.000Z');
+    const clinic = Clinic.create({
+      id: 'clinic-123',
+      name: 'Consultorio',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const updatedDate = new Date('2026-10-13T15:00:00.000Z');
+    clinic.updateDetails({
+      address: 'Nueva Dirección # 10',
+      email: 'nuevo@clinica.com',
+      logoUrl: 'https://r2.clinica.com/nuevo-logo.png',
+      settings: { theme: 'dark' },
+      updatedAt: updatedDate,
+    });
+
+    expect(clinic.address).toBe('Nueva Dirección # 10');
+    expect(clinic.email).toBe('nuevo@clinica.com');
+    expect(clinic.logoUrl).toBe('https://r2.clinica.com/nuevo-logo.png');
+    expect(clinic.settings).toEqual({ theme: 'dark' });
+    expect(clinic.updatedAt).toEqual(updatedDate);
+  });
+
   it('debe rechazar la creación de una clínica con nombre vacío o solo espacios', () => {
     const now = new Date('2026-10-13T12:00:00.000Z');
 

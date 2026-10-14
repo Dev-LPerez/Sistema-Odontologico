@@ -40,75 +40,77 @@ $ depcruise --config .dependency-cruiser.js src
 ----------------------------------------------|---------|----------|---------|---------|----------------------------------------
 File                                          | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                      
 ----------------------------------------------|---------|----------|---------|---------|----------------------------------------
-All files                                     |   97.47 |    87.56 |   98.24 |   97.39 |                                        
+All files                                     |   97.17 |    93.35 |   94.39 |   96.94 |                                        
  health                                       |     100 |      100 |     100 |     100 |                                        
   health.controller.ts                        |     100 |      100 |     100 |     100 |                                        
  modules/identity/application/queries         |     100 |      100 |     100 |     100 |                                        
   get-authenticated-user.query.ts             |     100 |      100 |     100 |     100 |                                        
   get-clinic-profile.query.ts                 |     100 |      100 |     100 |     100 |                                        
   list-clinic-users.query.ts                  |     100 |      100 |     100 |     100 |                                        
- modules/identity/application/use-cases       |     100 |    95.23 |     100 |     100 |                                        
+ modules/identity/application/use-cases       |   99.43 |    96.55 |     100 |   99.38 |                                        
   change-user-status.use-case.ts              |     100 |      100 |     100 |     100 |                                        
   create-user.use-case.ts                     |     100 |      100 |     100 |     100 |                                        
   login.use-case.ts                           |     100 |      100 |     100 |     100 |                                        
   logout.use-case.ts                          |     100 |      100 |     100 |     100 |                                        
-  refresh-session.use-case.ts                 |     100 |    83.33 |     100 |     100 | 58                                     
+  refresh-session.use-case.ts                 |   96.96 |    85.71 |     100 |   96.77 | 57                                     
   update-clinic-profile.use-case.ts           |     100 |      100 |     100 |     100 |                                        
   update-user.use-case.ts                     |     100 |      100 |     100 |     100 |                                        
- modules/identity/domain                      |   96.39 |    88.88 |     100 |   96.11 |                                        
-  clinic.entity.ts                            |   92.85 |       80 |     100 |   92.85 | 60,66                                  
+ modules/identity/domain                      |     100 |    97.14 |     100 |     100 |                                        
+  clinic.entity.ts                            |     100 |      100 |     100 |     100 |                                        
   email.vo.ts                                 |     100 |      100 |     100 |     100 |                                        
-  identity.errors.ts                          |     100 |      100 |     100 |     100 |                                        
+  identity.errors.ts                          |     100 |        0 |     100 |     100 | 43                                     
   refresh-session.entity.ts                   |     100 |      100 |     100 |     100 |                                        
   role.enum.ts                                |     100 |      100 |     100 |     100 |                                        
   user.entity.ts                              |     100 |      100 |     100 |     100 |                                        
  modules/identity/infrastructure/adapters     |     100 |      100 |     100 |     100 |                                        
   argon2-password-hasher.adapter.ts           |     100 |      100 |     100 |     100 |                                        
   jwt-token-service.adapter.ts                |     100 |      100 |     100 |     100 |                                        
- modules/identity/infrastructure/mappers      |     100 |      100 |     100 |     100 |                                        
-  clinic.mapper.ts                            |     100 |      100 |     100 |     100 |                                        
+ modules/identity/infrastructure/mappers      |     100 |       50 |     100 |     100 |                                        
+  clinic.mapper.ts                            |     100 |       50 |     100 |     100 | 13-27                                  
   refresh-session.mapper.ts                   |     100 |      100 |     100 |     100 |                                        
   user.mapper.ts                              |     100 |      100 |     100 |     100 |                                        
- modules/identity/infrastructure/repositories |   95.74 |    83.33 |     100 |   95.34 |                                        
-  in-memory-clinic.repository.ts              |     100 |      100 |     100 |     100 |                                        
-  in-memory-refresh-session.repository.ts     |     100 |      100 |     100 |     100 |                                        
-  in-memory-user.repository.ts                |     100 |      100 |     100 |     100 |                                        
+ modules/identity/infrastructure/repositories |   95.12 |    94.73 |      88 |    94.2 |                                        
+  in-memory-clinic.repository.ts              |   88.88 |      100 |   66.66 |   85.71 | 19                                     
+  in-memory-refresh-session.repository.ts     |   85.71 |      100 |      75 |   83.33 | 15,31                                  
+  in-memory-user.repository.ts                |      95 |      100 |      80 |   94.44 | 42                                     
   prisma-clinic.repository.ts                 |     100 |      100 |     100 |     100 |                                        
-  prisma-refresh-session.repository.ts        |   86.66 |       50 |     100 |   86.66 | 32,36                                  
-  prisma-user.repository.ts                   |   94.11 |       80 |     100 |   93.33 | 31                                     
- modules/identity/presentation                |     100 |      100 |     100 |     100 |                                        
+  prisma-refresh-session.repository.ts        |     100 |       50 |     100 |     100 | 15                                     
+  prisma-user.repository.ts                   |     100 |      100 |     100 |     100 |                                        
+ modules/identity/presentation                |   75.28 |        0 |      50 |   73.49 |                                        
+  auth.controller.ts                          |   51.11 |        0 |       0 |   48.83 | 45-48,65-72,91-101,113-117,129,142-158 
   clinic.controller.ts                        |     100 |      100 |     100 |     100 |                                        
   users.controller.ts                         |     100 |      100 |     100 |     100 |                                        
  modules/identity/presentation/dto            |     100 |      100 |     100 |     100 |                                        
+  auth-response.dto.ts                        |     100 |      100 |     100 |     100 |                                        
   change-user-status.dto.ts                   |     100 |      100 |     100 |     100 |                                        
   clinic-profile.dto.ts                       |     100 |      100 |     100 |     100 |                                        
   create-user.dto.ts                          |     100 |      100 |     100 |     100 |                                        
   login.dto.ts                                |     100 |      100 |     100 |     100 |                                        
   update-clinic.dto.ts                        |     100 |      100 |     100 |     100 |                                        
   update-user.dto.ts                          |     100 |      100 |     100 |     100 |                                        
- modules/patients/application/queries         |   95.45 |    80.64 |     100 |   94.59 |                                        
-  detect-duplicate-patients.query.ts          |    91.3 |       75 |     100 |   90.47 |                                        
+ modules/patients/application/queries         |     100 |      100 |     100 |     100 |                                        
+  detect-duplicate-patients.query.ts          |     100 |      100 |     100 |     100 |                                        
   get-patient-by-id.query.ts                  |     100 |      100 |     100 |     100 |                                        
-  list-patients.query.ts                      |     100 |    83.33 |     100 |     100 |                                        
- modules/patients/application/use-cases       |   95.77 |    66.66 |     100 |   95.38 |                                        
+  list-patients.query.ts                      |     100 |      100 |     100 |     100 |                                        
+ modules/patients/application/use-cases       |     100 |      100 |     100 |     100 |                                        
   change-patient-status.use-case.ts           |     100 |      100 |     100 |     100 |                                        
-  create-patient.use-case.ts                  |     100 |    66.66 |     100 |     100 |                                        
-  update-patient.use-case.ts                  |      88 |    53.84 |     100 |   86.95 |                                        
- modules/patients/domain                      |   96.63 |    86.66 |     100 |   96.63 |                                        
+  create-patient.use-case.ts                  |     100 |      100 |     100 |     100 |                                        
+  update-patient.use-case.ts                  |     100 |      100 |     100 |     100 |                                        
+ modules/patients/domain                      |     100 |    95.55 |     100 |     100 |                                        
   acquisition-source.enum.ts                  |     100 |      100 |     100 |     100 |                                        
-  document-identity.vo.ts                     |    90.9 |    83.33 |     100 |    90.9 |                                        
+  document-identity.vo.ts                     |     100 |      100 |     100 |     100 |                                        
   document-type.enum.ts                       |     100 |      100 |     100 |     100 |                                        
-  emergency-contact.vo.ts                     |   85.71 |    66.66 |     100 |   85.71 |                                        
-  patient.entity.ts                           |   96.61 |    84.61 |     100 |   96.61 |                                        
+  emergency-contact.vo.ts                     |     100 |      100 |     100 |     100 |                                        
+  patient.entity.ts                           |     100 |     92.3 |     100 |     100 | 164,167                                
   patients.errors.ts                          |     100 |      100 |     100 |     100 |                                        
   phone-number.vo.ts                          |     100 |      100 |     100 |     100 |                                        
  modules/patients/infrastructure/mappers      |     100 |    71.42 |     100 |     100 |                                        
-  patient.mapper.ts                           |     100 |    71.42 |     100 |     100 |                                        
+  patient.mapper.ts                           |     100 |    71.42 |     100 |     100 | 63-64                                  
  modules/patients/infrastructure/repositories |   92.98 |    84.84 |     100 |   92.45 |                                        
-  in-memory-patient.repository.ts             |   93.54 |    86.36 |     100 |   93.54 |                                        
-  prisma-patient.repository.ts                |    92.3 |    81.81 |     100 |    90.9 |                                        
+  in-memory-patient.repository.ts             |   93.54 |    86.36 |     100 |   93.54 | 44,69                                  
+  prisma-patient.repository.ts                |    92.3 |    81.81 |     100 |    90.9 | 52,59                                  
  modules/patients/presentation                |     100 |       50 |     100 |     100 |                                        
-  patients.controller.ts                      |     100 |       50 |     100 |     100 |                                        
+  patients.controller.ts                      |     100 |       50 |     100 |     100 | 101                                    
  modules/patients/presentation/dto            |     100 |      100 |     100 |     100 |                                        
   change-patient-status.dto.ts                |     100 |      100 |     100 |     100 |                                        
   check-duplicates-query.dto.ts               |     100 |      100 |     100 |     100 |                                        
@@ -132,8 +134,8 @@ All files                                     |   97.47 |    87.56 |   98.24 |  
  shared/infrastructure/sentry                 |     100 |      100 |     100 |     100 |                                        
   sentry.sanitizer.ts                         |     100 |      100 |     100 |     100 |                                        
  shared/presentation/decorators               |   77.77 |      100 |      50 |   71.42 |                                        
-  current-clinic.decorator.ts                 |      50 |      100 |       0 |      50 |                                        
-  current-user.decorator.ts                   |      50 |      100 |       0 |      50 |                                        
+  current-clinic.decorator.ts                 |      50 |      100 |       0 |      50 | 5-6                                    
+  current-user.decorator.ts                   |      50 |      100 |       0 |      50 | 12-13                                  
   public.decorator.ts                         |     100 |      100 |     100 |     100 |                                        
   roles.decorator.ts                          |     100 |      100 |     100 |     100 |                                        
  shared/presentation/filters                  |     100 |      100 |     100 |     100 |                                        
@@ -143,10 +145,10 @@ All files                                     |   97.47 |    87.56 |   98.24 |  
   roles.guard.ts                              |     100 |      100 |     100 |     100 |                                        
 ----------------------------------------------|---------|----------|---------|---------|----------------------------------------
 
-Test Suites: 44 passed, 44 total
-Tests:       182 passed, 182 total
+Test Suites: 45 passed, 45 total
+Tests:       193 passed, 193 total
 Snapshots:   0 total
-Time:        51.24 s
+Time:        41.61 s
 Ran all test suites.
 ```
 

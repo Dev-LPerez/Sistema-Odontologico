@@ -95,6 +95,39 @@ describe('Patient Aggregate', () => {
     expect(patient.updatedAt).toEqual(updateTime);
   });
 
+  it('debe rechazar la actualización si el nombre o apellido están vacíos', () => {
+    const patient = Patient.create(validProps);
+    const updateTime = new Date('2026-10-14T11:00:00.000Z');
+
+    expect(() =>
+      patient.updateDemographics({
+        firstName: '   ',
+        updatedAt: updateTime,
+      }),
+    ).toThrow('El nombre del paciente no puede estar vacío');
+
+    expect(() =>
+      patient.updateDemographics({
+        lastName: '',
+        updatedAt: updateTime,
+      }),
+    ).toThrow('El apellido del paciente no puede estar vacío');
+  });
+
+  it('debe crear un paciente con campos opcionales nulos', () => {
+    const patient = Patient.create({
+      ...validProps,
+      email: null,
+      address: null,
+      emergencyContact: null,
+    });
+
+    expect(patient.email).toBeNull();
+    expect(patient.address).toBeNull();
+    expect(patient.emergencyContact).toBeNull();
+    expect(patient.birthDate).toEqual(validProps.birthDate);
+  });
+
   it('debe permitir cambiar el estado lógico del paciente (activar y desactivar)', () => {
     const patient = Patient.create(validProps);
     const statusTime = new Date('2026-10-14T12:00:00.000Z');

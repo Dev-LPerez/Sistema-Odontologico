@@ -54,4 +54,15 @@ describe('ListPatientsQuery', () => {
       isActive: true,
     });
   });
+
+  it('debe listar los pacientes sin filtro si isActive es undefined', async () => {
+    mockPatientRepo.findAllByClinicId.mockResolvedValue([]);
+
+    const result = await query.execute({
+      clinicId: 'clinic-123',
+    });
+
+    expect(result).toEqual([]);
+    expect(mockPatientRepo.findAllByClinicId).toHaveBeenCalledWith('clinic-123', undefined);
+  });
 });

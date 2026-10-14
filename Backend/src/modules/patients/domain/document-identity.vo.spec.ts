@@ -9,8 +9,11 @@ describe('DocumentIdentity Value Object', () => {
     expect(doc.number).toBe('1020304050');
   });
 
-  it('debe rechazar un número de documento vacío', () => {
+  it('debe rechazar un número de documento vacío o compuesto únicamente por separadores', () => {
     expect(() => DocumentIdentity.create(DocumentType.CC, '   ')).toThrow(InvalidPatientDataError);
+    expect(() => DocumentIdentity.create(DocumentType.CC, '.- -.')).toThrow(
+      'El número de documento de identidad no es válido',
+    );
   });
 
   it('debe comparar igualdad por tipo y número', () => {

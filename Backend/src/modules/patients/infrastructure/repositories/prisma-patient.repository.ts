@@ -14,7 +14,7 @@ export class PrismaPatientRepository implements PatientRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(clinicId: string, id: string): Promise<Patient | null> {
-    const record = await this.prisma.patient.findFirst({
+    const record = await this.prisma.client.patient.findFirst({
       where: {
         id,
         clinicId,
@@ -29,7 +29,7 @@ export class PrismaPatientRepository implements PatientRepositoryPort {
     documentType: DocumentType,
     documentNumber: string,
   ): Promise<Patient | null> {
-    const record = await this.prisma.patient.findUnique({
+    const record = await this.prisma.client.patient.findUnique({
       where: {
         clinicId_documentType_documentNumber: {
           clinicId,
@@ -59,7 +59,7 @@ export class PrismaPatientRepository implements PatientRepositoryPort {
       return [];
     }
 
-    const records = await this.prisma.patient.findMany({
+    const records = await this.prisma.client.patient.findMany({
       where: {
         clinicId,
         ...(params.excludePatientId ? { id: { not: params.excludePatientId } } : {}),
@@ -71,7 +71,7 @@ export class PrismaPatientRepository implements PatientRepositoryPort {
   }
 
   async findAllByClinicId(clinicId: string, filter?: { isActive?: boolean }): Promise<Patient[]> {
-    const records = await this.prisma.patient.findMany({
+    const records = await this.prisma.client.patient.findMany({
       where: {
         clinicId,
         ...(filter?.isActive !== undefined ? { isActive: filter.isActive } : {}),
@@ -85,7 +85,7 @@ export class PrismaPatientRepository implements PatientRepositoryPort {
   async save(patient: Patient): Promise<void> {
     const data = PatientMapper.toPersistence(patient);
 
-    await this.prisma.patient.upsert({
+    await this.prisma.client.patient.upsert({
       where: { id: patient.id },
       create: data,
       update: data,

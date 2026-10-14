@@ -29,6 +29,30 @@ const config: Config = {
       lines: 80,
       statements: 80,
     },
+    './src/modules/identity/domain/': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    './src/modules/identity/application/': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    './src/modules/patients/domain/': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+    './src/modules/patients/application/': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
   },
 };
 
