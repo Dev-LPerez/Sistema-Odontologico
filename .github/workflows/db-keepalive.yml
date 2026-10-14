@@ -1,0 +1,25 @@
+name: Database Keep-Alive
+
+on:
+  schedule:
+    # Ejecutar cada 10 minutos para prevenir suspensión de base de datos en tiers gratuitos (Neon/Supabase)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping /ready Endpoint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send keep-alive ping to Backend readiness endpoint
+        run: |
+          TARGET_URL="${{ secrets.API_READY_URL }}"
+          if [ -z "$TARGET_URL" ]; then
+            if [ -n "${{ secrets.API_BASE_URL }}" ]; then
+              TARGET_URL="${{ secrets.API_BASE_URL }}/ready"
+            else
+              TARGET_URL="https://api.draangeleepacheco.com/ready"
+            fi
+          fi
+          echo "Sending ping to $TARGET_URL..."
+          curl -f -s -S --max-time 15 "$TARGET_URL" || echo "Ping dispatched with status $?"

@@ -3,7 +3,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
+import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
+import { DomainExceptionFilter, sanitizeSentryEvent } from './shared';
 
 function validateEnv(): void {
   const requiredEnvVars = ['DATABASE_URL'];
@@ -16,6 +18,16 @@ function validateEnv(): void {
 
 async function bootstrap(): Promise<void> {
   validateEnv();
+
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      beforeSend(event) {
+        return sanitizeSentryEvent(event);
+      },
+    });
+  }
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
@@ -32,6 +44,9 @@ async function bootstrap(): Promise<void> {
 
   // Excluir endpoints operativos de salud del prefijo /v1
   app.setGlobalPrefix('v1', { exclude: ['health', 'ready'] });
+
+  // Manejo global de excepciones de dominio
+  app.useGlobalFilters(new DomainExceptionFilter());
 
   // Validación de entrada con class-validator (RNF-B-005)
   app.useGlobalPipes(

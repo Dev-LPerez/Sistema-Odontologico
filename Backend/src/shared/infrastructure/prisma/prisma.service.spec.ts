@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { PrismaService } from './prisma.service';
 
 describe('PrismaService', () => {
@@ -64,6 +65,23 @@ describe('PrismaService', () => {
       jest.spyOn(service, '$queryRaw').mockRejectedValueOnce(new Error('DB error'));
       const healthy = await service.isHealthy();
       expect(healthy).toBe(false);
+    });
+  });
+
+  describe('client & runInTransaction', () => {
+    it('debe retornar la instancia del cliente cuando no está dentro de una transacción', () => {
+      expect(service.client).toBeDefined();
+      expect('$queryRaw' in service.client).toBe(true);
+    });
+
+    it('debe retornar el cliente transaccional dentro de runInTransaction', async () => {
+      const dummyTx = { txId: '123' } as unknown as Prisma.TransactionClient;
+
+      await service.runInTransaction(dummyTx, async () => {
+        expect(service.client).toBe(dummyTx);
+      });
+
+      expect('$queryRaw' in service.client).toBe(true);
     });
   });
 });
