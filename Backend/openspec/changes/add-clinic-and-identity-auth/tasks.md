@@ -34,8 +34,8 @@
 
 ## 6. Regeneración del contrato OpenAPI y cierre del change
 
-- [ ] 6.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) verificando que los endpoints `/v1/auth/*` y el esquema `bearer` aparezcan documentados, y ejecutar `pnpm --filter backend test:cov` validando cobertura >= 90% en `domain`/`application` y >= 80% global.
-- [ ] 6.2 Confirmar los cambios del contrato OpenAPI y el estado de `tasks.md` con un commit: `git add -A && git commit -m "chore(identity): regenerate openapi.json and complete B-03 tasks"` dejando `git status` limpio.
+- [x] 6.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) verificando que los endpoints `/v1/auth/*` y el esquema `bearer` aparezcan documentados, y ejecutar `pnpm --filter backend test:cov` validando cobertura >= 90% en `domain`/`application` y >= 80% global.
+- [x] 6.2 Confirmar los cambios del contrato OpenAPI y el estado de `tasks.md` con un commit: `git add -A && git commit -m "chore(identity): regenerate openapi.json and complete B-03 tasks"` dejando `git status` limpio.
 
 ## Workflow follow-up
 

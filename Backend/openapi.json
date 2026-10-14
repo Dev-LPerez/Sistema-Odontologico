@@ -1,6 +1,128 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sesión iniciada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales inválidas o usuario inactivo"
+          }
+        },
+        "summary": "Iniciar sesión con correo y contraseña",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Sesión renovada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token de refresco inválido o expirado"
+          }
+        },
+        "summary": "Renovar accessToken rotando la sesión de refresco",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Sesión cerrada exitosamente"
+          }
+        },
+        "summary": "Cerrar sesión y revocar sesión de refresco",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Perfil del usuario autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener datos del usuario autenticado",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/v1/auth/admin-only": {
+      "get": {
+        "operationId": "AuthController_adminOnly",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Acceso concedido a administradora"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ruta protegida exclusiva para rol ADMIN",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -51,6 +173,97 @@
         "type": "http"
       }
     },
-    "schemas": {}
+    "schemas": {
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Correo electrónico del usuario",
+            "example": "doctora@clinica.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña en texto plano",
+            "example": "Admin12345!",
+            "minLength": 6
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "UserProfileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22"
+          },
+          "email": {
+            "type": "string",
+            "example": "doctora@clinica.com"
+          },
+          "fullName": {
+            "type": "string",
+            "example": "Dra. María Pérez"
+          },
+          "role": {
+            "type": "string",
+            "example": "ADMIN",
+            "enum": [
+              "ADMIN",
+              "AUXILIARY"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "email",
+          "fullName",
+          "role"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserProfileDto"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "Token de acceso JWT de corta duración (15 min)",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "user",
+          "accessToken"
+        ]
+      },
+      "RefreshResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserProfileDto"
+          },
+          "accessToken": {
+            "type": "string",
+            "description": "Nuevo token de acceso JWT tras la rotación de sesión",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "user",
+          "accessToken"
+        ]
+      }
+    }
   }
 }
