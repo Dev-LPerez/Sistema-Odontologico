@@ -41,9 +41,7 @@ function sanitizeValue(value: unknown): unknown {
   return value;
 }
 
-export function sanitizeSentryEvent<T extends Record<string, unknown> | null | undefined>(
-  event: T,
-): T {
+export function sanitizeSentryEvent<T>(event: T): T {
   if (!event || typeof event !== 'object') {
     return event;
   }

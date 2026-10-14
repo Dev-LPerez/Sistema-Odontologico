@@ -1,4 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
+import * as crypto from 'crypto';
 
 export const CLINICAL_REDACT_PATHS = [
   'password',
@@ -32,11 +33,14 @@ export const createPinoHttpConfig = () => {
     genReqId: (req: IncomingMessage, res: ServerResponse) => {
       const headers = req.headers;
       const correlationId = headers['x-correlation-id'] || headers['x-request-id'];
-      if (typeof correlationId === 'string') {
+      if (typeof correlationId === 'string' && correlationId.trim().length > 0) {
         res.setHeader('x-correlation-id', correlationId);
         return correlationId;
       }
-      return (req as unknown as { id?: string }).id;
+      const newId = crypto.randomUUID();
+      headers['x-correlation-id'] = newId;
+      res.setHeader('x-correlation-id', newId);
+      return newId;
     },
     transport:
       process.env.NODE_ENV !== 'production'

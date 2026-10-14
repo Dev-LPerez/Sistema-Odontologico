@@ -1,33 +1,13 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
-import * as crypto from 'crypto';
 import { HealthModule } from './health/health.module';
-import { PrismaModule } from './shared/infrastructure/prisma/prisma.module';
+import { SharedModule, CorrelationIdMiddleware, createPinoHttpConfig } from './shared';
 
 @Module({
   imports: [
     LoggerModule.forRoot({
-      pinoHttp: {
-        genReqId: (req, res) => {
-          const existingId = req.headers['x-request-id'];
-          const id = (existingId as string) || crypto.randomUUID();
-          res.setHeader('x-request-id', id);
-          return id;
-        },
-        transport:
-          process.env.NODE_ENV !== 'production'
-            ? {
-                target: 'pino-pretty',
-                options: {
-                  colorize: true,
-                  singleLine: true,
-                },
-              }
-            : undefined,
-        autoLogging: true,
-        redact: ['req.headers.authorization', 'req.headers.cookie'],
-      },
+      pinoHttp: createPinoHttpConfig(),
     }),
     ThrottlerModule.forRoot([
       {
@@ -35,8 +15,12 @@ import { PrismaModule } from './shared/infrastructure/prisma/prisma.module';
         limit: Number(process.env.THROTTLE_LIMIT || 100),
       },
     ]),
-    PrismaModule,
+    SharedModule,
     HealthModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}
