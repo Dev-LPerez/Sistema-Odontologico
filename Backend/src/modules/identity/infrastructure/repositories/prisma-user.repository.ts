@@ -23,6 +23,14 @@ export class PrismaUserRepository implements UserRepositoryPort {
     return raw ? UserMapper.toDomain(raw) : null;
   }
 
+  async findAllByClinicId(clinicId: string): Promise<User[]> {
+    const rawList = await this.prisma.client.user.findMany({
+      where: { clinicId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rawList.map((raw) => UserMapper.toDomain(raw));
+  }
+
   async save(user: User): Promise<void> {
     const data = UserMapper.toPersistence(user);
     await this.prisma.client.user.upsert({

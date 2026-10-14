@@ -22,9 +22,10 @@
 
 ## 3. Capa infrastructure y actualización de pruebas de contrato (RC-018)
 
-- [ ] 3.1 Implementar `findAllByClinicId` en `in-memory-user.repository.ts` y en `prisma-user.repository.ts`.
-- [ ] 3.2 Extender la suite de contrato `identity-repositories.contract.spec.ts` para verificar `findAllByClinicId` garantizando aislamiento multitenant por `clinicId` (RNF-B-032, RC-018).
-- [ ] 3.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/infrastructure && git commit -m "feat(identity): actualizar repositorios User con findAllByClinicId y pruebas de contrato"`
+- [x] 3.1 Implementar `findAllByClinicId` en `in-memory-user.repository.ts` y en `prisma-user.repository.ts`.
+- [x] 3.2 Extender la suite de contrato `identity-repositories.contract.spec.ts` para verificar `findAllByClinicId` garantizando aislamiento multitenant por `clinicId` (RNF-B-032, RC-018).
+- [x] 3.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/infrastructure && git commit -m "feat(identity): actualizar repositorios User con findAllByClinicId y pruebas de contrato"`
+
 
 ## 4. Capa presentation, controladores y pruebas E2E (RC-005)
 
