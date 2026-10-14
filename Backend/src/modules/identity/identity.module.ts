@@ -8,13 +8,21 @@ import { TOKEN_SERVICE_PORT } from './application/ports/token-service.port';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 import { LogoutUseCase } from './application/use-cases/logout.use-case';
+import { CreateUserUseCase } from './application/use-cases/create-user.use-case';
+import { UpdateUserUseCase } from './application/use-cases/update-user.use-case';
+import { ChangeUserStatusUseCase } from './application/use-cases/change-user-status.use-case';
+import { UpdateClinicProfileUseCase } from './application/use-cases/update-clinic-profile.use-case';
 import { GetAuthenticatedUserQuery } from './application/queries/get-authenticated-user.query';
+import { ListClinicUsersQuery } from './application/queries/list-clinic-users.query';
+import { GetClinicProfileQuery } from './application/queries/get-clinic-profile.query';
 import { Argon2PasswordHasherAdapter } from './infrastructure/adapters/argon2-password-hasher.adapter';
 import { JwtTokenServiceAdapter } from './infrastructure/adapters/jwt-token-service.adapter';
 import { PrismaClinicRepository } from './infrastructure/repositories/prisma-clinic.repository';
 import { PrismaUserRepository } from './infrastructure/repositories/prisma-user.repository';
 import { PrismaRefreshSessionRepository } from './infrastructure/repositories/prisma-refresh-session.repository';
 import { AuthController } from './presentation/auth.controller';
+import { UsersController } from './presentation/users.controller';
+import { ClinicController } from './presentation/clinic.controller';
 import { JwtAuthGuard, RolesGuard } from '../../shared/presentation/guards';
 
 @Module({
@@ -24,7 +32,7 @@ import { JwtAuthGuard, RolesGuard } from '../../shared/presentation/guards';
       signOptions: { expiresIn: '15m' },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, UsersController, ClinicController],
   providers: [
     // Repositories
     {
@@ -52,7 +60,13 @@ import { JwtAuthGuard, RolesGuard } from '../../shared/presentation/guards';
     LoginUseCase,
     RefreshSessionUseCase,
     LogoutUseCase,
+    CreateUserUseCase,
+    UpdateUserUseCase,
+    ChangeUserStatusUseCase,
+    UpdateClinicProfileUseCase,
     GetAuthenticatedUserQuery,
+    ListClinicUsersQuery,
+    GetClinicProfileQuery,
     // Guards
     JwtAuthGuard,
     RolesGuard,
@@ -67,7 +81,13 @@ import { JwtAuthGuard, RolesGuard } from '../../shared/presentation/guards';
     LoginUseCase,
     RefreshSessionUseCase,
     LogoutUseCase,
+    CreateUserUseCase,
+    UpdateUserUseCase,
+    ChangeUserStatusUseCase,
+    UpdateClinicProfileUseCase,
     GetAuthenticatedUserQuery,
+    ListClinicUsersQuery,
+    GetClinicProfileQuery,
     JwtAuthGuard,
     RolesGuard,
   ],

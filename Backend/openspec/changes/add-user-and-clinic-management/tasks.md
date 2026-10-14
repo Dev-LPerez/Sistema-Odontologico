@@ -29,10 +29,11 @@
 
 ## 4. Capa presentation, controladores y pruebas E2E (RC-005)
 
-- [ ] 4.1 Definir los DTOs con `class-validator` y `@nestjs/swagger` (`create-user.dto.ts`, `update-user.dto.ts`, `change-user-status.dto.ts`, `update-clinic.dto.ts`, `clinic-profile.dto.ts`).
-- [ ] 4.2 Implementar `users.controller.ts` (`/v1/users`, protegido con `@UseGuards(JwtAuthGuard, RolesGuard)` y `@Roles('ADMIN')`) y `clinic.controller.ts` (`GET /v1/clinic` para `ADMIN` y `AUXILIARY`; `PATCH /v1/clinic` para `ADMIN`), y registrarlos en `identity.module.ts`.
-- [ ] 4.3 Escribir y ejecutar la suite E2E `Backend/test/users-and-clinic.e2e-spec.ts` probando creación de usuario, colisión de correos (409), listado, bloqueo de auto-desactivación (422), desactivación con revocación de tokens, consulta y actualización de consultorio, y rechazos 403 para rol `AUXILIARY` (RC-005).
-- [ ] 4.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(identity): agregar UsersController, ClinicController y suite de pruebas E2E"`
+- [x] 4.1 Definir los DTOs con `class-validator` y `@nestjs/swagger` (`create-user.dto.ts`, `update-user.dto.ts`, `change-user-status.dto.ts`, `update-clinic.dto.ts`, `clinic-profile.dto.ts`).
+- [x] 4.2 Implementar `users.controller.ts` (`/v1/users`, protegido con `@UseGuards(JwtAuthGuard, RolesGuard)` y `@Roles('ADMIN')`) y `clinic.controller.ts` (`GET /v1/clinic` para `ADMIN` y `AUXILIARY`; `PATCH /v1/clinic` para `ADMIN`), y registrarlos en `identity.module.ts`.
+- [x] 4.3 Escribir y ejecutar la suite E2E `Backend/test/users-and-clinic.e2e-spec.ts` probando creación de usuario, colisión de correos (409), listado, bloqueo de auto-desactivación (422), desactivación con revocación de tokens, consulta y actualización de consultorio, y rechazos 403 para rol `AUXILIARY` (RC-005).
+- [x] 4.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(identity): agregar UsersController, ClinicController y suite de pruebas E2E"`
+
 
 ## 5. Regeneración del contrato OpenAPI y cierre del change
 
