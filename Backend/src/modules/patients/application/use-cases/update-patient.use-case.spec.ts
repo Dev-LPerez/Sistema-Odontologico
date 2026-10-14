@@ -87,6 +87,37 @@ describe('UpdatePatientUseCase', () => {
     expect(mockPatientRepo.save).toHaveBeenCalledWith(existing);
   });
 
+  it('debe permitir eliminar el contacto de emergencia si se envía null', async () => {
+    const existing = createExistingPatient();
+    mockPatientRepo.findById.mockResolvedValue(existing);
+
+    const result = await useCase.execute({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      emergencyContactName: null,
+    });
+
+    expect(result.emergencyContactName).toBeNull();
+    expect(result.emergencyContactPhone).toBeNull();
+    expect(existing.emergencyContact).toBeNull();
+  });
+
+  it('debe mantener intacto el contacto de emergencia si los campos son undefined o sólo se envía el nombre', async () => {
+    const existing = createExistingPatient();
+    mockPatientRepo.findById.mockResolvedValue(existing);
+
+    const result = await useCase.execute({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      firstName: 'Nuevo Nombre',
+      emergencyContactName: 'Solo Nombre Sin Telefono',
+    });
+
+    expect(result.firstName).toBe('Nuevo Nombre');
+    expect(result.emergencyContactName).toBe('María Gómez');
+    expect(result.emergencyContactPhone).toBe('3109876543');
+  });
+
   it('debe lanzar PatientNotFoundError si el paciente no existe en el consultorio', async () => {
     mockPatientRepo.findById.mockResolvedValue(null);
 

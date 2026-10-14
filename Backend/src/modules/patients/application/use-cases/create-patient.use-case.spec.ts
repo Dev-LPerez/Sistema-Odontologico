@@ -78,6 +78,28 @@ describe('CreatePatientUseCase', () => {
     expect(savedPatient.id).toBe('patient-uuid-1');
   });
 
+  it('debe registrar un paciente cuando birthDate es un objeto Date y sin contacto de emergencia ni fuente explícita', async () => {
+    mockPatientRepo.findByDocument.mockResolvedValue(null);
+
+    const birthDateObj = new Date('1995-08-20T00:00:00.000Z');
+    const result = await useCase.execute({
+      clinicId: 'clinic-123',
+      firstName: 'Laura',
+      lastName: 'Pérez',
+      documentType: DocumentType.TI,
+      documentNumber: '99887766',
+      birthDate: birthDateObj,
+      phone: '3157778899',
+      dataTreatmentConsent: true,
+    });
+
+    expect(result.id).toBe('patient-uuid-1');
+    expect(result.birthDate).toEqual(birthDateObj);
+    expect(result.acquisitionSource).toBe(AcquisitionSource.DIRECT);
+    expect(result.emergencyContactName).toBeNull();
+    expect(result.emergencyContactPhone).toBeNull();
+  });
+
   it('debe lanzar DataTreatmentConsentRequiredError cuando dataTreatmentConsent es false', async () => {
     await expect(
       useCase.execute({

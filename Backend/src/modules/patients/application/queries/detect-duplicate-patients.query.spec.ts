@@ -77,4 +77,42 @@ describe('DetectDuplicatePatientsQuery', () => {
       excludePatientId: undefined,
     });
   });
+
+  it('debe retornar un array vacío sin consultar el repositorio si no se pasa ni documento ni teléfono', async () => {
+    const result = await query.execute({
+      clinicId: 'clinic-123',
+    });
+
+    expect(result).toEqual([]);
+    expect(mockPatientRepo.findPotentialDuplicates).not.toHaveBeenCalled();
+  });
+
+  it('debe retornar matchReason BOTH si coinciden tanto documento como teléfono', async () => {
+    const patientBothMatch = Patient.create({
+      id: 'patient-both',
+      clinicId: 'clinic-123',
+      firstName: 'Lucía',
+      lastName: 'Fernández',
+      document: DocumentIdentity.create(DocumentType.CC, '55443322'),
+      birthDate: new Date('1992-03-10T00:00:00.000Z'),
+      phone: PhoneNumber.create('3112223344'),
+      acquisitionSource: AcquisitionSource.DIRECT,
+      dataTreatmentConsent: true,
+      dataTreatmentConsentAt: fixedNow,
+      isActive: true,
+      createdAt: fixedNow,
+      updatedAt: fixedNow,
+    });
+
+    mockPatientRepo.findPotentialDuplicates.mockResolvedValue([patientBothMatch]);
+
+    const result = await query.execute({
+      clinicId: 'clinic-123',
+      documentNumber: '55443322',
+      phone: '3112223344',
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].matchReason).toBe('BOTH');
+  });
 });

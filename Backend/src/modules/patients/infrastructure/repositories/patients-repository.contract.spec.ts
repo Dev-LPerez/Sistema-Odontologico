@@ -28,91 +28,96 @@ describe('Patients Repository Contract Tests (RC-018)', () => {
   const createMockPrismaService = () => {
     const store = new Map<string, PrismaPatient>();
 
-    const mockPrisma = {
-      patient: {
-        findFirst: jest.fn(async ({ where }: { where: { id?: string; clinicId?: string } }) => {
+    const patientOps = {
+      findFirst: jest.fn(async ({ where }: { where: { id?: string; clinicId?: string } }) => {
+        for (const record of store.values()) {
+          if (
+            (!where.id || record.id === where.id) &&
+            (!where.clinicId || record.clinicId === where.clinicId)
+          ) {
+            return record;
+          }
+        }
+        return null;
+      }),
+      findUnique: jest.fn(
+        async ({
+          where,
+        }: {
+          where: {
+            clinicId_documentType_documentNumber: {
+              clinicId: string;
+              documentType: PrismaDocumentType;
+              documentNumber: string;
+            };
+          };
+        }) => {
+          const key = where.clinicId_documentType_documentNumber;
           for (const record of store.values()) {
             if (
-              (!where.id || record.id === where.id) &&
-              (!where.clinicId || record.clinicId === where.clinicId)
+              record.clinicId === key.clinicId &&
+              record.documentType === key.documentType &&
+              record.documentNumber === key.documentNumber
             ) {
               return record;
             }
           }
           return null;
-        }),
-        findUnique: jest.fn(
-          async ({
-            where,
-          }: {
-            where: {
-              clinicId_documentType_documentNumber: {
-                clinicId: string;
-                documentType: PrismaDocumentType;
-                documentNumber: string;
-              };
-            };
-          }) => {
-            const key = where.clinicId_documentType_documentNumber;
-            for (const record of store.values()) {
-              if (
-                record.clinicId === key.clinicId &&
-                record.documentType === key.documentType &&
-                record.documentNumber === key.documentNumber
-              ) {
-                return record;
-              }
-            }
-            return null;
-          },
-        ),
-        findMany: jest.fn(
-          async ({
-            where,
-          }: {
-            where: {
-              clinicId: string;
-              isActive?: boolean;
-              id?: { not: string };
-              OR?: Array<{ documentNumber?: string; phone?: string }>;
-            };
-          }) => {
-            const results: PrismaPatient[] = [];
-            for (const record of store.values()) {
-              if (record.clinicId !== where.clinicId) continue;
-              if (where.isActive !== undefined && record.isActive !== where.isActive) continue;
-              if (where.id?.not && record.id === where.id.not) continue;
+        },
+      ),
+      findMany: jest.fn(
+        async ({
+          where,
+        }: {
+          where: {
+            clinicId: string;
+            isActive?: boolean;
+            id?: { not: string };
+            OR?: Array<{ documentNumber?: string; phone?: string }>;
+          };
+        }) => {
+          const results: PrismaPatient[] = [];
+          for (const record of store.values()) {
+            if (record.clinicId !== where.clinicId) continue;
+            if (where.isActive !== undefined && record.isActive !== where.isActive) continue;
+            if (where.id?.not && record.id === where.id.not) continue;
 
-              if (where.OR) {
-                const matches = where.OR.some(
-                  (cond) =>
-                    (cond.documentNumber && record.documentNumber === cond.documentNumber) ||
-                    (cond.phone && record.phone === cond.phone),
-                );
-                if (!matches) continue;
-              }
-
-              results.push(record);
+            if (where.OR) {
+              const matches = where.OR.some(
+                (cond) =>
+                  (cond.documentNumber && record.documentNumber === cond.documentNumber) ||
+                  (cond.phone && record.phone === cond.phone),
+              );
+              if (!matches) continue;
             }
-            return results;
-          },
-        ),
-        upsert: jest.fn(
-          async ({
-            where,
-            create,
-            update,
-          }: {
-            where: { id: string };
-            create: Prisma.PatientUncheckedCreateInput;
-            update: Prisma.PatientUncheckedUpdateInput;
-          }) => {
-            const existing = store.get(where.id);
-            const data = (existing ? { ...existing, ...update } : { ...create }) as PrismaPatient;
-            store.set(where.id, data);
-            return data;
-          },
-        ),
+
+            results.push(record);
+          }
+          return results;
+        },
+      ),
+      upsert: jest.fn(
+        async ({
+          where,
+          create,
+          update,
+        }: {
+          where: { id: string };
+          create: Prisma.PatientUncheckedCreateInput;
+          update: Prisma.PatientUncheckedUpdateInput;
+        }) => {
+          const existing = store.get(where.id);
+          const data = (existing ? { ...existing, ...update } : { ...create }) as PrismaPatient;
+          store.set(where.id, data);
+          return data;
+        },
+      ),
+    };
+
+    const mockPrisma = {
+      patient: patientOps,
+      client: {
+        patient: patientOps,
       },
     };
 
