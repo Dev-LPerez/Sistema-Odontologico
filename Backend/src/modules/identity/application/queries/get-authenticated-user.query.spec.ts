@@ -40,8 +40,10 @@ describe('GetAuthenticatedUserQuery', () => {
     mockUserRepo = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
+      findAllByClinicId: jest.fn(),
       save: jest.fn(),
     };
+
     mockClinicRepo = {
       findById: jest.fn(),
       save: jest.fn(),

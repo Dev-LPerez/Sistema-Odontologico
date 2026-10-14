@@ -9,15 +9,16 @@
 
 ## 2. Capa application de identity (Casos de uso y queries de usuarios y consultorio)
 
-- [ ] 2.1 Escribir las pruebas unitarias en rojo para `create-user.use-case.spec.ts`, `update-user.use-case.spec.ts`, `change-user-status.use-case.spec.ts`, `list-clinic-users.query.spec.ts`, `get-clinic-profile.query.spec.ts` y `update-clinic-profile.use-case.spec.ts` usando dobles en memoria y reloj determinista.
-- [ ] 2.2 Implementar los casos de uso y queries en `application` respetando un único método `execute` por clase (RC-015):
+- [x] 2.1 Escribir las pruebas unitarias en rojo para `create-user.use-case.spec.ts`, `update-user.use-case.spec.ts`, `change-user-status.use-case.spec.ts`, `list-clinic-users.query.spec.ts`, `get-clinic-profile.query.spec.ts` y `update-clinic-profile.use-case.spec.ts` usando dobles en memoria y reloj determinista.
+- [x] 2.2 Implementar los casos de uso y queries en `application` respetando un único método `execute` por clase (RC-015):
   - `CreateUserUseCase`: valida unicidad de correo, hashea contraseña con `PasswordHasherPort` y persiste usuario.
   - `UpdateUserUseCase`: actualiza perfil, validando colisión de correo si cambia, y opcionalmente nueva contraseña.
   - `ChangeUserStatusUseCase`: impide auto-desactivación (`CannotDeactivateSelfError`) y orquesta dentro de `UnitOfWorkPort` la actualización y revocación de sesiones (`refreshSessionRepo.revokeAllForUser`).
   - `ListClinicUsersQuery`: retorna los usuarios del `clinicId` sin exponer `passwordHash`.
   - `GetClinicProfileQuery`: consulta los datos del consultorio autenticado.
   - `UpdateClinicProfileUseCase`: actualiza nombre, contacto y `settings` JSON del consultorio autenticado.
-- [ ] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/application && git commit -m "feat(identity): implementar casos de uso y queries para gestion de usuarios y consultorio"`
+- [x] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/application && git commit -m "feat(identity): implementar casos de uso y queries para gestion de usuarios y consultorio"`
+
 
 ## 3. Capa infrastructure y actualización de pruebas de contrato (RC-018)
 

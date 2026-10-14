@@ -40,8 +40,10 @@ describe('LoginUseCase', () => {
     mockUserRepo = {
       findById: jest.fn(),
       findByEmail: jest.fn(),
+      findAllByClinicId: jest.fn(),
       save: jest.fn(),
     };
+
     mockRefreshSessionRepo = {
       findByTokenHash: jest.fn(),
       save: jest.fn(),
