@@ -19,9 +19,9 @@
 - [x] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/infrastructure && git commit -m "feat(shared): implement SystemClock, UuidGenerator, PrismaUnitOfWork and NestEventBus adapters"`
 
 ## 5. Observabilidad, Correlation ID y Sanitización Clínica con TDD
-- [ ] 5.1 Escribir las pruebas en rojo `correlation-id.middleware.spec.ts`, `logger.redact.spec.ts` y `sentry.sanitizer.spec.ts` verificando la generación/propagación de `x-correlation-id` y el reemplazo por `"[REDACTED]"` de credenciales y campos clínicos (`diagnosis`, `notes`, `privateNotes`, `antecedents`, `findings`, `odontogram`, `documentNumber`, `phone`).
-- [ ] 5.2 Implementar `correlation-id.middleware.ts`, `logger.config.ts` y `sentry.sanitizer.ts` en `Backend/src/shared/infrastructure/` hasta pasar todas las pruebas en verde.
-- [ ] 5.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/infrastructure/logger Backend/src/shared/infrastructure/sentry && git commit -m "feat(shared): add correlation-id middleware, Pino redaction and Sentry clinical sanitizer"`
+- [x] 5.1 Escribir las pruebas en rojo `correlation-id.middleware.spec.ts`, `logger.redact.spec.ts` y `sentry.sanitizer.spec.ts` verificando la generación/propagación de `x-correlation-id` y el reemplazo por `"[REDACTED]"` de credenciales y campos clínicos (`diagnosis`, `notes`, `privateNotes`, `antecedents`, `findings`, `odontogram`, `documentNumber`, `phone`).
+- [x] 5.2 Implementar `correlation-id.middleware.ts`, `logger.config.ts` y `sentry.sanitizer.ts` en `Backend/src/shared/infrastructure/` hasta pasar todas las pruebas en verde.
+- [x] 5.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/infrastructure/logger Backend/src/shared/infrastructure/sentry && git commit -m "feat(shared): add correlation-id middleware, Pino redaction and Sentry clinical sanitizer"`
 
 ## 6. Filtro HTTP global, SharedModule y Seguridad en main.ts
 - [ ] 6.1 Escribir la prueba unitaria en rojo `domain-exception.filter.spec.ts` para todas las categorías (`VALIDATION` 400, `UNAUTHORIZED` 401, `FORBIDDEN` 403, `NOT_FOUND` 404, `CONFLICT` 409, `INVARIANT_VIOLATION` 422) e implementar `Backend/src/shared/presentation/filters/domain-exception.filter.ts`.
