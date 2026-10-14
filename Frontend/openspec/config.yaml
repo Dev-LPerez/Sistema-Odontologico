@@ -1,51 +1,49 @@
 schema: spec-driven
 
 context: |
-  Frontend (PWA) de un sistema de gestión odontológica. Este directorio es Frontend dentro de un monorepo.
-  El backend está en Backend con su propio OpenSpec y es dueño de las reglas de negocio.
-  Uso principal en iPad (horizontal y vertical, con Apple Pencil). También funciona en computador y celular.
-  Stack: React, TypeScript estricto y Vite como PWA (vite-plugin-pwa), TanStack Router y TanStack Query,
-  Zustand solo para lo mínimo, React Hook Form con Zod, Tailwind CSS con shadcn/ui, Dexie para el modo
-  sin conexión, Vitest, Testing Library, MSW y Playwright (WebKit).
-  Arquitectura: Clean Architecture completa en CADA feature (domain, application, infrastructure,
-  presentation). Domain y application son TypeScript puro y no importan React, TanStack Query, fetch ni Dexie.
-  Los componentes no llaman a fetch ni a casos de uso, usan los hooks de su feature.
-  Una feature solo importa el index.ts público de otra. El ensamblaje va en el archivo container de cada feature.
-  Principios SOLID, TDD (la prueba se escribe primero) y código en inglés.
-  El cliente de la API se genera desde el OpenAPI del backend. Las reglas de negocio no se duplican aquí.
-  Experiencia de uso: zonas táctiles de al menos 44 por 44 puntos, estado de guardado siempre visible,
-  agenda del día legible sin conexión, borradores guardados en Dexie, textos centralizados,
-  español de Colombia y fechas mostradas en America/Bogota.
-  Requisitos de origen: RF-F y RNF-F (documento de requerimientos del frontend) y calidad RC-xxx.
+  Frontend PWA (iPad-first) del sistema de gestión odontológica para la Dra. Angelee Pacheco.
+  Este directorio es Frontend dentro de un monorepo pnpm y consume el contrato Backend/openapi.json.
+  Stack: TypeScript estricto, React + Vite, TanStack Router, TanStack Query con persistencia local,
+  Zustand (solo estado mínimo de UI), React Hook Form + Zod, Tailwind CSS + shadcn/ui (Radix), FullCalendar,
+  odontograma propio en SVG con Pointer Events a 60 FPS, signature_pad, react-zoom-pan-pinch, Recharts,
+  vite-plugin-pwa (Workbox), Dexie (IndexedDB), Vitest, Testing Library, axe, MSW y Playwright.
+  Arquitectura: Clean Architecture de 4 capas por feature (domain, application, infrastructure, presentation)
+  en features/ (auth, patients, attention, odontogram, appointments, files, quotes, payments, reports, settings).
+  Domain y application son TypeScript puro y no importan React, TanStack Query, fetch ni Dexie
+  (verificado con eslint-plugin-boundaries, RC-019). Los componentes usan hooks y no llaman casos de uso directo.
+  Calidad y TDD: cobertura >= 90% en domain/application (RC-002) y >= 80% global (RC-001), bundle inicial
+  <= 300 KB gzip (RC-032), zonas táctiles >= 44x44 pt (RC-042) y cero violaciones axe (RC-040).
+  Textos visibles en español de Colombia centralizados en shared/i18n/es-CO.ts (RNF-F-053); código en inglés.
+  Commits obligatorios con Conventional Commits (RC-074). Requisitos de origen: RF-F, RNF-F y RC-xxx.
   Write all artifacts in Spanish.
 
 rules:
   proposal:
     - Cita los IDs de requisito que cubre el cambio (RF-F, RNF-F y RC)
-    - Cita el change del backend con el mismo nombre cuando exista, como fuente de las reglas de negocio
+    - Indica el change del Backend cuyo contrato OpenAPI consume
     - Máximo 400 palabras
   specs:
-    - Cada requisito lleva al menos un escenario Dado/Cuando/Entonces desde la perspectiva de la doctora
-    - Describe lo que la persona ve y hace en la interfaz, sin repetir las reglas de negocio del backend
-    - Incluye el comportamiento sin conexión y los estados de carga y de error cuando apliquen
+    - Incluye la sección Purpose (mínimo 50 caracteres) cuando sea una capacidad nueva
+    - Mantén la descripción de cada Requirement por debajo de 500 caracteres
+    - Cada requisito lleva al menos un escenario con formato GIVEN/WHEN/THEN bajo un encabezado de 4 numerales
+    - Incluye comportamiento táctil en iPad, estados sin conexión, casos de error y permisos por rol
   design:
-    - Indica la feature, las capas afectadas, los puertos, los hooks y los componentes
-    - Indica qué se probará en el iPad real cuando el cambio toque la interfaz
-    - Señala cualquier decisión que merezca un ADR
+    - Usa las secciones Context, Goals / Non-Goals, Decisions y Risks / Trade-offs
+    - Indica la feature, las capas afectadas, los puertos y el almacenamiento local en Dexie
+    - Describe los componentes UI, las zonas táctiles de 44x44 pt y el impacto en el límite de 300 KB gzip
   tasks:
-    - Ordena las tareas de adentro hacia afuera (domain, application, infrastructure, presentation)
-    - Cada caso de uso y cada componente crítico empiezan con su prueba, luego el código y luego el refactor
-    - Incluye una tarea para regenerar el cliente de la API cuando cambie el contrato del backend
-    - Cada tarea termina con lint, tipos, pruebas y axe sin violaciones críticas
+    - Agrupa las tareas bajo encabezados numerados de nivel 2 (## 1. Nombre del grupo) de adentro hacia afuera
+    - Cada bloque funcional empieza con su prueba en rojo, luego el código en verde y luego el refactor
+    - Incluye verificación de accesibilidad con axe en los componentes de interfaz
+    - Cada grupo de tareas termina con lint, tsc, pruebas en verde y un commit con Conventional Commits
 
 operations:
   apply:
     guidance:
-      - Ejecuta lint, tsc y Vitest antes de marcar una tarea como completa
-      - Verifica que no se rompa la regla de dependencia entre capas
-      - Si una prueba falla, corrige la causa y no la elimines ni la debilites
-      - Si la tarea toca la interfaz, deja anotado qué debe probarse en el iPad
+      - Ejecuta lint, tsc, pruebas con Vitest/axe y build antes de marcar un grupo como completo
+      - Verifica que no se rompa eslint-plugin-boundaries ni los umbrales de cobertura
+      - Realiza un git commit usando formato Conventional Commits al cerrar cada grupo de tareas de tasks.md
   archive:
     guidance:
-      - Confirma que el change del backend con el mismo nombre ya está archivado
-      - Resume lo entregado y los IDs de requisito cubiertos
+      - Confirma que el cliente OpenAPI está sincronizado, el build no supera 300 KB gzip y git status está limpio
+      - Resume lo entregado, los commits realizados y los IDs de requisito cubiertos
