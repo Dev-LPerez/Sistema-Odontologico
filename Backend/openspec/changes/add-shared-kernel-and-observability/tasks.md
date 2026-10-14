@@ -14,9 +14,9 @@
 - [x] 3.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test:arch` en verde, y hacer commit: `git add Backend/src/shared/application && git commit -m "feat(shared): define Clock, IdGenerator, UnitOfWork and EventBus ports"`
 
 ## 4. Adaptadores de shared/infrastructure con TDD
-- [ ] 4.1 Escribir las pruebas unitarias en rojo `system-clock.adapter.spec.ts` (incluyendo bordes de cambio de día a las 23:59 y 00:01 en `America/Bogota`) y `uuid-generator.adapter.spec.ts`, e implementar `system-clock.adapter.ts` y `uuid-generator.adapter.ts`.
-- [ ] 4.2 Escribir las pruebas unitarias en rojo `prisma-unit-of-work.adapter.spec.ts` y `nest-event-bus.adapter.spec.ts`, actualizar `PrismaService` con `AsyncLocalStorage` (`get client()`) e implementar `prisma-unit-of-work.adapter.ts` y `nest-event-bus.adapter.ts`.
-- [ ] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/infrastructure && git commit -m "feat(shared): implement SystemClock, UuidGenerator, PrismaUnitOfWork and NestEventBus adapters"`
+- [x] 4.1 Escribir las pruebas unitarias en rojo `system-clock.adapter.spec.ts` (incluyendo bordes de cambio de día a las 23:59 y 00:01 en `America/Bogota`) y `uuid-generator.adapter.spec.ts`, e implementar `system-clock.adapter.ts` y `uuid-generator.adapter.ts`.
+- [x] 4.2 Escribir las pruebas unitarias en rojo `prisma-unit-of-work.adapter.spec.ts` y `nest-event-bus.adapter.spec.ts`, actualizar `PrismaService` con `AsyncLocalStorage` (`get client()`) e implementar `prisma-unit-of-work.adapter.ts` y `nest-event-bus.adapter.ts`.
+- [x] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/shared/infrastructure && git commit -m "feat(shared): implement SystemClock, UuidGenerator, PrismaUnitOfWork and NestEventBus adapters"`
 
 ## 5. Observabilidad, Correlation ID y Sanitización Clínica con TDD
 - [ ] 5.1 Escribir las pruebas en rojo `correlation-id.middleware.spec.ts`, `logger.redact.spec.ts` y `sentry.sanitizer.spec.ts` verificando la generación/propagación de `x-correlation-id` y el reemplazo por `"[REDACTED]"` de credenciales y campos clínicos (`diagnosis`, `notes`, `privateNotes`, `antecedents`, `findings`, `odontogram`, `documentNumber`, `phone`).

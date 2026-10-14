@@ -1,9 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { AsyncLocalStorage } from 'async_hooks';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
+  private readonly als = new AsyncLocalStorage<Prisma.TransactionClient>();
 
   constructor() {
     const url = process.env.DATABASE_URL;
@@ -22,6 +24,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           }
         : undefined,
     });
+  }
+
+  get client(): Prisma.TransactionClient | PrismaClient {
+    return this.als.getStore() ?? this;
+  }
+
+  async runInTransaction<T>(tx: Prisma.TransactionClient, fn: () => Promise<T>): Promise<T> {
+    return this.als.run(tx, fn);
   }
 
   async onModuleInit(): Promise<void> {
