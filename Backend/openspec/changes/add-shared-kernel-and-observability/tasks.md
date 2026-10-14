@@ -1,8 +1,8 @@
 # Tasks
 
 ## 1. Instalación de dependencias en Backend
-- [ ] 1.1 Instalar en `Backend/package.json` las dependencias de producción (`helmet`, `@nestjs/throttler`, `@nestjs/event-emitter`, `nestjs-pino`, `pino-http`, `@sentry/node`) y desarrollo (`plop`), verificando que `pnpm --filter backend build` compile sin errores.
-- [ ] 1.2 Confirmar los cambios de dependencias con un commit de Conventional Commits: `git add Backend/package.json pnpm-lock.yaml && git commit -m "chore(shared): install observability, security and plop dependencies"`
+- [x] 1.1 Instalar en `Backend/package.json` las dependencias de producción (`helmet`, `@nestjs/throttler`, `@nestjs/event-emitter`, `nestjs-pino`, `pino-http`, `@sentry/node`) y desarrollo (`plop`), verificando que `pnpm --filter backend build` compile sin errores.
+- [x] 1.2 Confirmar los cambios de dependencias con un commit de Conventional Commits: `git add Backend/package.json pnpm-lock.yaml && git commit -m "chore(shared): install observability, security and plop dependencies"`
 
 ## 2. Implementación de shared/domain con TDD
 - [ ] 2.1 Escribir las pruebas unitarias en rojo `Backend/src/shared/domain/domain-error.spec.ts` y `Backend/src/shared/domain/aggregate-root.spec.ts` cubriendo categorías de error, metadatos y cola de eventos de dominio.
