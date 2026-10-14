@@ -38,18 +38,19 @@ rules:
     - Describe los cambios en el esquema de Prisma, en el contrato OpenAPI y si requiere un ADR
   tasks:
     - Agrupa las tareas bajo encabezados numerados de nivel 2 (## 1. Nombre del grupo) de adentro hacia afuera
+    - Mapea explícitamente cada Scenario de spec.md al archivo .spec.ts/.e2e-spec.ts y nombre exacto del test it(...)
     - Cada caso de uso empieza con su prueba en rojo, luego el código en verde y luego el refactor
-    - Cada grupo de tareas termina con una tarea de verificación (lint, tsc y pruebas en verde) y un commit con Conventional Commits
-    - Incluye una tarea final para regenerar el documento OpenAPI y verificar git status limpio
+    - Cada grupo de tareas termina con lint, typecheck, deps:check y pruebas en verde más un commit con Conventional Commits
+    - Incluye una tarea final para regenerar openapi.json y guardar en evidence.md la salida literal de lint, typecheck, deps:check, test:cov y test:e2e
 
 operations:
   apply:
     guidance:
-      - Ejecuta lint, tsc, dependency-cruiser y las pruebas antes de marcar una tarea de verificación como completa
-      - Verifica que no se rompa la regla de dependencia entre capas ni los umbrales de cobertura
-      - Si una prueba falla, corrige la causa y no la elimines ni la debilites
+      - Ejecuta lint, typecheck, deps:check y las pruebas antes de marcar una tarea de verificación como completa
+      - Usa exactamente los nombres de prueba it(...) mapeados en tasks.md para cada Scenario de la spec
+      - Pega la salida literal de consola de lint, typecheck, deps:check, test:cov y test:e2e en el archivo evidence.md del change y en tu respuesta final
       - Realiza un git commit usando formato Conventional Commits al cerrar cada grupo de tareas de tasks.md
   archive:
     guidance:
+      - Confirma que evidence.md contiene la matriz Scenario -> Test y las salidas de consola en verde
       - Confirma que el documento OpenAPI está regenerado y que git status no tiene cambios pendientes
-      - Resume lo entregado, los commits realizados y los IDs de requisito cubiertos

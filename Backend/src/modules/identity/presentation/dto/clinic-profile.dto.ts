@@ -34,16 +34,25 @@ export class ClinicProfileResponseDto {
   @ApiProperty({ example: 'Consultorio Odontológico Dra. Angelee Pacheco' })
   name!: string;
 
-  @ApiPropertyOptional({ example: 'Calle 100 # 15-20, Consultorio 501', nullable: true })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'Calle 100 # 15-20, Consultorio 501',
+    nullable: true,
+  })
   address!: string | null;
 
-  @ApiPropertyOptional({ example: '+573001234567', nullable: true })
+  @ApiPropertyOptional({ type: String, example: '+573001234567', nullable: true })
   phone!: string | null;
 
-  @ApiPropertyOptional({ example: 'contacto@draangeleepacheco.com', nullable: true })
+  @ApiPropertyOptional({
+    type: String,
+    example: 'contacto@draangeleepacheco.com',
+    nullable: true,
+  })
   email!: string | null;
 
   @ApiPropertyOptional({
+    type: String,
     example: 'https://r2.draangeleepacheco.com/branding/logo.png',
     nullable: true,
   })

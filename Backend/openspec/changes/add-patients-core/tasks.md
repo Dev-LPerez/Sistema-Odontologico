@@ -1,0 +1,48 @@
+# Tasks
+
+## Matriz de Trazabilidad Obligatoria (Spec Scenario -> Test Concreto)
+Cada escenario de `specs/patients-management/spec.md` DEBE estar cubierto por las siguientes pruebas con estos nombres exactos en `it(...)`:
+
+| Escenario en `spec.md` | Archivo de Prueba Unitaria / Caso de Uso | Archivo E2E (`Backend/test/patients.e2e-spec.ts`) |
+| :--- | :--- | :--- |
+| **Scenario:** Registro exitoso de paciente con consentimiento Ley 1581 por doctora o auxiliar | `create-patient.use-case.spec.ts` -> `it('debe registrar un paciente activo con consentimiento Ley 1581 y asignar dataTreatmentConsentAt')` | `it('debe permitir a ADMIN y AUXILIARY registrar un paciente con consentimiento Ley 1581 (201)')` |
+| **Scenario:** Rechazo de creación de paciente cuando no se otorga el consentimiento Ley 1581 | `patient.entity.spec.ts` y `create-patient.use-case.spec.ts` -> `it('debe lanzar DataTreatmentConsentRequiredError cuando dataTreatmentConsent es false')` | `it('debe rechazar con 422 DATA_TREATMENT_CONSENT_REQUIRED cuando dataTreatmentConsent es false')` |
+| **Scenario:** Rechazo por documento de identidad duplicado en el mismo consultorio | `create-patient.use-case.spec.ts` -> `it('debe lanzar DuplicatePatientDocumentError si ya existe un paciente con el mismo tipo y número de documento en el consultorio')` | `it('debe rechazar con 409 DUPLICATE_PATIENT_DOCUMENT cuando el documento ya existe en el consultorio')` |
+| **Scenario:** Detección de posible duplicado por número de documento o teléfono | `detect-duplicate-patients.query.spec.ts` -> `it('debe retornar coincidencias por documento o teléfono normalizado dentro del mismo clinicId indicando el motivo')` | `it('debe detectar posibles duplicados por documento o teléfono en GET /v1/patients/check-duplicates (200)')` |
+| **Scenario:** Actualización exitosa de datos de contacto y emergencia de un paciente | `update-patient.use-case.spec.ts` -> `it('debe actualizar los datos demográficos, contacto de emergencia y fuente de captación del paciente')` | `it('debe permitir a ADMIN y AUXILIARY listar, consultar y actualizar datos de un paciente (200)')` |
+| **Scenario:** Administradora desactiva lógicamente a un paciente | `change-patient-status.use-case.spec.ts` -> `it('debe desactivar lógicamente al paciente cambiando isActive a false sin eliminarlo')` | `it('debe permitir a ADMIN desactivar lógicamente a un paciente en PATCH /v1/patients/:id/status (200)')` |
+| **Scenario:** Bloqueo a rol AUXILIARY al intentar desactivar un paciente | `roles.guard.spec.ts` (cubierto) | `it('debe rechazar con 403 FORBIDDEN_ROLE cuando AUXILIARY intenta cambiar el estado en PATCH /v1/patients/:id/status')` |
+
+---
+
+## 1. Esquema Prisma y migración de pacientes
+- [x] 1.1 Definir en `Backend/prisma/schema.prisma` los enums `DocumentType` (`CC`, `TI`, `RC`, `CE`, `PAS`, `OTHER`) y `AcquisitionSource` (`REFERRAL`, `INSTAGRAM`, `WHATSAPP`, `DIRECT`, `OTHER`), y el modelo `Patient` vinculado a `Clinic` (`clinicId`), con `firstName`, `lastName`, `documentType`, `documentNumber`, `birthDate`, `phone`, `email`, `address`, `emergencyContactName`, `emergencyContactPhone`, `acquisitionSource`, `dataTreatmentConsent`, `dataTreatmentConsentAt`, `isActive`, `createdAt`, `updatedAt`, índice único `@@unique([clinicId, documentType, documentNumber])` e índices en `[clinicId, isActive]` y `[clinicId, phone]`.
+- [x] 1.2 Generar la migración en `Backend/prisma/migrations/` (`20261014000000_add_patients_table`), ejecutar `pnpm --filter backend prisma:generate` y `pnpm --filter backend typecheck`, y confirmar con commit: `git add Backend/prisma && git commit -m "feat(patients): add Patient model, DocumentType and AcquisitionSource enums in Prisma"`
+
+## 2. Capa domain de patients con TDD
+- [x] 2.1 Escribir las pruebas unitarias en rojo en `Backend/src/modules/patients/domain/` (`document-identity.vo.spec.ts`, `phone-number.vo.spec.ts`, `patient.entity.spec.ts`) incluyendo el test exacto `it('debe lanzar DataTreatmentConsentRequiredError cuando dataTreatmentConsent es false')`, normalización de documento/teléfono, actualización demográfica y activación/desactivación lógica.
+- [x] 2.2 Implementar en `Backend/src/modules/patients/domain/` los enums `document-type.enum.ts` y `acquisition-source.enum.ts`, los objetos de valor `document-identity.vo.ts`, `phone-number.vo.ts` y `emergency-contact.vo.ts`, los errores `patients.errors.ts` (`DataTreatmentConsentRequiredError`, `DuplicatePatientDocumentError`, `PatientNotFoundError`, `InvalidPatientDataError`), el agregado `patient.entity.ts` y el puerto `patient.repository.port.ts` (máx. 5 métodos).
+- [x] 2.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/patients/domain && git commit -m "feat(patients): implement Patient aggregate, value objects, errors and repository port"`
+
+## 3. Capa application de patients (Casos de uso y Queries) con TDD
+- [x] 3.1 Escribir las pruebas unitarias en rojo en `Backend/src/modules/patients/application/` para `create-patient.use-case.spec.ts`, `update-patient.use-case.spec.ts`, `change-patient-status.use-case.spec.ts`, `get-patient-by-id.query.spec.ts`, `list-patients.query.spec.ts` y `detect-duplicate-patients.query.spec.ts` usando los nombres exactos de la Matriz de Trazabilidad, dobles en memoria, `ClockPort` fijo e `IdGeneratorPort` determinista.
+- [x] 3.2 Implementar `create-patient.use-case.ts`, `update-patient.use-case.ts`, `change-patient-status.use-case.ts`, `get-patient-by-id.query.ts`, `list-patients.query.ts` y `detect-duplicate-patients.query.ts` (un único método público `execute` por clase, RC-015) alcanzando cobertura >= 90% en `domain` y `application`.
+- [x] 3.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/patients/application && git commit -m "feat(patients): implement patient CRUD use cases, queries and duplicate detector"`
+
+## 4. Capa infrastructure y suite de contrato (RC-018)
+- [x] 4.1 Implementar `patient.mapper.ts`, `in-memory-patient.repository.ts` y `prisma-patient.repository.ts` en `Backend/src/modules/patients/infrastructure/`.
+- [x] 4.2 Escribir y ejecutar la suite de pruebas de contrato `patients-repository.contract.spec.ts` (RC-018) que corre contra `InMemoryPatientRepository` y `PrismaPatientRepository` verificando guardado, búsqueda por ID, búsqueda por documento, detección de duplicados (con `excludePatientId`), filtro por `isActive` y aislamiento multitenant por `clinicId` (RNF-B-032).
+- [x] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/patients/infrastructure && git commit -m "feat(patients): add Prisma and InMemory patient repositories with contract tests"`
+
+## 5. Capa presentation, PatientsController y pruebas E2E (RC-005)
+- [x] 5.1 Implementar los DTOs con `class-validator` y `@nestjs/swagger` (`create-patient.dto.ts`, `update-patient.dto.ts`, `change-patient-status.dto.ts`, `check-duplicates-query.dto.ts`, `patient-response.dto.ts` usando `@ApiPropertyOptional({ type: String, nullable: true })` en campos anulables) y el controlador `patients.controller.ts` + `patients.controller.spec.ts`, `patients.module.ts` e `index.ts` público, registrando `PatientsModule` en `app.module.ts`.
+- [x] 5.2 Escribir y ejecutar la suite E2E `Backend/test/patients.e2e-spec.ts` implementando exactamente los 6 bloques `it(...)` de la Matriz de Trazabilidad.
+- [x] 5.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(patients): add PatientsController, module wiring and E2E role permission tests"`
+
+## 6. Regeneración del contrato OpenAPI, captura de evidencia y cierre
+- [x] 6.1 Agregar `type: String` en los decoradores `@ApiPropertyOptional({ type: String, nullable: true, ... })` de `address`, `phone`, `email` y `logoUrl` en `Backend/src/modules/identity/presentation/dto/clinic-profile.dto.ts`, regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y verificar que ni `ClinicProfileResponseDto` ni `PatientResponseDto` tengan `"type": "object"` en campos `string | null`.
+- [x] 6.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear el archivo `Backend/openspec/changes/add-patients-core/evidence.md` pegando la matriz de trazabilidad completada y la salida literal de consola de los 5 comandos (incluyendo la tabla ASCII de cobertura de Jest).
+- [x] 6.3 Confirmar el contrato OpenAPI, `evidence.md` y `tasks.md` con un commit: `git add -A && git commit -m "chore(patients): regenerate openapi.json, record test evidence and complete B-05 tasks"` dejando `git status` limpio.
+
+## Workflow follow-up
+- Ejecutar `/opsx-sync` y `/opsx-archive` una vez auditado `evidence.md`.
