@@ -21,9 +21,9 @@
 
 ## 4. Adaptadores de infraestructura y suite de contrato (RC-018)
 
-- [ ] 4.1 Escribir las pruebas unitarias en rojo `argon2-password-hasher.adapter.spec.ts` y `jwt-token-service.adapter.spec.ts`, e implementar `argon2-password-hasher.adapter.ts` y `jwt-token-service.adapter.ts` en `Backend/src/modules/identity/infrastructure/adapters/`.
-- [ ] 4.2 Implementar los repositorios `in-memory-clinic.repository.ts`, `in-memory-user.repository.ts`, `in-memory-refresh-session.repository.ts` y sus contrapartes `prisma-clinic.repository.ts`, `prisma-user.repository.ts` y `prisma-refresh-session.repository.ts` con sus mapeadores, y crear la suite de contrato `identity-repositories.contract.spec.ts` (RC-018).
-- [ ] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/infrastructure && git commit -m "feat(identity): implement Argon2, JWT and Prisma/InMemory repositories with contract tests"`
+- [x] 4.1 Escribir las pruebas unitarias en rojo `argon2-password-hasher.adapter.spec.ts` y `jwt-token-service.adapter.spec.ts`, e implementar `argon2-password-hasher.adapter.ts` y `jwt-token-service.adapter.ts` en `Backend/src/modules/identity/infrastructure/adapters/`.
+- [x] 4.2 Implementar los repositorios `in-memory-clinic.repository.ts`, `in-memory-user.repository.ts`, `in-memory-refresh-session.repository.ts` y sus contrapartes `prisma-clinic.repository.ts`, `prisma-user.repository.ts` y `prisma-refresh-session.repository.ts` con sus mapeadores, y crear la suite de contrato `identity-repositories.contract.spec.ts` (RC-018).
+- [x] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/infrastructure && git commit -m "feat(identity): implement Argon2, JWT and Prisma/InMemory repositories with contract tests"`
 
 ## 5. Guards, decoradores, AuthController y pruebas E2E (RC-005)
 
