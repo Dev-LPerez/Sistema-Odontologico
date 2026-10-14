@@ -8,7 +8,7 @@ FROM base AS builder
 WORKDIR /app
 COPY package.json ./
 COPY pnpm-lock.yaml* ./
-RUN printf "allowBuilds:\n  prisma: true\n  '@prisma/client': true\n  '@prisma/engines': true\n  '@nestjs/core': true\n  '@scarf/scarf': true\n" > pnpm-workspace.yaml
+RUN printf "allowBuilds:\n  prisma: true\n  '@prisma/client': true\n  '@prisma/engines': true\n  '@nestjs/core': true\n  '@scarf/scarf': true\n  argon2: true\n" > pnpm-workspace.yaml
 RUN pnpm install
 
 COPY . .
