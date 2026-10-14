@@ -15,6 +15,13 @@ export interface UserProps {
   updatedAt: Date;
 }
 
+export interface UpdateUserProfileProps {
+  fullName?: string;
+  email?: Email;
+  role?: UserRole;
+  updatedAt: Date;
+}
+
 export class User extends AggregateRoot<string> {
   private constructor(
     id: string,
@@ -74,14 +81,30 @@ export class User extends AggregateRoot<string> {
     }
   }
 
-  deactivate(updatedAt: Date): void {
-    this._isActive = false;
+  changeStatus(isActive: boolean, updatedAt: Date): void {
+    this._isActive = isActive;
     this._updatedAt = updatedAt;
   }
 
+  deactivate(updatedAt: Date): void {
+    this.changeStatus(false, updatedAt);
+  }
+
   activate(updatedAt: Date): void {
-    this._isActive = true;
-    this._updatedAt = updatedAt;
+    this.changeStatus(true, updatedAt);
+  }
+
+  updateProfile(props: UpdateUserProfileProps): void {
+    if (props.fullName !== undefined) {
+      this._fullName = props.fullName.trim();
+    }
+    if (props.email !== undefined) {
+      this._email = props.email;
+    }
+    if (props.role !== undefined) {
+      this._role = props.role;
+    }
+    this._updatedAt = props.updatedAt;
   }
 
   changePassword(newPasswordHash: string, updatedAt: Date): void {

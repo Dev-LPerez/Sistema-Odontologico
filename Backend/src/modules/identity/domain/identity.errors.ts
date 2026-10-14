@@ -62,3 +62,30 @@ export class ClinicNotFoundError extends DomainError {
     super(`Consultorio con ID '${clinicId}' no encontrado`);
   }
 }
+
+export class DuplicateUserEmailError extends DomainError {
+  readonly category: DomainErrorCategory = 'CONFLICT';
+  readonly code = 'DUPLICATE_USER_EMAIL';
+
+  constructor(email: string) {
+    super(`El correo electrónico '${email}' ya se encuentra registrado`);
+  }
+}
+
+export class CannotDeactivateSelfError extends DomainError {
+  readonly category: DomainErrorCategory = 'INVARIANT_VIOLATION';
+  readonly code = 'CANNOT_DEACTIVATE_SELF';
+
+  constructor() {
+    super('Un usuario no puede desactivar su propia cuenta');
+  }
+}
+
+export class InvalidClinicNameError extends DomainError {
+  readonly category: DomainErrorCategory = 'VALIDATION';
+  readonly code = 'INVALID_CLINIC_NAME';
+
+  constructor() {
+    super('El nombre del consultorio no puede estar vacío');
+  }
+}

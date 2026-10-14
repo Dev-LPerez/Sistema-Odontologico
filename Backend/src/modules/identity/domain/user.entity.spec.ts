@@ -89,4 +89,59 @@ describe('User Entity', () => {
     expect(user.passwordHash).toBe('new-secure-hash');
     expect(user.updatedAt).toEqual(updateTime);
   });
+
+  it('debe permitir actualizar el perfil (nombre, correo y rol) actualizando updatedAt', () => {
+    const user = User.create({
+      id: 'user-005',
+      clinicId: 'clinic-123',
+      email: validEmail,
+      passwordHash: 'hash-xyz',
+      fullName: 'Dra. Angelee Pacheco',
+      role: UserRole.ADMIN,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const updateTime = new Date('2026-10-13T16:00:00.000Z');
+    const newEmail = Email.create('angelee.nueva@consultorio.com');
+
+    user.updateProfile({
+      fullName: 'Dra. Angelee Pacheco M.',
+      email: newEmail,
+      role: UserRole.AUXILIARY,
+      updatedAt: updateTime,
+    });
+
+    expect(user.fullName).toBe('Dra. Angelee Pacheco M.');
+    expect(user.email.value).toBe('angelee.nueva@consultorio.com');
+    expect(user.role).toBe(UserRole.AUXILIARY);
+    expect(user.updatedAt).toEqual(updateTime);
+  });
+
+  it('debe permitir cambiar de estado mediante changeStatus actualizando updatedAt', () => {
+    const user = User.create({
+      id: 'user-006',
+      clinicId: 'clinic-123',
+      email: validEmail,
+      passwordHash: 'hash-xyz',
+      fullName: 'Usuario Prueba',
+      role: UserRole.AUXILIARY,
+      isActive: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    const updateTime = new Date('2026-10-13T17:00:00.000Z');
+    user.changeStatus(false, updateTime);
+
+    expect(user.isActive).toBe(false);
+    expect(user.updatedAt).toEqual(updateTime);
+
+    const reactivateTime = new Date('2026-10-13T18:00:00.000Z');
+    user.changeStatus(true, reactivateTime);
+
+    expect(user.isActive).toBe(true);
+    expect(user.updatedAt).toEqual(reactivateTime);
+  });
 });

@@ -2,9 +2,10 @@
 
 ## 1. Capa domain de identity (Extensión para usuarios y consultorio)
 
-- [ ] 1.1 Escribir las pruebas unitarias en rojo para los métodos de actualización de perfil en `user.entity.spec.ts` y validación de nombre no vacío en `clinic.entity.spec.ts`.
-- [ ] 1.2 Implementar los errores de dominio tipados `DuplicateUserEmailError`, `CannotDeactivateSelfError` e `InvalidClinicNameError` en `identity.errors.ts`, extender las entidades `User` y `Clinic`, y agregar `findAllByClinicId(clinicId: string): Promise<User[]>` a `user.repository.port.ts`.
-- [ ] 1.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/domain && git commit -m "feat(identity): extender entidades User y Clinic con validaciones y puerto de consulta"`
+- [x] 1.1 Escribir las pruebas unitarias en rojo para los métodos de actualización de perfil en `user.entity.spec.ts` y validación de nombre no vacío en `clinic.entity.spec.ts`.
+- [x] 1.2 Implementar los errores de dominio tipados `DuplicateUserEmailError`, `CannotDeactivateSelfError` e `InvalidClinicNameError` en `identity.errors.ts`, extender las entidades `User` y `Clinic`, y agregar `findAllByClinicId(clinicId: string): Promise<User[]>` a `user.repository.port.ts`.
+- [x] 1.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/identity/domain && git commit -m "feat(identity): extender entidades User y Clinic con validaciones y puerto de consulta"`
+
 
 ## 2. Capa application de identity (Casos de uso y queries de usuarios y consultorio)
 
