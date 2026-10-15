@@ -37,6 +37,8 @@ model Clinic {
   procedures             Procedure[]
   patientProcedurePrices PatientProcedurePrice[]
   materials              Material[]
+  clinicalHistories      ClinicalHistory[]
+  treatmentPlanItems     TreatmentPlanItem[]
 
   @@map("clinics")
 }
@@ -111,8 +113,9 @@ model Patient {
   createdAt              DateTime          @default(now()) @map("created_at")
   updatedAt              DateTime          @updatedAt @map("updated_at")
 
-  clinic          Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  procedurePrices PatientProcedurePrice[]
+  clinic            Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  procedurePrices   PatientProcedurePrice[]
+  clinicalHistories ClinicalHistory[]
 
   @@unique([clinicId, documentType, documentNumber])
   @@index([clinicId, isActive])
@@ -130,8 +133,9 @@ model Procedure {
   isActive      Boolean                 @default(true) @map("is_active")
   createdAt     DateTime                @default(now()) @map("created_at")
   updatedAt     DateTime                @updatedAt @map("updated_at")
-  clinic        Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  patientPrices PatientProcedurePrice[]
+  clinic             Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientPrices      PatientProcedurePrice[]
+  treatmentPlanItems TreatmentPlanItem[]
 
   @@unique([clinicId, code])
   @@index([clinicId, isActive])
@@ -173,4 +177,52 @@ model Material {
   @@unique([clinicId, brand, reference, color])
   @@index([clinicId, isActive])
   @@map("materials")
+}
+
+enum TreatmentItemStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model ClinicalHistory {
+  id                  String              @id @default(uuid())
+  clinicId            String              @map("clinic_id")
+  patientId           String              @map("patient_id")
+  chiefComplaint      String              @map("chief_complaint")
+  currentIllness      String              @map("current_illness")
+  personalAntecedents Json                @map("personal_antecedents")
+  familyAntecedents   String?             @map("family_antecedents")
+  clinicalExamination String?             @map("clinical_examination")
+  diagnoses           Json
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+  clinic              Clinic              @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patient             Patient             @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  treatmentItems      TreatmentPlanItem[]
+
+  @@unique([clinicId, patientId])
+  @@index([clinicId, patientId])
+  @@map("clinical_histories")
+}
+
+model TreatmentPlanItem {
+  id                String              @id @default(uuid())
+  clinicId          String              @map("clinic_id")
+  clinicalHistoryId String              @map("clinical_history_id")
+  procedureId       String              @map("procedure_id")
+  procedureCode     String              @map("procedure_code")
+  procedureName     String              @map("procedure_name")
+  toothNumber       String?             @map("tooth_number")
+  status            TreatmentItemStatus @default(PENDING)
+  estimatedCostCop  Int                 @map("estimated_cost_cop")
+  notes             String?
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  clinic            Clinic              @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  clinicalHistory   ClinicalHistory     @relation(fields: [clinicalHistoryId], references: [id], onDelete: Restrict)
+  procedure         Procedure           @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, clinicalHistoryId])
+  @@map("treatment_plan_items")
 }

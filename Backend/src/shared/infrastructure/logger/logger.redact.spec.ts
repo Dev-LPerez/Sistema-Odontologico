@@ -44,6 +44,26 @@ describe('Logger Clinical Redaction', () => {
     }
   });
 
+  it('debe redactar todos los campos de historia clínica: chiefComplaint, currentIllness, personalAntecedents, familyAntecedents, clinicalExamination, diagnoses, allergiesDetails y medicationsDetails (RNF-B-009, RC-023)', () => {
+    const clinicalFields = [
+      'chiefComplaint',
+      'currentIllness',
+      'personalAntecedents',
+      'familyAntecedents',
+      'clinicalExamination',
+      'diagnoses',
+      'allergiesDetails',
+      'medicationsDetails',
+    ];
+
+    for (const field of clinicalFields) {
+      const isRedacted = CLINICAL_REDACT_PATHS.some(
+        (path) => path === field || path.endsWith(`.${field}`),
+      );
+      expect(isRedacted).toBe(true);
+    }
+  });
+
   it('debe censurar datos clínicos y credenciales al serializar logs con Pino', () => {
     let loggedData = '';
     const destination = {

@@ -18,6 +18,14 @@ const SENSITIVE_KEYS = new Set([
   'birthdate',
   'emergencycontactname',
   'emergencycontactphone',
+  'chiefcomplaint',
+  'currentillness',
+  'personalantecedents',
+  'familyantecedents',
+  'clinicalexamination',
+  'diagnoses',
+  'allergiesdetails',
+  'medicationsdetails',
 ]);
 
 function isSensitiveKey(key: string): boolean {

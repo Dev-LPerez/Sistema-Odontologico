@@ -90,6 +90,36 @@ describe('sanitizeSentryEvent', () => {
     expect(sanitized.extra.patient.nonSensitiveField).toBe('visible-value');
   });
 
+  it('debe redactar todos los campos de historia clínica en Sentry: chiefComplaint, currentIllness, personalAntecedents, familyAntecedents, clinicalExamination, diagnoses, allergiesDetails y medicationsDetails (RNF-B-009, RC-023)', () => {
+    const event = {
+      extra: {
+        clinicalHistory: {
+          chiefComplaint: 'Dolor agudo en molar inferior',
+          currentIllness: 'Evolución de 3 días con inflamación',
+          personalAntecedents: { allergies: true },
+          familyAntecedents: 'Madre hipertensa',
+          clinicalExamination: 'Caries cavitada en 46',
+          diagnoses: [{ code: 'K02.1', description: 'Caries de la dentina' }],
+          allergiesDetails: 'Alergia a la penicilina',
+          medicationsDetails: 'Amoxicilina 500mg',
+          historyId: 'hist-123',
+        },
+      },
+    };
+
+    const sanitized = sanitizeSentryEvent(event);
+
+    expect(sanitized.extra.clinicalHistory.chiefComplaint).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.currentIllness).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.personalAntecedents).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.familyAntecedents).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.clinicalExamination).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.diagnoses).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.allergiesDetails).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.medicationsDetails).toBe('[REDACTED]');
+    expect(sanitized.extra.clinicalHistory.historyId).toBe('hist-123');
+  });
+
   it('debe manejar eventos nulos o sin campos adicionales sin fallar', () => {
     expect(sanitizeSentryEvent(null as unknown as Record<string, unknown>)).toBeNull();
     const minimalEvent = { message: 'Simple error' };
