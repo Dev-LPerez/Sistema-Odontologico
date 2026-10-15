@@ -6,19 +6,27 @@ export function normalizeText(text: string): string {
     .trim();
 }
 
-export function extractTrigrams(text: string): Set<string> {
-  const normalized = '  ' + normalizeText(text) + ' ';
+export function extractTrigramsFromNormalized(normalized: string): Set<string> {
+  const padded = '  ' + normalized + ' ';
   const trigrams = new Set<string>();
+  const len = padded.length - 3;
 
-  for (let i = 0; i <= normalized.length - 3; i++) {
-    trigrams.add(normalized.substring(i, i + 3));
+  for (let i = 0; i <= len; i++) {
+    trigrams.add(padded.substring(i, i + 3));
   }
 
   return trigrams;
 }
 
-export function calculateTrigramSimilarity(target: string, query: string | Set<string>): number {
-  const targetTrigrams = extractTrigrams(target);
+export function extractTrigrams(text: string): Set<string> {
+  return extractTrigramsFromNormalized(normalizeText(text));
+}
+
+export function calculateTrigramSimilarity(
+  target: string | Set<string>,
+  query: string | Set<string>,
+): number {
+  const targetTrigrams = typeof target === 'string' ? extractTrigrams(target) : target;
   const queryTrigrams = typeof query === 'string' ? extractTrigrams(query) : query;
 
   if (targetTrigrams.size === 0 || queryTrigrams.size === 0) {

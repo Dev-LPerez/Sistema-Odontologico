@@ -12,6 +12,7 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 import {
   normalizeText,
   extractTrigrams,
+  extractTrigramsFromNormalized,
   calculateTrigramSimilarity,
 } from './trigram-similarity.util';
 import { PatientMapper } from '../mappers/patient.mapper';
@@ -93,14 +94,17 @@ function calculateRecordScore(
   queryTrigrams: Set<string>,
   digits: string,
 ): number {
-  const fullName = `${record.firstName} ${record.lastName}`;
-  const normFullName = normalizeText(fullName);
   const normFirstName = normalizeText(record.firstName);
   const normLastName = normalizeText(record.lastName);
+  const normFullName = `${normFirstName} ${normLastName}`;
 
-  const simFullName = calculateTrigramSimilarity(fullName, queryTrigrams);
-  const simFirstName = calculateTrigramSimilarity(record.firstName, queryTrigrams);
-  const simLastName = calculateTrigramSimilarity(record.lastName, queryTrigrams);
+  let digitMatchBonus = 0;
+  if (digits) {
+    const rawPhoneDigits = record.phone.replace(/\D/g, '');
+    if (record.documentNumber.includes(digits) || rawPhoneDigits.includes(digits)) {
+      digitMatchBonus = 0.8;
+    }
+  }
 
   let subMatchBonus = 0;
   if (normFullName.includes(normQuery) || normQuery.includes(normFullName)) {
@@ -109,12 +113,20 @@ function calculateRecordScore(
     subMatchBonus = 0.5;
   }
 
-  let digitMatchBonus = 0;
-  if (digits) {
-    const rawPhoneDigits = record.phone.replace(/\D/g, '');
-    if (record.documentNumber.includes(digits) || rawPhoneDigits.includes(digits)) {
-      digitMatchBonus = 0.8;
-    }
+  const fullTrigrams = extractTrigramsFromNormalized(normFullName);
+  const simFullName = calculateTrigramSimilarity(fullTrigrams, queryTrigrams);
+
+  let simFirstName = 0;
+  let simLastName = 0;
+  if (simFullName < 0.5) {
+    simFirstName = calculateTrigramSimilarity(
+      extractTrigramsFromNormalized(normFirstName),
+      queryTrigrams,
+    );
+    simLastName = calculateTrigramSimilarity(
+      extractTrigramsFromNormalized(normLastName),
+      queryTrigrams,
+    );
   }
 
   return Math.max(simFullName, simFirstName, simLastName, subMatchBonus, digitMatchBonus);

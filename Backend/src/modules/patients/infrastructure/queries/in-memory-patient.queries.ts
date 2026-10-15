@@ -8,6 +8,7 @@ import { Patient } from '../../domain/patient.entity';
 import {
   normalizeText,
   extractTrigrams,
+  extractTrigramsFromNormalized,
   calculateTrigramSimilarity,
 } from './trigram-similarity.util';
 
@@ -17,14 +18,17 @@ function calculatePatientRelevance(
   queryTrigrams: Set<string>,
   digits?: string,
 ): number {
-  const fullName = `${patient.firstName} ${patient.lastName}`;
-  const normFullName = normalizeText(fullName);
   const normFirstName = normalizeText(patient.firstName);
   const normLastName = normalizeText(patient.lastName);
+  const normFullName = `${normFirstName} ${normLastName}`;
 
-  const simFullName = calculateTrigramSimilarity(fullName, queryTrigrams);
-  const simFirstName = calculateTrigramSimilarity(patient.firstName, queryTrigrams);
-  const simLastName = calculateTrigramSimilarity(patient.lastName, queryTrigrams);
+  let digitMatchBonus = 0;
+  if (digits) {
+    const rawPhoneDigits = patient.phone.value.replace(/\D/g, '');
+    if (patient.document.number.includes(digits) || rawPhoneDigits.includes(digits)) {
+      digitMatchBonus = 0.8;
+    }
+  }
 
   let subMatchBonus = 0;
   if (normFullName.includes(normQuery) || normQuery.includes(normFullName)) {
@@ -33,12 +37,20 @@ function calculatePatientRelevance(
     subMatchBonus = 0.5;
   }
 
-  let digitMatchBonus = 0;
-  if (digits) {
-    const rawPhoneDigits = patient.phone.value.replace(/\D/g, '');
-    if (patient.document.number.includes(digits) || rawPhoneDigits.includes(digits)) {
-      digitMatchBonus = 0.8;
-    }
+  const fullTrigrams = extractTrigramsFromNormalized(normFullName);
+  const simFullName = calculateTrigramSimilarity(fullTrigrams, queryTrigrams);
+
+  let simFirstName = 0;
+  let simLastName = 0;
+  if (simFullName < 0.5) {
+    simFirstName = calculateTrigramSimilarity(
+      extractTrigramsFromNormalized(normFirstName),
+      queryTrigrams,
+    );
+    simLastName = calculateTrigramSimilarity(
+      extractTrigramsFromNormalized(normLastName),
+      queryTrigrams,
+    );
   }
 
   return Math.max(simFullName, simFirstName, simLastName, subMatchBonus, digitMatchBonus);

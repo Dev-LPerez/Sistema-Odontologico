@@ -26,11 +26,17 @@ import { ChangePatientStatusUseCase } from '../application/use-cases/change-pati
 import { GetPatientByIdQuery } from '../application/queries/get-patient-by-id.query';
 import { ListPatientsQuery } from '../application/queries/list-patients.query';
 import { DetectDuplicatePatientsQuery } from '../application/queries/detect-duplicate-patients.query';
+import { SearchPatientsQuery } from '../application/queries/search-patients.query';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { ChangePatientStatusDto } from './dto/change-patient-status.dto';
 import { CheckDuplicatesQueryDto } from './dto/check-duplicates-query.dto';
-import { PatientResponseDto, DuplicatePatientResponseDto } from './dto/patient-response.dto';
+import { SearchPatientsQueryDto } from './dto/search-patients-query.dto';
+import {
+  PatientResponseDto,
+  DuplicatePatientResponseDto,
+  PatientSearchResponseDto,
+} from './dto/patient-response.dto';
 
 @ApiTags('Patients')
 @ApiBearerAuth()
@@ -44,6 +50,7 @@ export class PatientsController {
     private readonly getPatientByIdQuery: GetPatientByIdQuery,
     private readonly listPatientsQuery: ListPatientsQuery,
     private readonly detectDuplicatePatientsQuery: DetectDuplicatePatientsQuery,
+    private readonly searchPatientsQuery: SearchPatientsQuery,
   ) {}
 
   @Post()
@@ -103,6 +110,28 @@ export class PatientsController {
     return this.listPatientsQuery.execute({
       clinicId: user.clinicId,
       isActive: filterIsActive,
+    });
+  }
+
+  @Get('search')
+  @Roles(UserRole.ADMIN, UserRole.AUXILIARY)
+  @ApiOperation({
+    summary: 'Búsqueda rápida de pacientes tolerante a errores tipográficos por trigramas',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Resultados de búsqueda ordenados por relevancia',
+    type: [PatientSearchResponseDto],
+  })
+  async search(
+    @CurrentUser() user: AuthenticatedUserPayload,
+    @Query() query: SearchPatientsQueryDto,
+  ): Promise<PatientSearchResponseDto[]> {
+    return this.searchPatientsQuery.execute({
+      clinicId: user.clinicId,
+      q: query.q,
+      limit: query.limit,
+      includeInactive: query.includeInactive,
     });
   }
 

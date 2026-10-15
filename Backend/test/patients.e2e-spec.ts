@@ -8,11 +8,13 @@ import { CLINIC_REPOSITORY_PORT } from '../src/modules/identity/domain/clinic.re
 import { USER_REPOSITORY_PORT } from '../src/modules/identity/domain/user.repository.port';
 import { REFRESH_SESSION_REPOSITORY_PORT } from '../src/modules/identity/domain/refresh-session.repository.port';
 import { PATIENT_REPOSITORY_TOKEN } from '../src/modules/patients/domain/patient.repository.port';
+import { PATIENT_QUERIES_TOKEN } from '../src/modules/patients/application/ports/patient.queries.port';
 import { UNIT_OF_WORK_PORT } from '../src/shared/application/ports/unit-of-work.port';
 import { InMemoryClinicRepository } from '../src/modules/identity/infrastructure/repositories/in-memory-clinic.repository';
 import { InMemoryUserRepository } from '../src/modules/identity/infrastructure/repositories/in-memory-user.repository';
 import { InMemoryRefreshSessionRepository } from '../src/modules/identity/infrastructure/repositories/in-memory-refresh-session.repository';
 import { InMemoryPatientRepository } from '../src/modules/patients/infrastructure/repositories/in-memory-patient.repository';
+import { InMemoryPatientQueriesAdapter } from '../src/modules/patients/infrastructure/queries/in-memory-patient.queries';
 import {
   PasswordHasherPort,
   PASSWORD_HASHER_PORT,
@@ -23,13 +25,17 @@ import { Email } from '../src/modules/identity/domain/email.vo';
 import { UserRole } from '../src/modules/identity/domain/role.enum';
 import { DocumentType } from '../src/modules/patients/domain/document-type.enum';
 import { AcquisitionSource } from '../src/modules/patients/domain/acquisition-source.enum';
+import { Patient } from '../src/modules/patients/domain/patient.entity';
+import { DocumentIdentity } from '../src/modules/patients/domain/document-identity.vo';
+import { PhoneNumber } from '../src/modules/patients/domain/phone-number.vo';
 
-describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-013, RF-B-014, RC-005)', () => {
+describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-012, RF-B-013, RF-B-014, RC-005)', () => {
   let app: INestApplication;
   let clinicRepo: InMemoryClinicRepository;
   let userRepo: InMemoryUserRepository;
   let refreshSessionRepo: InMemoryRefreshSessionRepository;
   let patientRepo: InMemoryPatientRepository;
+  let patientQueriesAdapter: InMemoryPatientQueriesAdapter;
   let passwordHasher: PasswordHasherPort;
 
   const testClinicId = 'clinic-uuid-mgmt-001';
@@ -47,6 +53,7 @@ describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-013, RF-B-014, RC-
     userRepo = new InMemoryUserRepository();
     refreshSessionRepo = new InMemoryRefreshSessionRepository();
     patientRepo = new InMemoryPatientRepository();
+    patientQueriesAdapter = new InMemoryPatientQueriesAdapter(patientRepo);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -59,6 +66,8 @@ describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-013, RF-B-014, RC-
       .useValue(refreshSessionRepo)
       .overrideProvider(PATIENT_REPOSITORY_TOKEN)
       .useValue(patientRepo)
+      .overrideProvider(PATIENT_QUERIES_TOKEN)
+      .useValue(patientQueriesAdapter)
       .overrideProvider(UNIT_OF_WORK_PORT)
       .useValue({
         execute: async <T>(work: () => Promise<T>): Promise<T> => work(),
@@ -292,5 +301,95 @@ describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-013, RF-B-014, RC-
       .set('Authorization', `Bearer ${adminAccessToken}`)
       .expect(200);
     expect(verifyRes.body.isActive).toBe(false);
+  });
+
+  // Scenario: Búsqueda exitosa por nombre con errores tipográficos para ADMIN o AUXILIARY
+  it('debe permitir a ADMIN y AUXILIARY buscar pacientes tolerando errores tipográficos en GET /v1/patients/search (200)', async () => {
+    const carlosPatient = Patient.create({
+      id: 'patient-carlos-e2e',
+      clinicId: testClinicId,
+      firstName: 'Carlos',
+      lastName: 'Gómez',
+      document: DocumentIdentity.create(DocumentType.CC, '1020304050'),
+      birthDate: new Date('1990-05-15T00:00:00.000Z'),
+      phone: PhoneNumber.create('3001234567'),
+      email: 'carlos@example.com',
+      address: 'Calle 100 # 15-20',
+      emergencyContact: null,
+      acquisitionSource: AcquisitionSource.DIRECT,
+      dataTreatmentConsent: true,
+      dataTreatmentConsentAt: new Date('2026-10-14T10:00:00.000Z'),
+      isActive: true,
+      createdAt: new Date('2026-10-14T10:00:00.000Z'),
+      updatedAt: new Date('2026-10-14T10:00:00.000Z'),
+    });
+    patientQueriesAdapter.save(carlosPatient);
+
+    const adminRes = await request(app.getHttpServer())
+      .get('/v1/patients/search?q=Carls Gomz')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(Array.isArray(adminRes.body)).toBe(true);
+    expect(adminRes.body.length).toBeGreaterThanOrEqual(1);
+    expect(adminRes.body[0].firstName).toBe('Carlos');
+    expect(adminRes.body[0].lastName).toBe('Gómez');
+    expect(adminRes.body[0].similarityScore).toBeDefined();
+
+    const auxRes = await request(app.getHttpServer())
+      .get('/v1/patients/search?q=Carls Gomz')
+      .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+      .expect(200);
+
+    expect(Array.isArray(auxRes.body)).toBe(true);
+    expect(auxRes.body.length).toBeGreaterThanOrEqual(1);
+    expect(auxRes.body[0].firstName).toBe('Carlos');
+  });
+
+  // Scenario: Búsqueda exitosa por fragmento de documento o teléfono con caracteres de formato
+  it('debe encontrar pacientes por fragmento de documento o teléfono en GET /v1/patients/search (200)', async () => {
+    const phoneRes = await request(app.getHttpServer())
+      .get('/v1/patients/search?q=300-123')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(Array.isArray(phoneRes.body)).toBe(true);
+    expect(phoneRes.body.some((p: { phone: string }) => p.phone === '3001234567')).toBe(true);
+
+    const docRes = await request(app.getHttpServer())
+      .get('/v1/patients/search?q=102030')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(Array.isArray(docRes.body)).toBe(true);
+    expect(
+      docRes.body.some((p: { documentNumber: string }) => p.documentNumber === '1020304050'),
+    ).toBe(true);
+  });
+
+  // Scenario: Exclusión por defecto de pacientes inactivos e inclusión opcional en búsqueda
+  it('debe excluir pacientes inactivos por defecto e incluirlos con includeInactive=true en GET /v1/patients/search (200)', async () => {
+    const defaultRes = await request(app.getHttpServer())
+      .get('/v1/patients/search?q=Laura')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(defaultRes.body.some((p: { id: string }) => p.id === createdPatientId)).toBe(false);
+
+    const withInactiveRes = await request(app.getHttpServer())
+      .get('/v1/patients/search?q=Laura&includeInactive=true')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    const foundInactive = withInactiveRes.body.find(
+      (p: { id: string }) => p.id === createdPatientId,
+    );
+    expect(foundInactive).toBeDefined();
+    expect(foundInactive.isActive).toBe(false);
+  });
+
+  // Rechazo sin token
+  it('debe rechazar con 401 Unauthorized la búsqueda sin token en GET /v1/patients/search', async () => {
+    await request(app.getHttpServer()).get('/v1/patients/search?q=Carlos').expect(401);
   });
 });
