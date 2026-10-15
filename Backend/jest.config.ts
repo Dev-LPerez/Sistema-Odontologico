@@ -1,6 +1,7 @@
 import type { Config } from 'jest';
 
 const config: Config = {
+  maxWorkers: 1,
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',

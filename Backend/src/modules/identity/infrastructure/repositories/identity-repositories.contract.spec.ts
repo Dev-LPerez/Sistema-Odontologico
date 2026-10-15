@@ -1,9 +1,3 @@
-import {
-  Clinic as PrismaClinic,
-  User as PrismaUser,
-  RefreshSession as PrismaRefreshSession,
-  Prisma,
-} from '@prisma/client';
 import { Clinic } from '../../domain/clinic.entity';
 import { User } from '../../domain/user.entity';
 import { RefreshSession } from '../../domain/refresh-session.entity';
@@ -19,6 +13,7 @@ import { PrismaClinicRepository } from './prisma-clinic.repository';
 import { PrismaUserRepository } from './prisma-user.repository';
 import { PrismaRefreshSessionRepository } from './prisma-refresh-session.repository';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { DuplicateUserEmailError } from '../../domain/identity.errors';
 
 interface RepositoryFactory {
   name: string;
@@ -31,130 +26,22 @@ interface RepositoryFactory {
 }
 
 describe('Identity Repositories Contract Tests (RC-018)', () => {
-  // In-Memory store simulator for PrismaService to verify Prisma repository logic and mappers
-  const createMockPrismaService = () => {
-    const clinicStore = new Map<string, PrismaClinic>();
-    const userStore = new Map<string, PrismaUser>();
-    const sessionStore = new Map<string, PrismaRefreshSession>();
+  const realPrisma = new PrismaService();
 
-    const mockPrisma = {
-      client: {
-        clinic: {
-          findUnique: jest.fn(async ({ where }: { where: { id: string } }) => {
-            return clinicStore.get(where.id) ?? null;
-          }),
-          upsert: jest.fn(
-            async ({
-              where,
-              create,
-              update,
-            }: {
-              where: { id: string };
-              create: Prisma.ClinicCreateInput;
-              update: Prisma.ClinicUpdateInput;
-            }) => {
-              const existing = clinicStore.get(where.id);
-              const data = (existing ? { ...existing, ...update } : { ...create }) as PrismaClinic;
-              clinicStore.set(where.id, data);
-              return data;
-            },
-          ),
-        },
-        user: {
-          findFirst: jest.fn(async ({ where }: { where: { id: string; clinicId: string } }) => {
-            const u = userStore.get(where.id);
-            if (u && u.clinicId === where.clinicId) {
-              return u;
-            }
-            return null;
-          }),
-          findUnique: jest.fn(async ({ where }: { where: { email: string } }) => {
-            for (const u of userStore.values()) {
-              if (u.email === where.email) return u;
-            }
-            return null;
-          }),
-          findMany: jest.fn(
-            async ({
-              where,
-            }: {
-              where: { clinicId: string };
-              orderBy?: { createdAt: 'asc' | 'desc' };
-            }) => {
-              const list: PrismaUser[] = [];
-              for (const u of userStore.values()) {
-                if (u.clinicId === where.clinicId) {
-                  list.push(u);
-                }
-              }
-              return list;
-            },
-          ),
-          upsert: jest.fn(
-            async ({
-              where,
-              create,
-              update,
-            }: {
-              where: { id: string };
-              create: Prisma.UserUncheckedCreateInput;
-              update: Prisma.UserUncheckedUpdateInput;
-            }) => {
-              const existing = userStore.get(where.id);
-              const data = (existing ? { ...existing, ...update } : { ...create }) as PrismaUser;
-              userStore.set(where.id, data);
-              return data;
-            },
-          ),
-        },
-        refreshSession: {
-          findUnique: jest.fn(async ({ where }: { where: { tokenHash: string } }) => {
-            for (const s of sessionStore.values()) {
-              if (s.tokenHash === where.tokenHash) return s;
-            }
-            return null;
-          }),
-          upsert: jest.fn(
-            async ({
-              where,
-              create,
-              update,
-            }: {
-              where: { id: string };
-              create: Prisma.RefreshSessionUncheckedCreateInput;
-              update: Prisma.RefreshSessionUncheckedUpdateInput;
-            }) => {
-              const existing = sessionStore.get(where.id);
-              const data = (
-                existing ? { ...existing, ...update } : { ...create }
-              ) as PrismaRefreshSession;
-              sessionStore.set(where.id, data);
-              return data;
-            },
-          ),
-          updateMany: jest.fn(
-            async ({
-              where,
-              data,
-            }: {
-              where: { userId: string; revokedAt: null };
-              data: { revokedAt: Date };
-            }) => {
-              let count = 0;
-              for (const [id, s] of sessionStore.entries()) {
-                if (s.userId === where.userId && s.revokedAt === null) {
-                  sessionStore.set(id, { ...s, revokedAt: data.revokedAt });
-                  count++;
-                }
-              }
-              return { count };
-            },
-          ),
-        },
-      },
-    };
+  beforeAll(async () => {
+    await realPrisma.$connect();
+  });
 
-    return mockPrisma as unknown as PrismaService;
+  afterAll(async () => {
+    await cleanDb();
+    await realPrisma.$disconnect();
+  });
+
+  const cleanDb = async () => {
+    await realPrisma.patient.deleteMany();
+    await realPrisma.refreshSession.deleteMany();
+    await realPrisma.user.deleteMany();
+    await realPrisma.clinic.deleteMany();
   };
 
   const implementations: RepositoryFactory[] = [
@@ -166,18 +53,18 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
     },
     {
       name: 'PrismaRepositories',
-      createClinicRepo: () => {
-        const prisma = createMockPrismaService();
-        return { repo: new PrismaClinicRepository(prisma) };
-      },
-      createUserRepo: () => {
-        const prisma = createMockPrismaService();
-        return { repo: new PrismaUserRepository(prisma) };
-      },
-      createRefreshSessionRepo: () => {
-        const prisma = createMockPrismaService();
-        return { repo: new PrismaRefreshSessionRepository(prisma) };
-      },
+      createClinicRepo: () => ({
+        repo: new PrismaClinicRepository(realPrisma),
+        cleanup: cleanDb,
+      }),
+      createUserRepo: () => ({
+        repo: new PrismaUserRepository(realPrisma),
+        cleanup: cleanDb,
+      }),
+      createRefreshSessionRepo: () => ({
+        repo: new PrismaRefreshSessionRepository(realPrisma),
+        cleanup: cleanDb,
+      }),
     },
   ];
 
@@ -186,8 +73,12 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
       describe(`${name} - Contrato ClinicRepositoryPort`, () => {
         let repo: ClinicRepositoryPort;
 
-        beforeEach(() => {
-          repo = createClinicRepo().repo;
+        beforeEach(async () => {
+          const factory = createClinicRepo();
+          if (factory.cleanup) {
+            await factory.cleanup();
+          }
+          repo = factory.repo;
         });
 
         it('debe guardar una clínica y recuperarla por su id', async () => {
@@ -224,12 +115,40 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
 
       describe(`${name} - Contrato UserRepositoryPort`, () => {
         let repo: UserRepositoryPort;
+        let clinicRepo: ClinicRepositoryPort;
 
-        beforeEach(() => {
-          repo = createUserRepo().repo;
+        beforeEach(async () => {
+          const userFactory = createUserRepo();
+          if (userFactory.cleanup) {
+            await userFactory.cleanup();
+          }
+          repo = userFactory.repo;
+          clinicRepo = createClinicRepo().repo;
+
+          // Prerrequisitos de clínica para claves foráneas reales
+          const now = new Date('2026-10-13T10:00:00.000Z');
+          await clinicRepo.save(
+            Clinic.create({ id: 'clinic-c1', name: 'Clínica C1', createdAt: now, updatedAt: now }),
+          );
+          await clinicRepo.save(
+            Clinic.create({
+              id: 'clinic-tenant-1',
+              name: 'Clínica Tenant 1',
+              createdAt: now,
+              updatedAt: now,
+            }),
+          );
+          await clinicRepo.save(
+            Clinic.create({
+              id: 'clinic-tenant-2',
+              name: 'Clínica Tenant 2',
+              createdAt: now,
+              updatedAt: now,
+            }),
+          );
         });
 
-        it('debe guardar un usuario y recuperarlo por id respetando el clinicId (RNF-B-032)', async () => {
+        it('debe guardar un usuario y recuperarlo por su id con clinicId', async () => {
           const now = new Date('2026-10-13T10:00:00.000Z');
           const user = User.create({
             id: 'user-u1',
@@ -253,7 +172,6 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
           expect(found?.role).toBe(UserRole.ADMIN);
           expect(found?.fullName).toBe('Dra. María Pérez');
 
-          // Aislamiento multitenant: no debe encontrarse con otro clinicId
           const crossClinicFound = await repo.findById('other-clinic-c2', 'user-u1');
           expect(crossClinicFound).toBeNull();
         });
@@ -337,13 +255,69 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
           const emptyTenantUsers = await repo.findAllByClinicId('clinic-sin-usuarios');
           expect(emptyTenantUsers).toEqual([]);
         });
+
+        it('debe lanzar DuplicateUserEmailError (409) cuando se intenta registrar un correo ya existente (P2002)', async () => {
+          const now = new Date('2026-10-13T10:00:00.000Z');
+          const user1 = User.create({
+            id: 'user-uniq-1',
+            clinicId: 'clinic-c1',
+            email: Email.create('duplicado@clinica.com'),
+            passwordHash: 'hash-1',
+            fullName: 'Usuario Uno',
+            role: UserRole.ADMIN,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+          const user2 = User.create({
+            id: 'user-uniq-2',
+            clinicId: 'clinic-c1',
+            email: Email.create('duplicado@clinica.com'),
+            passwordHash: 'hash-2',
+            fullName: 'Usuario Dos',
+            role: UserRole.AUXILIARY,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          });
+
+          await repo.save(user1);
+          await expect(repo.save(user2)).rejects.toThrow(DuplicateUserEmailError);
+        });
       });
 
       describe(`${name} - Contrato RefreshSessionRepositoryPort`, () => {
         let repo: RefreshSessionRepositoryPort;
+        let userRepo: UserRepositoryPort;
+        let clinicRepo: ClinicRepositoryPort;
 
-        beforeEach(() => {
-          repo = createRefreshSessionRepo().repo;
+        beforeEach(async () => {
+          const sessionFactory = createRefreshSessionRepo();
+          if (sessionFactory.cleanup) {
+            await sessionFactory.cleanup();
+          }
+          repo = sessionFactory.repo;
+          clinicRepo = createClinicRepo().repo;
+          userRepo = createUserRepo().repo;
+
+          // Prerrequisitos de clínica y usuario para claves foráneas reales
+          const now = new Date('2026-10-13T10:00:00.000Z');
+          await clinicRepo.save(
+            Clinic.create({ id: 'clinic-c1', name: 'Clínica C1', createdAt: now, updatedAt: now }),
+          );
+          await userRepo.save(
+            User.create({
+              id: 'user-u1',
+              clinicId: 'clinic-c1',
+              email: Email.create('sess-user@clinica.com'),
+              passwordHash: 'hash',
+              fullName: 'Usuario Sesión',
+              role: UserRole.ADMIN,
+              isActive: true,
+              createdAt: now,
+              updatedAt: now,
+            }),
+          );
         });
 
         it('debe guardar y encontrar una sesión por su tokenHash', async () => {

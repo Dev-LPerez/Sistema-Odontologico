@@ -38,7 +38,7 @@ describe('SearchPatientsQuery', () => {
     query = new SearchPatientsQuery(mockQueriesPort);
   });
 
-  it('debe encontrar pacientes por nombre tolerando errores tipográficos y ordenando por relevancia dentro del mismo clinicId', async () => {
+  it('debe encontrar pacientes por nombre tolerando errores tipográficos y omisión de tildes ordenando por relevancia dentro del mismo clinicId', async () => {
     mockQueriesPort.searchByTrigram.mockResolvedValue([samplePatient]);
 
     const result = await query.execute({

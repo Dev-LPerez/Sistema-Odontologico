@@ -3,6 +3,8 @@ import { UserRepositoryPort } from '../../domain/user.repository.port';
 import { User } from '../../domain/user.entity';
 import { Email } from '../../domain/email.vo';
 
+import { DuplicateUserEmailError } from '../../domain/identity.errors';
+
 @Injectable()
 export class InMemoryUserRepository implements UserRepositoryPort {
   private readonly items = new Map<string, User>();
@@ -35,6 +37,11 @@ export class InMemoryUserRepository implements UserRepositoryPort {
   }
 
   async save(user: User): Promise<void> {
+    for (const existing of this.items.values()) {
+      if (existing.id !== user.id && existing.email.equals(user.email)) {
+        throw new DuplicateUserEmailError(user.email.value);
+      }
+    }
     this.items.set(user.id, user);
   }
 

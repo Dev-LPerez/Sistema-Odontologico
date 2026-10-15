@@ -7,7 +7,8 @@ import {
 import { Patient } from '../../domain/patient.entity';
 import { DocumentType } from '../../domain/document-type.enum';
 import { PatientMapper } from '../mappers/patient.mapper';
-import { DocumentType as PrismaDocumentType } from '@prisma/client';
+import { DocumentType as PrismaDocumentType, Prisma } from '@prisma/client';
+import { DuplicatePatientDocumentError } from '../../domain/patients.errors';
 
 @Injectable()
 export class PrismaPatientRepository implements PatientRepositoryPort {
@@ -85,10 +86,17 @@ export class PrismaPatientRepository implements PatientRepositoryPort {
   async save(patient: Patient): Promise<void> {
     const data = PatientMapper.toPersistence(patient);
 
-    await this.prisma.client.patient.upsert({
-      where: { id: patient.id },
-      create: data,
-      update: data,
-    });
+    try {
+      await this.prisma.client.patient.upsert({
+        where: { id: patient.id },
+        create: data,
+        update: data,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new DuplicatePatientDocumentError(patient.document.number);
+      }
+      throw error;
+    }
   }
 }

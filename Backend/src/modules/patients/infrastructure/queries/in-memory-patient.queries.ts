@@ -42,7 +42,7 @@ function calculatePatientRelevance(
 
   let simFirstName = 0;
   let simLastName = 0;
-  if (simFullName > 0 && simFullName < 0.5) {
+  if (simFullName > 0) {
     simFirstName = calculateTrigramSimilarity(
       extractTrigramsFromNormalized(normFirstName),
       queryTrigrams,
@@ -61,9 +61,9 @@ export class InMemoryPatientQueriesAdapter implements PatientQueriesPort {
 
   constructor(private readonly patientRepo?: InMemoryPatientRepository) {}
 
-  save(patient: Patient): void {
+  async save(patient: Patient): Promise<void> {
     if (this.patientRepo) {
-      void this.patientRepo.save(patient);
+      await this.patientRepo.save(patient);
     }
     this.internalStore.set(patient.id, patient);
   }

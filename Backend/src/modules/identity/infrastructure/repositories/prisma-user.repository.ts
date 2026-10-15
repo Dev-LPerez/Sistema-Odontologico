@@ -5,6 +5,9 @@ import { Email } from '../../domain/email.vo';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { UserMapper } from '../mappers/user.mapper';
 
+import { Prisma } from '@prisma/client';
+import { DuplicateUserEmailError } from '../../domain/identity.errors';
+
 @Injectable()
 export class PrismaUserRepository implements UserRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
@@ -33,10 +36,17 @@ export class PrismaUserRepository implements UserRepositoryPort {
 
   async save(user: User): Promise<void> {
     const data = UserMapper.toPersistence(user);
-    await this.prisma.client.user.upsert({
-      where: { id: user.id },
-      create: data,
-      update: data,
-    });
+    try {
+      await this.prisma.client.user.upsert({
+        where: { id: user.id },
+        create: data,
+        update: data,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new DuplicateUserEmailError(user.email.value);
+      }
+      throw error;
+    }
   }
 }

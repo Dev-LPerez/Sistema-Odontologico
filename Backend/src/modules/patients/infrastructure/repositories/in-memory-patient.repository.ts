@@ -4,6 +4,7 @@ import {
 } from '../../domain/patient.repository.port';
 import { Patient } from '../../domain/patient.entity';
 import { DocumentType } from '../../domain/document-type.enum';
+import { DuplicatePatientDocumentError } from '../../domain/patients.errors';
 
 export class InMemoryPatientRepository implements PatientRepositoryPort {
   private readonly patients: Map<string, Patient> = new Map();
@@ -80,6 +81,16 @@ export class InMemoryPatientRepository implements PatientRepositoryPort {
   }
 
   async save(patient: Patient): Promise<void> {
+    for (const existing of this.patients.values()) {
+      if (
+        existing.id !== patient.id &&
+        existing.clinicId === patient.clinicId &&
+        existing.document.type === patient.document.type &&
+        existing.document.number === patient.document.number
+      ) {
+        throw new DuplicatePatientDocumentError(patient.document.number);
+      }
+    }
     this.patients.set(patient.id, patient);
   }
 

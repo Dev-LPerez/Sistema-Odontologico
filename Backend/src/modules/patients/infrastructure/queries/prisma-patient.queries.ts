@@ -42,7 +42,6 @@ export class PrismaPatientQueriesAdapter implements PatientQueriesPort {
     const hasDigits = digits.length > 0;
     const clinicId = params.clinicId;
     const activeFilter = params.includeInactive ? Prisma.empty : Prisma.sql`AND p.is_active = true`;
-    const textPattern = `%${query}%`;
     const digitPattern = `%${digits}%`;
 
     const sql = Prisma.sql`
@@ -66,13 +65,12 @@ export class PrismaPatientQueriesAdapter implements PatientQueriesPort {
         p.created_at AS "createdAt",
         p.updated_at AS "updatedAt",
         GREATEST(
-          similarity(concat(p.first_name, ' ', p.last_name), ${query}),
-          similarity(p.first_name, ${query}),
-          similarity(p.last_name, ${query}),
-          CASE WHEN concat(p.first_name, ' ', p.last_name) ILIKE ${textPattern} THEN 0.6 ELSE 0.0 END,
+          similarity(immutable_unaccent(p.first_name || ' ' || p.last_name), immutable_unaccent(${query})),
+          word_similarity(immutable_unaccent(${query}), immutable_unaccent(p.first_name || ' ' || p.last_name)),
+          CASE WHEN immutable_unaccent(p.first_name || ' ' || p.last_name) ILIKE ('%' || immutable_unaccent(${query}) || '%') THEN 0.6 ELSE 0.0 END,
           ${
             hasDigits
-              ? Prisma.sql`CASE WHEN p.document_number ILIKE ${digitPattern} OR regexp_replace(p.phone, '\\D', '', 'g') ILIKE ${digitPattern} THEN 0.8 ELSE 0.0 END`
+              ? Prisma.sql`CASE WHEN p.document_number ILIKE ${digitPattern} OR p.phone ILIKE ${digitPattern} THEN 0.8 ELSE 0.0 END`
               : Prisma.sql`0.0`
           }
         ) AS "similarityScore"
@@ -80,13 +78,12 @@ export class PrismaPatientQueriesAdapter implements PatientQueriesPort {
       WHERE p.clinic_id = ${clinicId}
         ${activeFilter}
         AND (
-          similarity(concat(p.first_name, ' ', p.last_name), ${query}) >= 0.25
-          OR similarity(p.first_name, ${query}) >= 0.25
-          OR similarity(p.last_name, ${query}) >= 0.25
-          OR concat(p.first_name, ' ', p.last_name) ILIKE ${textPattern}
+          immutable_unaccent(p.first_name || ' ' || p.last_name) % immutable_unaccent(${query})
+          OR immutable_unaccent(p.first_name || ' ' || p.last_name) %> immutable_unaccent(${query})
+          OR immutable_unaccent(p.first_name || ' ' || p.last_name) ILIKE ('%' || immutable_unaccent(${query}) || '%')
           ${
             hasDigits
-              ? Prisma.sql`OR p.document_number ILIKE ${digitPattern} OR regexp_replace(p.phone, '\\D', '', 'g') ILIKE ${digitPattern}`
+              ? Prisma.sql`OR p.document_number ILIKE ${digitPattern} OR p.phone ILIKE ${digitPattern}`
               : Prisma.empty
           }
         )

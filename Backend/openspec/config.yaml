@@ -16,12 +16,20 @@ context: |
   execute. Los controladores no tienen lógica de negocio. Un módulo solo importa el index.ts público de otro.
   Principios SOLID, TDD (cobertura >= 90% en domain/application y >= 80% global) y código en inglés con
   términos en Backend/docs/glosario.md.
-  Restricciones: datos clínicos y PII de pacientes nunca en logs, Sentry ni URLs (RC-023), fechas en UTC
-  evaluadas en America/Bogota (RC-054), la base admite máximo 20 conexiones (pool de Prisma 5 y de pg-boss 3),
-  pacientes e historias clínicas no se eliminan físicamente. El arranque HTTP (prefijo, pipes, filtros, helmet,
-  cookies y CORS) se centraliza en configureApp(app) y se reutiliza en main.ts y en todos los tests E2E.
-  Commits obligatorios con Conventional Commits (RC-074). Requisitos de origen: RF-B, RNF-B y calidad RC-xxx.
-  Este backend es dueño del contrato OpenAPI. Write all artifacts in Spanish.
+  Restricciones críticas:
+  1. Datos clínicos y PII de pacientes nunca en logs, Sentry ni URLs (RC-023).
+  2. Fechas en UTC evaluadas en America/Bogota (RC-054).
+  3. La base admite máximo 20 conexiones (pool de Prisma 5 y de pg-boss 3).
+  4. Pacientes, catálogos e historias clínicas NUNCA se eliminan físicamente (RF-B-010, RC-055): todas sus
+     relaciones Foreign Key en Prisma DEBEN usar onDelete: Restrict (prohibido onDelete: Cascade).
+  5. Las suites de contrato (*.contract.spec.ts, RC-018) DEBEN ejecutarse contra PostgreSQL real (con
+     migraciones aplicadas mediante prisma migrate deploy, RC-050) y contra InMemory; está PROHIBIDO simular
+     PrismaService con mocks en memoria dentro de las pruebas de contrato.
+  6. Todo repositorio Prisma e InMemory DEBE capturar violaciones de unicidad (P2002 en Prisma) al guardar y
+     traducirlas al DomainError de categoría CONFLICT (409) correspondiente para evitar errores 500 en
+     condiciones de carrera.
+  7. El arranque HTTP se centraliza en configureApp(app) y se reutiliza en main.ts y en todos los tests E2E.
+  Commits obligatorios con Conventional Commits (RC-074). Write all artifacts in Spanish.
 
 rules:
   proposal:
@@ -36,18 +44,18 @@ rules:
   design:
     - Usa las secciones Context, Goals / Non-Goals, Decisions y Risks / Trade-offs
     - Indica el módulo, las capas afectadas, los puertos nuevos o modificados y los eventos de dominio
-    - Describe los cambios en el esquema de Prisma, en el contrato OpenAPI y si requiere un ADR
+    - Describe los cambios en el esquema de Prisma (usando onDelete:Restrict), en el contrato OpenAPI y si requiere un ADR
   tasks:
     - Agrupa las tareas bajo encabezados numerados de nivel 2 (## 1. Nombre del grupo) de adentro hacia afuera
     - Mapea explícitamente cada Scenario de spec.md al archivo .spec.ts/.e2e-spec.ts y nombre exacto del test it(...)
-    - Cada caso de uso empieza con su prueba en rojo, luego el código en verde y luego el refactor
+    - Exige que las pruebas de contrato (*.contract.spec.ts) corran contra PostgreSQL real (sin mocks de Prisma) y verifiquen traducción de P2002 a error de dominio 409
     - Cada grupo de tareas termina con lint, typecheck, deps:check y pruebas en verde más un commit con Conventional Commits
     - Incluye una tarea final para regenerar openapi.json y guardar en evidence.md la salida literal e íntegra de consola de lint, typecheck, deps:check, test:cov (tabla ASCII completa) y test:e2e
 
 operations:
   apply:
     guidance:
-      - Ejecuta lint, typecheck, deps:check y las pruebas antes de marcar una tarea de verificación como completa
+      - Ejecuta lint, typecheck, deps:check y las pruebas (incluyendo suites de contrato contra PostgreSQL real) antes de marcar una tarea como completa
       - Usa exactamente los nombres de prueba it(...) mapeados en tasks.md para cada Scenario de la spec
       - Pega en evidence.md la salida literal y exacta de stdout/stderr de pnpm (incluyendo las líneas "> backend@0.0.1 <script>" y la tabla ASCII completa de Jest en test:cov); NUNCA la resumas ni escribas frases como "Salida con código 0"
       - Realiza un git commit usando formato Conventional Commits al cerrar cada grupo de tareas de tasks.md
