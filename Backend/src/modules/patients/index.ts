@@ -8,11 +8,13 @@ export * from './domain/acquisition-source.enum';
 export * from './domain/patients.errors';
 export * from './domain/patient.repository.port';
 
+export * from './application/ports/patient.queries.port';
 export * from './application/use-cases/create-patient.use-case';
 export * from './application/use-cases/update-patient.use-case';
 export * from './application/use-cases/change-patient-status.use-case';
 export * from './application/queries/get-patient-by-id.query';
 export * from './application/queries/list-patients.query';
 export * from './application/queries/detect-duplicate-patients.query';
+export * from './application/queries/search-patients.query';
 
 export * from './patients.module';

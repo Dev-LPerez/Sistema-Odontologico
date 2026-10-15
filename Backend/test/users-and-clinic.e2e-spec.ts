@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import * as cookieParser from 'cookie-parser';
 import { AppModule } from '../src/app.module';
-import { DomainExceptionFilter } from '../src/shared/presentation/filters/domain-exception.filter';
+import { configureApp } from '../src/configure-app';
 import { CLINIC_REPOSITORY_PORT } from '../src/modules/identity/domain/clinic.repository.port';
 import { USER_REPOSITORY_PORT } from '../src/modules/identity/domain/user.repository.port';
 import { REFRESH_SESSION_REPOSITORY_PORT } from '../src/modules/identity/domain/refresh-session.repository.port';
@@ -59,16 +58,7 @@ describe('Users and Clinic Management (e2e) (RF-B-003, RF-B-141, RC-005)', () =>
     passwordHasher = moduleFixture.get<PasswordHasherPort>(PASSWORD_HASHER_PORT);
 
     app = moduleFixture.createNestApplication();
-    app.use(cookieParser());
-    app.setGlobalPrefix('v1', { exclude: ['health', 'ready'] });
-    app.useGlobalFilters(new DomainExceptionFilter());
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
+    configureApp(app);
     await app.init();
 
     // Seeding inicial de consultorio y usuarios

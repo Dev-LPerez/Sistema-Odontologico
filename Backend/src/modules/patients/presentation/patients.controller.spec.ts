@@ -5,6 +5,7 @@ import { ChangePatientStatusUseCase } from '../application/use-cases/change-pati
 import { GetPatientByIdQuery } from '../application/queries/get-patient-by-id.query';
 import { ListPatientsQuery } from '../application/queries/list-patients.query';
 import { DetectDuplicatePatientsQuery } from '../application/queries/detect-duplicate-patients.query';
+import { SearchPatientsQuery } from '../application/queries/search-patients.query';
 import { UserRole } from '../../identity';
 import { DocumentType } from '../domain/document-type.enum';
 import { AcquisitionSource } from '../domain/acquisition-source.enum';
@@ -18,6 +19,7 @@ describe('PatientsController', () => {
   let getPatientByIdQuery: jest.Mocked<GetPatientByIdQuery>;
   let listPatientsQuery: jest.Mocked<ListPatientsQuery>;
   let detectDuplicatePatientsQuery: jest.Mocked<DetectDuplicatePatientsQuery>;
+  let searchPatientsQuery: jest.Mocked<SearchPatientsQuery>;
 
   const mockUser: AuthenticatedUserPayload = {
     sub: 'user-1',
@@ -72,6 +74,10 @@ describe('PatientsController', () => {
       execute: jest.fn().mockResolvedValue([{ ...sampleResult, matchReason: 'PHONE' }]),
     } as unknown as jest.Mocked<DetectDuplicatePatientsQuery>;
 
+    searchPatientsQuery = {
+      execute: jest.fn().mockResolvedValue([sampleResult]),
+    } as unknown as jest.Mocked<SearchPatientsQuery>;
+
     controller = new PatientsController(
       createPatientUseCase,
       updatePatientUseCase,
@@ -79,6 +85,7 @@ describe('PatientsController', () => {
       getPatientByIdQuery,
       listPatientsQuery,
       detectDuplicatePatientsQuery,
+      searchPatientsQuery,
     );
   });
 
@@ -151,6 +158,21 @@ describe('PatientsController', () => {
       documentNumber: undefined,
       phone: '3001234567',
       excludePatientId: undefined,
+    });
+  });
+
+  it('debe buscar pacientes delegando a SearchPatientsQuery', async () => {
+    const res = await controller.search(mockUser, {
+      q: 'Carls Gomz',
+      limit: 10,
+      includeInactive: true,
+    });
+    expect(res).toEqual([sampleResult]);
+    expect(searchPatientsQuery.execute).toHaveBeenCalledWith({
+      clinicId: 'clinic-123',
+      q: 'Carls Gomz',
+      limit: 10,
+      includeInactive: true,
     });
   });
 });

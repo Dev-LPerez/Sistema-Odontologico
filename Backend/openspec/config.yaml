@@ -16,11 +16,12 @@ context: |
   execute. Los controladores no tienen lógica de negocio. Un módulo solo importa el index.ts público de otro.
   Principios SOLID, TDD (cobertura >= 90% en domain/application y >= 80% global) y código en inglés con
   términos en Backend/docs/glosario.md.
-  Restricciones: datos clínicos nunca en logs, Sentry ni URLs (RC-023), fechas en UTC evaluadas en
-  America/Bogota (RC-054), la base admite máximo 20 conexiones (pool de Prisma 5 y de pg-boss 3), pacientes e
-  historias clínicas no se eliminan físicamente. Commits obligatorios con Conventional Commits (RC-074).
-  Requisitos de origen: RF-B, RNF-B y calidad RC-xxx. Este backend es dueño del contrato OpenAPI.
-  Write all artifacts in Spanish.
+  Restricciones: datos clínicos y PII de pacientes nunca en logs, Sentry ni URLs (RC-023), fechas en UTC
+  evaluadas en America/Bogota (RC-054), la base admite máximo 20 conexiones (pool de Prisma 5 y de pg-boss 3),
+  pacientes e historias clínicas no se eliminan físicamente. El arranque HTTP (prefijo, pipes, filtros, helmet,
+  cookies y CORS) se centraliza en configureApp(app) y se reutiliza en main.ts y en todos los tests E2E.
+  Commits obligatorios con Conventional Commits (RC-074). Requisitos de origen: RF-B, RNF-B y calidad RC-xxx.
+  Este backend es dueño del contrato OpenAPI. Write all artifacts in Spanish.
 
 rules:
   proposal:
@@ -41,16 +42,16 @@ rules:
     - Mapea explícitamente cada Scenario de spec.md al archivo .spec.ts/.e2e-spec.ts y nombre exacto del test it(...)
     - Cada caso de uso empieza con su prueba en rojo, luego el código en verde y luego el refactor
     - Cada grupo de tareas termina con lint, typecheck, deps:check y pruebas en verde más un commit con Conventional Commits
-    - Incluye una tarea final para regenerar openapi.json y guardar en evidence.md la salida literal de lint, typecheck, deps:check, test:cov y test:e2e
+    - Incluye una tarea final para regenerar openapi.json y guardar en evidence.md la salida literal e íntegra de consola de lint, typecheck, deps:check, test:cov (tabla ASCII completa) y test:e2e
 
 operations:
   apply:
     guidance:
       - Ejecuta lint, typecheck, deps:check y las pruebas antes de marcar una tarea de verificación como completa
       - Usa exactamente los nombres de prueba it(...) mapeados en tasks.md para cada Scenario de la spec
-      - Pega la salida literal de consola de lint, typecheck, deps:check, test:cov y test:e2e en el archivo evidence.md del change y en tu respuesta final
+      - Pega en evidence.md la salida literal y exacta de stdout/stderr de pnpm (incluyendo las líneas "> backend@0.0.1 <script>" y la tabla ASCII completa de Jest en test:cov); NUNCA la resumas ni escribas frases como "Salida con código 0"
       - Realiza un git commit usando formato Conventional Commits al cerrar cada grupo de tareas de tasks.md
   archive:
     guidance:
-      - Confirma que evidence.md contiene la matriz Scenario -> Test y las salidas de consola en verde
+      - Confirma que evidence.md contiene la matriz Scenario -> Test y la salida literal de los 5 comandos sin resúmenes
       - Confirma que el documento OpenAPI está regenerado y que git status no tiene cambios pendientes

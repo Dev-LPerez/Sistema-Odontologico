@@ -66,3 +66,11 @@ export class DuplicatePatientResponseDto extends PatientResponseDto {
   })
   matchReason!: 'DOCUMENT' | 'PHONE' | 'BOTH';
 }
+
+export class PatientSearchResponseDto extends PatientResponseDto {
+  @ApiPropertyOptional({
+    example: 0.85,
+    description: 'Puntuación de similitud calculada por trigramas',
+  })
+  similarityScore?: number;
+}

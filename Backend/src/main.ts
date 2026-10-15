@@ -1,21 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import * as Sentry from '@sentry/node';
 import { AppModule } from './app.module';
-import { DomainExceptionFilter, sanitizeSentryEvent } from './shared';
-
-function validateEnv(): void {
-  const requiredEnvVars = ['DATABASE_URL'];
-  const missingVars = requiredEnvVars.filter((v) => !process.env[v]);
-
-  if (missingVars.length > 0) {
-    throw new Error(`Variables de entorno requeridas no configuradas: ${missingVars.join(', ')}`);
-  }
-}
+import { sanitizeSentryEvent } from './shared';
+import { validateEnv, configureApp } from './configure-app';
 
 async function bootstrap(): Promise<void> {
   validateEnv();
@@ -35,29 +24,8 @@ async function bootstrap(): Promise<void> {
   const logger = app.get(Logger);
   app.useLogger(logger);
 
-  // Seguridad HTTP (RNF-B-005, RNF-B-006)
-  app.use(helmet());
-  app.use(cookieParser());
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
-  });
-
-  // Excluir endpoints operativos de salud del prefijo /v1
-  app.setGlobalPrefix('v1', { exclude: ['health', 'ready'] });
-
-  // Manejo global de excepciones de dominio
-  app.useGlobalFilters(new DomainExceptionFilter());
-
-  // Validación de entrada con class-validator (RNF-B-005)
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  // Configuración transversal unificada (Seguridad, Cookies, CORS, Prefijo v1, Filtros y Pipes)
+  configureApp(app);
 
   // Documentación de OpenAPI en /docs (RNF-B-040)
   const config = new DocumentBuilder()
