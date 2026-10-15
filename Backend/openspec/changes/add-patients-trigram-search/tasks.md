@@ -33,9 +33,9 @@ Cada escenario de `specs/patients-management/spec.md` DEBE estar cubierto por la
 - [x] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(patients): expose GET /v1/patients/search endpoint with E2E tests"`
 
 ## 5. Regeneración del contrato OpenAPI, captura de evidencia y cierre
-- [ ] 5.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) verificando que `/v1/patients/search` aparezca documentado con sus query params (`q`, `limit`, `includeInactive`).
-- [ ] 5.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-patients-trigram-search/evidence.md` con la Matriz de Trazabilidad completada y la salida literal de consola de los 5 comandos.
-- [ ] 5.3 Confirmar el contrato OpenAPI, `evidence.md` y `tasks.md` con un commit: `git add -A && git commit -m "chore(patients): regenerate openapi.json and record B-06 test evidence"` dejando `git status` limpio.
+- [x] 5.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) verificando que `/v1/patients/search` aparezca documentado con sus query params (`q`, `limit`, `includeInactive`).
+- [x] 5.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-patients-trigram-search/evidence.md` con la Matriz de Trazabilidad completada y la salida literal de consola de los 5 comandos.
+- [x] 5.3 Confirmar el contrato OpenAPI, `evidence.md` y `tasks.md` con un commit: `git add -A && git commit -m "chore(patients): regenerate openapi.json and record B-06 test evidence"` dejando `git status` limpio.
 
 ## Workflow follow-up
 - Ejecutar `/opsx-sync` y `/opsx-archive` una vez auditado `evidence.md`.

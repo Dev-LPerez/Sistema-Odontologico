@@ -535,6 +535,69 @@
         ]
       }
     },
+    "/v1/patients/search": {
+      "get": {
+        "operationId": "PatientsController_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": true,
+            "in": "query",
+            "description": "Término de búsqueda difusa por nombre, documento o teléfono",
+            "schema": {
+              "example": "Carls Gomz",
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Límite de resultados a retornar (1 - 50)",
+            "schema": {
+              "default": 20,
+              "example": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "includeInactive",
+            "required": false,
+            "in": "query",
+            "description": "Incluir pacientes inactivos en el resultado",
+            "schema": {
+              "default": false,
+              "example": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultados de búsqueda ordenados por relevancia",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PatientSearchResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Búsqueda rápida de pacientes tolerante a errores tipográficos por trigramas",
+        "tags": [
+          "Patients"
+        ]
+      }
+    },
     "/v1/patients/{id}": {
       "get": {
         "operationId": "PatientsController_getById",
@@ -1362,6 +1425,127 @@
           "createdAt",
           "updatedAt",
           "matchReason"
+        ]
+      },
+      "PatientSearchResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-123"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Carlos"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Gómez"
+          },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "CC",
+              "TI",
+              "RC",
+              "CE",
+              "PAS",
+              "OTHER"
+            ],
+            "example": "CC"
+          },
+          "documentNumber": {
+            "type": "string",
+            "example": "1020304050"
+          },
+          "birthDate": {
+            "format": "date-time",
+            "type": "string",
+            "example": "1990-05-15T00:00:00.000Z"
+          },
+          "phone": {
+            "type": "string",
+            "example": "3001234567"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": "carlos@example.com"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": "Calle 100 # 15-20"
+          },
+          "emergencyContactName": {
+            "type": "string",
+            "nullable": true,
+            "example": "María Gómez"
+          },
+          "emergencyContactPhone": {
+            "type": "string",
+            "nullable": true,
+            "example": "3109876543"
+          },
+          "acquisitionSource": {
+            "type": "string",
+            "enum": [
+              "REFERRAL",
+              "INSTAGRAM",
+              "WHATSAPP",
+              "DIRECT",
+              "OTHER"
+            ],
+            "example": "INSTAGRAM"
+          },
+          "dataTreatmentConsent": {
+            "type": "boolean",
+            "example": true
+          },
+          "dataTreatmentConsentAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2026-10-14T10:00:00.000Z"
+          },
+          "similarityScore": {
+            "type": "number",
+            "example": 0.85,
+            "description": "Puntuación de similitud calculada por trigramas"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "firstName",
+          "lastName",
+          "documentType",
+          "documentNumber",
+          "birthDate",
+          "phone",
+          "acquisitionSource",
+          "dataTreatmentConsent",
+          "dataTreatmentConsentAt",
+          "isActive",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "UpdatePatientDto": {

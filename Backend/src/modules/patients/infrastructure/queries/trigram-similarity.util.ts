@@ -1,4 +1,7 @@
 export function normalizeText(text: string): string {
+  if (!/[^\x00-\x7F]/.test(text)) {
+    return text.toLowerCase().trim();
+  }
   return text
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
