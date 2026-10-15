@@ -1,0 +1,408 @@
+import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { ClinicalHistoryRepositoryPort } from '../../domain/clinical-history.repository.port';
+import { InMemoryClinicalHistoryRepository } from './in-memory-clinical-history.repository';
+import { PrismaClinicalHistoryRepository } from './prisma-clinical-history.repository';
+import { ClinicalHistory } from '../../domain/clinical-history.entity';
+import { MedicalAntecedents } from '../../domain/medical-antecedents.vo';
+import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
+import { TreatmentItemStatus } from '../../domain/treatment-item-status.enum';
+import { DuplicateClinicalHistoryError } from '../../domain/clinical.errors';
+import { Prisma } from '@prisma/client';
+
+interface RepositoryFactory {
+  name: string;
+  createRepo: () => {
+    repo: ClinicalHistoryRepositoryPort;
+    cleanup?: () => Promise<void>;
+  };
+}
+
+describe('ClinicalHistory Repository Contract Tests (RC-018, RC-050, RC-055)', () => {
+  const realPrisma = new PrismaService();
+  const fixedNow = new Date('2026-10-15T10:00:00.000Z');
+
+  beforeAll(async () => {
+    await realPrisma.$connect();
+  });
+
+  afterAll(async () => {
+    await cleanDb();
+    await realPrisma.$disconnect();
+  });
+
+  const cleanDb = async () => {
+    await realPrisma.treatmentPlanItem.deleteMany();
+    await realPrisma.clinicalHistory.deleteMany();
+    await realPrisma.patientProcedurePrice.deleteMany();
+    await realPrisma.procedure.deleteMany();
+    await realPrisma.material.deleteMany();
+    await realPrisma.patient.deleteMany();
+    await realPrisma.refreshSession.deleteMany();
+    await realPrisma.user.deleteMany();
+    await realPrisma.clinic.deleteMany();
+  };
+
+  const ensurePrerequisites = async () => {
+    await realPrisma.clinic.upsert({
+      where: { id: 'clinic-contract-1' },
+      create: { id: 'clinic-contract-1', name: 'Clínica Contract 1' },
+      update: {},
+    });
+    await realPrisma.clinic.upsert({
+      where: { id: 'clinic-contract-2' },
+      create: { id: 'clinic-contract-2', name: 'Clínica Contract 2' },
+      update: {},
+    });
+
+    await realPrisma.patient.upsert({
+      where: { id: 'pat-contract-1' },
+      create: {
+        id: 'pat-contract-1',
+        clinicId: 'clinic-contract-1',
+        firstName: 'Juan',
+        lastName: 'Pérez',
+        documentType: 'CC',
+        documentNumber: '99001122',
+        birthDate: new Date('1990-01-01'),
+        phone: '3009900112',
+        dataTreatmentConsent: true,
+        dataTreatmentConsentAt: fixedNow,
+      },
+      update: {},
+    });
+    await realPrisma.patient.upsert({
+      where: { id: 'pat-contract-2' },
+      create: {
+        id: 'pat-contract-2',
+        clinicId: 'clinic-contract-2',
+        firstName: 'María',
+        lastName: 'López',
+        documentType: 'CC',
+        documentNumber: '88001122',
+        birthDate: new Date('1992-05-10'),
+        phone: '3008800112',
+        dataTreatmentConsent: true,
+        dataTreatmentConsentAt: fixedNow,
+      },
+      update: {},
+    });
+
+    await realPrisma.procedure.upsert({
+      where: { id: 'proc-contract-1' },
+      create: {
+        id: 'proc-contract-1',
+        clinicId: 'clinic-contract-1',
+        code: 'PROC-C1',
+        name: 'Profilaxis',
+        basePriceCop: 80000,
+      },
+      update: {},
+    });
+  };
+
+  const implementations: RepositoryFactory[] = [
+    {
+      name: 'InMemoryClinicalHistoryRepository',
+      createRepo: () => {
+        const repo = new InMemoryClinicalHistoryRepository();
+        return {
+          repo,
+          cleanup: async () => repo.clear(),
+        };
+      },
+    },
+    {
+      name: 'PrismaClinicalHistoryRepository (PostgreSQL Real)',
+      createRepo: () => {
+        const repo = new PrismaClinicalHistoryRepository(realPrisma);
+        return {
+          repo,
+          cleanup: async () => {
+            await cleanDb();
+            await ensurePrerequisites();
+          },
+        };
+      },
+    },
+  ];
+
+  implementations.forEach(({ name, createRepo }) => {
+    describe(`Suite Contract: ${name}`, () => {
+      let repo: ClinicalHistoryRepositoryPort;
+      let cleanup: (() => Promise<void>) | undefined;
+
+      beforeEach(async () => {
+        const context = createRepo();
+        repo = context.repo;
+        cleanup = context.cleanup;
+        if (cleanup) {
+          await cleanup();
+        }
+      });
+
+      afterAll(async () => {
+        if (cleanup) {
+          await cleanup();
+        }
+      });
+
+      it('debe crear, actualizar y consultar la historia clínica con antecedentes y diagnósticos aislando por clinicId', async () => {
+        const antecedents1 = MedicalAntecedents.create({
+          hypertension: false,
+          diabetes: false,
+          allergies: true,
+          allergiesDetails: 'Penicilina',
+          medications: true,
+          medicationsDetails: 'Amoxicilina 500mg',
+          bleedingDisorders: false,
+          pregnancy: false,
+          otherNotes: 'Anotación especial',
+          familyAntecedents: 'Madre hipertensa',
+        });
+
+        const history1 = ClinicalHistory.create({
+          id: 'hist-contract-1',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          chiefComplaint: 'Dolor dental severo',
+          currentIllness: 'Dolor continuo desde hace 2 días',
+          medicalAntecedents: antecedents1,
+          clinicalExamination: 'Caries cavitada en 16',
+          diagnoses: [{ code: 'K02.1', description: 'Caries de la dentina' }],
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+
+        await repo.save(history1);
+
+        const found = await repo.findByPatientId('clinic-contract-1', 'pat-contract-1');
+        expect(found).not.toBeNull();
+        expect(found?.id).toBe('hist-contract-1');
+        expect(found?.chiefComplaint).toBe('Dolor dental severo');
+        expect(found?.medicalAntecedents.allergies).toBe(true);
+        expect(found?.medicalAntecedents.allergiesDetails).toBe('Penicilina');
+        expect(found?.medicalAntecedents.familyAntecedents).toBe('Madre hipertensa');
+
+        // Aislamiento por consultorio (clinicId)
+        const foundOtherClinic = await repo.findByPatientId('clinic-contract-2', 'pat-contract-1');
+        expect(foundOtherClinic).toBeNull();
+
+        // Actualización
+        const updatedDate = new Date('2026-10-15T12:00:00.000Z');
+        history1.update({
+          chiefComplaint: 'Dolor moderado post-tratamiento',
+          currentIllness: 'Evolución satisfactoria',
+          updatedAt: updatedDate,
+        });
+        await repo.save(history1);
+
+        const foundAfterUpdate = await repo.findById('clinic-contract-1', 'hist-contract-1');
+        expect(foundAfterUpdate?.chiefComplaint).toBe('Dolor moderado post-tratamiento');
+        expect(foundAfterUpdate?.currentIllness).toBe('Evolución satisfactoria');
+        expect(foundAfterUpdate?.updatedAt).toEqual(updatedDate);
+      });
+
+      it('debe lanzar DuplicateClinicalHistoryError (409) cuando el paciente ya tiene historia clínica en el consultorio (P2002)', async () => {
+        const antecedents = MedicalAntecedents.create({
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        });
+
+        const history1 = ClinicalHistory.create({
+          id: 'hist-dup-1',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          chiefComplaint: 'Primera historia',
+          currentIllness: 'Enfermedad 1',
+          medicalAntecedents: antecedents,
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+        await repo.save(history1);
+
+        const history2 = ClinicalHistory.create({
+          id: 'hist-dup-2',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          chiefComplaint: 'Segunda historia para el mismo paciente',
+          currentIllness: 'Enfermedad 2',
+          medicalAntecedents: antecedents,
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+
+        await expect(repo.save(history2)).rejects.toThrow(DuplicateClinicalHistoryError);
+      });
+
+      it('debe agregar ítems al plan de tratamiento resolviendo el costo y actualizar su estado a COMPLETED calculando totalEstimatedCostCop', async () => {
+        const antecedents = MedicalAntecedents.create({
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        });
+
+        const history = ClinicalHistory.create({
+          id: 'hist-plan-1',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          chiefComplaint: 'Plan de prueba',
+          currentIllness: 'Evaluación integral',
+          medicalAntecedents: antecedents,
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+
+        const item1 = TreatmentPlanItem.create({
+          id: 'item-contract-1',
+          clinicId: 'clinic-contract-1',
+          clinicalHistoryId: 'hist-plan-1',
+          procedureId: 'proc-contract-1',
+          procedureCode: 'PROC-C1',
+          procedureName: 'Profilaxis',
+          toothNumber: '16',
+          status: TreatmentItemStatus.PENDING,
+          estimatedCostCop: 80000,
+          notes: 'Limpieza inicial',
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+
+        history.addTreatmentPlanItem(item1);
+        await repo.save(history);
+
+        const savedHistory = await repo.findById('clinic-contract-1', 'hist-plan-1');
+        expect(savedHistory?.treatmentItems).toHaveLength(1);
+        expect(savedHistory?.treatmentItems[0].status).toBe(TreatmentItemStatus.PENDING);
+        expect(savedHistory?.totalEstimatedCostCop).toBe(80000);
+
+        // Actualizar estado a COMPLETED
+        const completedDate = new Date('2026-10-15T13:00:00.000Z');
+        history.updateTreatmentPlanItemStatus(
+          'item-contract-1',
+          TreatmentItemStatus.COMPLETED,
+          completedDate,
+        );
+        await repo.save(history);
+
+        const updatedHistory = await repo.findById('clinic-contract-1', 'hist-plan-1');
+        expect(updatedHistory?.treatmentItems[0].status).toBe(TreatmentItemStatus.COMPLETED);
+        expect(updatedHistory?.treatmentItems[0].updatedAt).toEqual(completedDate);
+        expect(updatedHistory?.totalEstimatedCostCop).toBe(80000);
+      });
+    });
+  });
+
+  describe('Restricciones de Integridad Referencial onDelete: Restrict (RC-055)', () => {
+    beforeEach(async () => {
+      await cleanDb();
+      await ensurePrerequisites();
+    });
+
+    it('debe rechazar la eliminación del paciente si tiene una historia clínica asociada (P2003 onDelete: Restrict)', async () => {
+      const repo = new PrismaClinicalHistoryRepository(realPrisma);
+
+      const history = ClinicalHistory.create({
+        id: 'hist-restrict-patient',
+        clinicId: 'clinic-contract-1',
+        patientId: 'pat-contract-1',
+        chiefComplaint: 'Consulta',
+        currentIllness: 'Enfermedad',
+        medicalAntecedents: MedicalAntecedents.create({
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        }),
+        createdAt: fixedNow,
+        updatedAt: fixedNow,
+      });
+
+      await repo.save(history);
+
+      await expect(realPrisma.patient.delete({ where: { id: 'pat-contract-1' } })).rejects.toThrow(
+        Prisma.PrismaClientKnownRequestError,
+      );
+    });
+
+    it('debe rechazar la eliminación del procedimiento si está referenciado en un ítem del plan de tratamiento (P2003 onDelete: Restrict)', async () => {
+      const repo = new PrismaClinicalHistoryRepository(realPrisma);
+
+      const history = ClinicalHistory.create({
+        id: 'hist-restrict-proc',
+        clinicId: 'clinic-contract-1',
+        patientId: 'pat-contract-1',
+        chiefComplaint: 'Consulta',
+        currentIllness: 'Enfermedad',
+        medicalAntecedents: MedicalAntecedents.create({
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        }),
+        createdAt: fixedNow,
+        updatedAt: fixedNow,
+      });
+
+      const item = TreatmentPlanItem.create({
+        id: 'item-restrict-proc',
+        clinicId: 'clinic-contract-1',
+        clinicalHistoryId: 'hist-restrict-proc',
+        procedureId: 'proc-contract-1',
+        procedureCode: 'PROC-C1',
+        procedureName: 'Profilaxis',
+        toothNumber: null,
+        status: TreatmentItemStatus.PENDING,
+        estimatedCostCop: 80000,
+        notes: null,
+        createdAt: fixedNow,
+        updatedAt: fixedNow,
+      });
+
+      history.addTreatmentPlanItem(item);
+      await repo.save(history);
+
+      await expect(
+        realPrisma.procedure.delete({ where: { id: 'proc-contract-1' } }),
+      ).rejects.toThrow(Prisma.PrismaClientKnownRequestError);
+    });
+
+    it('debe rechazar la eliminación del consultorio si tiene historias clínicas asociadas (P2003 onDelete: Restrict)', async () => {
+      const repo = new PrismaClinicalHistoryRepository(realPrisma);
+
+      const history = ClinicalHistory.create({
+        id: 'hist-restrict-clinic',
+        clinicId: 'clinic-contract-1',
+        patientId: 'pat-contract-1',
+        chiefComplaint: 'Consulta',
+        currentIllness: 'Enfermedad',
+        medicalAntecedents: MedicalAntecedents.create({
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        }),
+        createdAt: fixedNow,
+        updatedAt: fixedNow,
+      });
+
+      await repo.save(history);
+
+      await expect(
+        realPrisma.clinic.delete({ where: { id: 'clinic-contract-1' } }),
+      ).rejects.toThrow(Prisma.PrismaClientKnownRequestError);
+    });
+  });
+});
