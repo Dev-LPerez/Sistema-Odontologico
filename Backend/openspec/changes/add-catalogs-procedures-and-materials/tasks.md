@@ -40,9 +40,9 @@ Cada escenario de `specs/catalogs-management/spec.md` DEBE estar cubierto por la
 - [x] 5.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(catalogs): add CatalogsController, module wiring and E2E role permission tests"`
 
 ## 6. Umbrales de cobertura RC-002, contrato OpenAPI y evidencia literal (`evidence.md`)
-- [ ] 6.1 Agregar en `Backend/jest.config.ts` los umbrales del 90 % para `'./src/modules/catalogs/domain/'` y `'./src/modules/catalogs/application/'` (`RC-002`) y regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`).
-- [ ] 6.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-catalogs-procedures-and-materials/evidence.md` con la Matriz de Trazabilidad completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
-- [ ] 6.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(catalogs): enforce 90% coverage thresholds, regenerate openapi.json and record B-07 evidence"` dejando `git status` limpio.
+- [x] 6.1 Agregar en `Backend/jest.config.ts` los umbrales del 90 % para `'./src/modules/catalogs/domain/'` y `'./src/modules/catalogs/application/'` (`RC-002`) y regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`).
+- [x] 6.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-catalogs-procedures-and-materials/evidence.md` con la Matriz de Trazabilidad completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
+- [x] 6.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(catalogs): enforce 90% coverage thresholds, regenerate openapi.json and record B-07 evidence"` dejando `git status` limpio.
 
 ## Workflow follow-up
 - Pasa `evidence.md` al Arquitecto para auditoría antes de ejecutar `/opsx-sync` y `/opsx-archive`.
