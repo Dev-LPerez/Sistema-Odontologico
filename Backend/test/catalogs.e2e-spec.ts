@@ -175,7 +175,7 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
   });
 
   describe('Scenario 1: Administradora crea y actualiza un procedimiento y auxiliar puede listarlo (RF-B-050)', () => {
-    it('ADMIN should create procedure with 201 Created and update it with 200 OK', async () => {
+    it('debe permitir a ADMIN crear y actualizar un procedimiento y a AUXILIARY listarlo (201/200)', async () => {
       const createRes = await request(app.getHttpServer())
         .post('/v1/catalogs/procedures')
         .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -208,16 +208,25 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
       expect(updateRes.body.id).toBe(createdProcedureId);
       expect(updateRes.body.name).toBe('Resina estética premium');
       expect(updateRes.body.basePriceCop).toBe(200000);
+
+      const listRes = await request(app.getHttpServer())
+        .get('/v1/catalogs/procedures')
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .expect(200);
+
+      expect(listRes.body).toHaveLength(1);
+      expect(listRes.body[0].code).toBe('RES-EST');
+      expect(listRes.body[0].name).toBe('Resina estética premium');
     });
   });
 
   describe('Scenario 2: Rechazo de procedimiento con código duplicado en el mismo consultorio (RF-B-050)', () => {
-    it('ADMIN should receive 409 Conflict when creating procedure with duplicate code', async () => {
+    it('debe rechazar con 409 DUPLICATE_PROCEDURE_CODE cuando el código de procedimiento ya existe en el consultorio', async () => {
       const res = await request(app.getHttpServer())
         .post('/v1/catalogs/procedures')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({
-          code: 'res-est', // Normalized should collide with RES-EST
+          code: 'res-est', // Normalizado debe colisionar con RES-EST
           name: 'Otra resina',
           basePriceCop: 150000,
         })
@@ -228,8 +237,76 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
     });
   });
 
-  describe('Scenario 3: Configuración y consulta de precio especial por paciente con motivo (RF-B-051)', () => {
-    it('ADMIN should set custom price with 200 OK and list it for the patient', async () => {
+  describe('Scenario 3: Bloqueo a rol AUXILIARY al intentar crear o modificar procedimientos o materiales (RC-005)', () => {
+    it('debe rechazar con 403 FORBIDDEN_ROLE cuando AUXILIARY intenta crear o modificar procedimientos, precios o materiales', async () => {
+      // 1. POST /procedures
+      const p1 = await request(app.getHttpServer())
+        .post('/v1/catalogs/procedures')
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .send({
+          code: 'PROC-AUX',
+          name: 'Proc Aux',
+          basePriceCop: 50000,
+        })
+        .expect(403);
+      expect(p1.body.errorCode).toBe('FORBIDDEN_ROLE');
+
+      // 2. PATCH /procedures/:id
+      const p2 = await request(app.getHttpServer())
+        .patch(`/v1/catalogs/procedures/${createdProcedureId}`)
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .send({ name: 'Hack' })
+        .expect(403);
+      expect(p2.body.errorCode).toBe('FORBIDDEN_ROLE');
+
+      // 3. PUT /patient-prices
+      const p3 = await request(app.getHttpServer())
+        .put('/v1/catalogs/patient-prices')
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .send({
+          patientId: testPatientId,
+          procedureId: createdProcedureId,
+          customPriceCop: 10000,
+          reason: 'Gratis',
+        })
+        .expect(403);
+      expect(p3.body.errorCode).toBe('FORBIDDEN_ROLE');
+
+      // 4. POST /materials
+      const p4 = await request(app.getHttpServer())
+        .post('/v1/catalogs/materials')
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .send({
+          brand: 'AuxBrand',
+          reference: 'AuxRef',
+          type: 'RESIN',
+          color: 'A1',
+          currentStock: 10,
+          minStock: 2,
+        })
+        .expect(403);
+      expect(p4.body.errorCode).toBe('FORBIDDEN_ROLE');
+
+      // 5. PATCH /materials/:id
+      const p5 = await request(app.getHttpServer())
+        .patch('/v1/catalogs/materials/mat-mock-aux')
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .send({ currentStock: 50 })
+        .expect(403);
+      expect(p5.body.errorCode).toBe('FORBIDDEN_ROLE');
+
+      // 6. POST /materials/:id/consume
+      const p6 = await request(app.getHttpServer())
+        .post('/v1/catalogs/materials/mat-mock-aux/consume')
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .send({ quantity: 1 })
+        .expect(403);
+      expect(p6.body.errorCode).toBe('FORBIDDEN_ROLE');
+    });
+  });
+
+  describe('Scenario 4: Configuración y consulta exitosa de precio especial por paciente con motivo (RF-B-051)', () => {
+    it('debe permitir a ADMIN configurar un precio especial por paciente con motivo y a AUXILIARY consultarlo (200)', async () => {
       const setPriceRes = await request(app.getHttpServer())
         .put('/v1/catalogs/patient-prices')
         .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -248,16 +325,18 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
 
       const listPriceRes = await request(app.getHttpServer())
         .get(`/v1/catalogs/patient-prices?patientId=${testPatientId}`)
-        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
         .expect(200);
 
       expect(listPriceRes.body).toHaveLength(1);
       expect(listPriceRes.body[0].customPriceCop).toBe(140000);
       expect(listPriceRes.body[0].reason).toBe('Tarifa familiar');
     });
+  });
 
-    it('ADMIN should receive 400 Bad Request when reason is empty or whitespace', async () => {
-      const res = await request(app.getHttpServer())
+  describe('Scenario 5: Rechazo de ajuste de precio por paciente cuando el motivo está vacío (RF-B-051)', () => {
+    it('debe rechazar con 400 cuando se intenta configurar un precio por paciente con motivo vacío o monto negativo', async () => {
+      const resEmpty = await request(app.getHttpServer())
         .put('/v1/catalogs/patient-prices')
         .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({
@@ -268,32 +347,25 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
         })
         .expect(400);
 
-      expect(res.body.message).toBeDefined();
+      expect(resEmpty.body.message).toBeDefined();
+
+      const resNegative = await request(app.getHttpServer())
+        .put('/v1/catalogs/patient-prices')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({
+          patientId: testPatientId,
+          procedureId: createdProcedureId,
+          customPriceCop: -100,
+          reason: 'Precio inválido negativo',
+        })
+        .expect(400);
+
+      expect(resNegative.body.message).toBeDefined();
     });
   });
 
-  describe('Scenario 4: AUXILIARY puede consultar procedimientos y precios especiales (RC-005)', () => {
-    it('AUXILIARY should list procedures and patient custom prices with 200 OK', async () => {
-      const procRes = await request(app.getHttpServer())
-        .get('/v1/catalogs/procedures')
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .expect(200);
-
-      expect(procRes.body).toHaveLength(1);
-      expect(procRes.body[0].code).toBe('RES-EST');
-
-      const priceRes = await request(app.getHttpServer())
-        .get(`/v1/catalogs/patient-prices?patientId=${testPatientId}`)
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .expect(200);
-
-      expect(priceRes.body).toHaveLength(1);
-      expect(priceRes.body[0].customPriceCop).toBe(140000);
-    });
-  });
-
-  describe('Scenario 5: Registro de material propio y alerta de bajo stock (RF-B-052)', () => {
-    it('ADMIN should create material with 201 Created and isLowStock false', async () => {
+  describe('Scenario 6: Registro de material propio y activación de alerta de bajo stock tras descuento (RF-B-052, RF-B-053)', () => {
+    it('debe registrar un material propio, descontar existencias y activar isLowStock cuando llega al umbral mínimo (201/200)', async () => {
       const createRes = await request(app.getHttpServer())
         .post('/v1/catalogs/materials')
         .set('Authorization', `Bearer ${adminAccessToken}`)
@@ -315,6 +387,16 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
 
       createdMaterialId = createRes.body.id;
 
+      // El consumo debe ser realizado por ADMIN (RNF-B-004, RC-005)
+      const consumeRes = await request(app.getHttpServer())
+        .post(`/v1/catalogs/materials/${createdMaterialId}/consume`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ quantity: 2 })
+        .expect(200);
+
+      expect(consumeRes.body.currentStock).toBe(1);
+      expect(consumeRes.body.isLowStock).toBe(true);
+
       const listRes = await request(app.getHttpServer())
         .get('/v1/catalogs/materials')
         .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
@@ -322,89 +404,20 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
 
       expect(listRes.body).toHaveLength(1);
       expect(listRes.body[0].id).toBe(createdMaterialId);
-      expect(listRes.body[0].isLowStock).toBe(false);
+      expect(listRes.body[0].isLowStock).toBe(true);
     });
   });
 
-  describe('Scenario 6: Descuento de existencias y activación de alerta de bajo inventario (RF-B-053)', () => {
-    it('AUXILIARY should consume 2 units, reducing stock to 1 and setting isLowStock to true', async () => {
-      const consumeRes = await request(app.getHttpServer())
-        .post(`/v1/catalogs/materials/${createdMaterialId}/consume`)
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .send({ quantity: 2 })
-        .expect(200);
-
-      expect(consumeRes.body.currentStock).toBe(1);
-      expect(consumeRes.body.isLowStock).toBe(true);
-    });
-
-    it('should receive 422 Unprocessable Entity when consuming more than available stock', async () => {
+  describe('Scenario 7: Rechazo de descuento de material cuando las existencias son insuficientes (RF-B-053)', () => {
+    it('debe rechazar con 422 INSUFFICIENT_MATERIAL_STOCK cuando se intenta descontar más stock del disponible', async () => {
       const res = await request(app.getHttpServer())
         .post(`/v1/catalogs/materials/${createdMaterialId}/consume`)
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+        .set('Authorization', `Bearer ${adminAccessToken}`)
         .send({ quantity: 2 })
         .expect(422);
 
       expect(res.body.errorCode).toBe('INSUFFICIENT_MATERIAL_STOCK');
       expect(res.body.message).toContain('insuficiente');
-    });
-  });
-
-  describe('Scenario 7: Bloqueo a rol AUXILIARY en rutas administrativas (RC-005)', () => {
-    it('AUXILIARY should be rejected with 403 Forbidden on POST /catalogs/procedures', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/catalogs/procedures')
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .send({
-          code: 'PROC-AUX',
-          name: 'Proc Aux',
-          basePriceCop: 50000,
-        })
-        .expect(403);
-    });
-
-    it('AUXILIARY should be rejected with 403 Forbidden on PATCH /catalogs/procedures/:id', async () => {
-      await request(app.getHttpServer())
-        .patch(`/v1/catalogs/procedures/${createdProcedureId}`)
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .send({ name: 'Hack' })
-        .expect(403);
-    });
-
-    it('AUXILIARY should be rejected with 403 Forbidden on PUT /catalogs/patient-prices', async () => {
-      await request(app.getHttpServer())
-        .put('/v1/catalogs/patient-prices')
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .send({
-          patientId: testPatientId,
-          procedureId: createdProcedureId,
-          customPriceCop: 10000,
-          reason: 'Gratis',
-        })
-        .expect(403);
-    });
-
-    it('AUXILIARY should be rejected with 403 Forbidden on POST /catalogs/materials', async () => {
-      await request(app.getHttpServer())
-        .post('/v1/catalogs/materials')
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .send({
-          brand: 'AuxBrand',
-          reference: 'AuxRef',
-          type: 'RESIN',
-          color: 'A1',
-          currentStock: 10,
-          minStock: 2,
-        })
-        .expect(403);
-    });
-
-    it('AUXILIARY should be rejected with 403 Forbidden on PATCH /catalogs/materials/:id', async () => {
-      await request(app.getHttpServer())
-        .patch(`/v1/catalogs/materials/${createdMaterialId}`)
-        .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
-        .send({ currentStock: 50 })
-        .expect(403);
     });
   });
 });

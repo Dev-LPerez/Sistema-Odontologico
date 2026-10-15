@@ -79,4 +79,48 @@ describe('PatientProcedurePrice Entity', () => {
       }),
     ).toThrow(PatientPriceReasonRequiredError);
   });
+
+  it('debe lanzar InvalidCatalogDataError si id o clinicId están vacíos', () => {
+    expect(() => PatientProcedurePrice.create({ ...baseProps, id: '' })).toThrow(
+      InvalidCatalogDataError,
+    );
+    expect(() => PatientProcedurePrice.create({ ...baseProps, clinicId: '   ' })).toThrow(
+      InvalidCatalogDataError,
+    );
+  });
+
+  it('debe lanzar InvalidCatalogDataError si customPrice es nulo o no es instancia de Money', () => {
+    expect(() =>
+      PatientProcedurePrice.create({
+        ...baseProps,
+        customPrice: null as unknown as Money,
+      }),
+    ).toThrow(InvalidCatalogDataError);
+
+    expect(() =>
+      PatientProcedurePrice.create({
+        ...baseProps,
+        customPrice: { amount: 100000 } as unknown as Money,
+      }),
+    ).toThrow(InvalidCatalogDataError);
+  });
+
+  it('debe permitir actualizar solo customPrice o solo reason individualmente', () => {
+    const item = PatientProcedurePrice.create(baseProps);
+    const date1 = new Date('2026-10-15T12:00:00.000Z');
+    item.update({
+      customPrice: Money.from(110000),
+      updatedAt: date1,
+    });
+    expect(item.customPrice.amount).toBe(110000);
+    expect(item.reason).toBe(baseProps.reason);
+
+    const date2 = new Date('2026-10-15T13:00:00.000Z');
+    item.update({
+      reason: 'Nuevo motivo',
+      updatedAt: date2,
+    });
+    expect(item.customPrice.amount).toBe(110000);
+    expect(item.reason).toBe('Nuevo motivo');
+  });
 });

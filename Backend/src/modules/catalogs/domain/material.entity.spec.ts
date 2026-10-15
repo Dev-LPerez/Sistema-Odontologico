@@ -106,4 +106,84 @@ describe('Material Entity', () => {
     expect(material.isLowStock).toBe(false);
     expect(material.updatedAt).toEqual(newDate);
   });
+
+  it('debe lanzar InvalidCatalogDataError si campos obligatorios están vacíos', () => {
+    expect(() => Material.create({ ...baseProps, id: '' })).toThrow(InvalidCatalogDataError);
+    expect(() => Material.create({ ...baseProps, clinicId: '   ' })).toThrow(
+      InvalidCatalogDataError,
+    );
+    expect(() => Material.create({ ...baseProps, brand: '' })).toThrow(InvalidCatalogDataError);
+    expect(() => Material.create({ ...baseProps, reference: '   ' })).toThrow(
+      InvalidCatalogDataError,
+    );
+    expect(() => Material.create({ ...baseProps, type: '' })).toThrow(InvalidCatalogDataError);
+    expect(() => Material.create({ ...baseProps, color: '   ' })).toThrow(InvalidCatalogDataError);
+  });
+
+  it('debe lanzar InvalidCatalogDataError si currentStock o minStock no son enteros o no son números', () => {
+    expect(() =>
+      Material.create({
+        ...baseProps,
+        currentStock: 'diez' as unknown as number,
+      }),
+    ).toThrow(InvalidCatalogDataError);
+
+    expect(() =>
+      Material.create({
+        ...baseProps,
+        currentStock: 2.5,
+      }),
+    ).toThrow(InvalidCatalogDataError);
+
+    expect(() =>
+      Material.create({
+        ...baseProps,
+        minStock: NaN,
+      }),
+    ).toThrow(InvalidCatalogDataError);
+  });
+
+  it('debe lanzar InvalidCatalogDataError al consumir stock con valores no enteros o no numéricos', () => {
+    const material = Material.create(baseProps);
+    const date = new Date('2026-10-15T12:00:00.000Z');
+    expect(() => material.consumeStock(1.5, date)).toThrow(InvalidCatalogDataError);
+    expect(() => material.consumeStock('dos' as unknown as number, date)).toThrow(
+      InvalidCatalogDataError,
+    );
+  });
+
+  it('debe permitir actualizar solo propiedades individuales sin alterar el resto', () => {
+    const material = Material.create(baseProps);
+    const date = new Date('2026-10-15T12:00:00.000Z');
+
+    material.update({ brand: 'NuevaMarca', updatedAt: date });
+    expect(material.brand).toBe('NuevaMarca');
+    expect(material.reference).toBe(baseProps.reference);
+
+    material.update({ reference: 'NuevaRef', updatedAt: date });
+    expect(material.reference).toBe('NuevaRef');
+
+    material.update({ type: 'NuevoTipo', updatedAt: date });
+    expect(material.type).toBe('NuevoTipo');
+
+    material.update({ color: 'NuevoColor', updatedAt: date });
+    expect(material.color).toBe('NuevoColor');
+
+    material.update({ currentStock: 7, updatedAt: date });
+    expect(material.currentStock).toBe(7);
+
+    material.update({ minStock: 4, updatedAt: date });
+    expect(material.minStock).toBe(4);
+
+    material.update({ isActive: false, updatedAt: date });
+    expect(material.isActive).toBe(false);
+  });
+
+  it('debe asignar isActive en true por defecto cuando isActive es undefined en create', () => {
+    const material = Material.create({
+      ...baseProps,
+      isActive: undefined,
+    });
+    expect(material.isActive).toBe(true);
+  });
 });

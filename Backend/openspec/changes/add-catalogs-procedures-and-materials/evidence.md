@@ -1,16 +1,16 @@
 # Evidencia de Calidad y Pruebas - Change: add-catalogs-procedures-and-materials (B-07)
 
-## 1. Matriz de Trazabilidad Completada (Spec Scenario -> Test Concreto)
+## 1. Matriz de Trazabilidad Obligatoria (Spec Scenario -> Test Concreto 1:1)
 
-| Escenario en `spec.md` | Archivo de Prueba Unitaria / Caso de Uso | Archivo E2E (`Backend/test/catalogs.e2e-spec.ts`) | Estado |
+| Escenario en `spec.md` | Archivo de Prueba Unitaria / Contrato (PostgreSQL Real + InMemory) | Archivo E2E (`Backend/test/catalogs.e2e-spec.ts`) | Estado |
 | :--- | :--- | :--- | :--- |
-| **Scenario:** Administradora crea y actualiza un procedimiento y auxiliar puede listarlo (RF-B-050) | `create-procedure.use-case.spec.ts` -> `it('should create an active procedure with base price COP')`, `update-procedure.use-case.spec.ts` -> `it('should update procedure properties')`, `list-procedures.query.spec.ts` -> `it('should list procedures by clinicId')` | `it('ADMIN should create procedure with 201 Created and update it with 200 OK')`, `it('AUXILIARY should list procedures and patient custom prices with 200 OK')` | **PASSED** |
-| **Scenario:** Rechazo de procedimiento con código duplicado en el mismo consultorio (RF-B-050) | `create-procedure.use-case.spec.ts` -> `it('should throw DuplicateProcedureCodeError when code already exists in clinic')` | `it('ADMIN should receive 409 Conflict when creating procedure with duplicate code')` | **PASSED** |
-| **Scenario:** Bloqueo a rol AUXILIARY al intentar crear o modificar procedimientos o materiales (RC-005) | `roles.guard.spec.ts` (pruebas unitarias del guard de roles) | `it('AUXILIARY should be rejected with 403 Forbidden on POST /catalogs/procedures')`, `it('AUXILIARY should be rejected with 403 Forbidden on PATCH /catalogs/procedures/:id')`, `it('AUXILIARY should be rejected with 403 Forbidden on PUT /catalogs/patient-prices')`, `it('AUXILIARY should be rejected with 403 Forbidden on POST /catalogs/materials')`, `it('AUXILIARY should be rejected with 403 Forbidden on PATCH /catalogs/materials/:id')` | **PASSED** |
-| **Scenario:** Configuración y consulta de precio especial por paciente con motivo (RF-B-051) | `set-patient-procedure-price.use-case.spec.ts` -> `it('should create or update a patient custom price with mandatory reason')`, `list-patient-procedure-prices.query.spec.ts` -> `it('should list all custom prices for a patient in clinic')` | `it('ADMIN should set custom price with 200 OK and list it for the patient')` | **PASSED** |
-| **Scenario:** Rechazo de ajuste de precio por paciente cuando el motivo está vacío (RF-B-051) | `patient-procedure-price.entity.spec.ts` -> `it('should throw PatientPriceReasonRequiredError when reason is empty or whitespace')` | `it('ADMIN should receive 400 Bad Request when reason is empty or whitespace')` | **PASSED** |
-| **Scenario:** Registro de material propio y activación de alerta de bajo stock tras descuento (RF-B-052, RF-B-053) | `create-material.use-case.spec.ts` -> `it('should create material with natural key and calculate initial stock status')`, `consume-material-stock.use-case.spec.ts` -> `it('should consume stock and recalculate low stock flag')` | `it('ADMIN should create material with 201 Created and isLowStock false')`, `it('AUXILIARY should consume 2 units, reducing stock to 1 and setting isLowStock to true')` | **PASSED** |
-| **Scenario:** Rechazo de descuento de material cuando las existencias son insuficientes (RF-B-053) | `material.entity.spec.ts` -> `it('should throw InsufficientMaterialStockError when consuming more than currentStock')`, `consume-material-stock.use-case.spec.ts` -> `it('should reject consumption if stock is insufficient')` | `it('should receive 422 Unprocessable Entity when consuming more than available stock')` | **PASSED** |
+| **Scenario:** Administradora crea y actualiza un procedimiento y auxiliar puede listarlo | `create-procedure.use-case.spec.ts`, `update-procedure.use-case.spec.ts` y `catalogs-repositories.contract.spec.ts` -> `it('debe crear, actualizar y listar procedimientos aislando por clinicId')` | `it('debe permitir a ADMIN crear y actualizar un procedimiento y a AUXILIARY listarlo (201/200)')` | **PASSED** |
+| **Scenario:** Rechazo de procedimiento con código duplicado en el mismo consultorio | `create-procedure.use-case.spec.ts` y `catalogs-repositories.contract.spec.ts` -> `it('debe lanzar DuplicateProcedureCodeError (409) cuando el código ya existe en el mismo consultorio (P2002)')` | `it('debe rechazar con 409 DUPLICATE_PROCEDURE_CODE cuando el código de procedimiento ya existe en el consultorio')` | **PASSED** |
+| **Scenario:** Bloqueo a rol AUXILIARY al intentar crear o modificar procedimientos o materiales | `roles.guard.spec.ts` (cubierto en pruebas unitarias) | `it('debe rechazar con 403 FORBIDDEN_ROLE cuando AUXILIARY intenta crear o modificar procedimientos, precios o materiales')` | **PASSED** |
+| **Scenario:** Configuración y consulta exitosa de precio especial por paciente con motivo | `set-patient-procedure-price.use-case.spec.ts` y `catalogs-repositories.contract.spec.ts` -> `it('debe guardar y consultar el precio personalizado por paciente y procedimiento con su motivo')` | `it('debe permitir a ADMIN configurar un precio especial por paciente con motivo y a AUXILIARY consultarlo (200)')` | **PASSED** |
+| **Scenario:** Rechazo de ajuste de precio por paciente cuando el motivo está vacío | `patient-procedure-price.entity.spec.ts` -> `it('debe lanzar PatientPriceReasonRequiredError cuando el motivo está vacío o solo tiene espacios')` | `it('debe rechazar con 400 cuando se intenta configurar un precio por paciente con motivo vacío o monto negativo')` | **PASSED** |
+| **Scenario:** Registro de material propio y activación de alerta de bajo stock tras descuento | `material.entity.spec.ts`, `consume-material-stock.use-case.spec.ts` y `catalogs-repositories.contract.spec.ts` -> `it('debe descontar existencias del material y activar isLowStock cuando currentStock es menor o igual a minStock')` | `it('debe registrar un material propio, descontar existencias y activar isLowStock cuando llega al umbral mínimo (201/200)')` | **PASSED** |
+| **Scenario:** Rechazo de descuento de material cuando las existencias son insuficientes | `material.entity.spec.ts` y `consume-material-stock.use-case.spec.ts` -> `it('debe lanzar InsufficientMaterialStockError (422) cuando la cantidad solicitada supera currentStock')` | `it('debe rechazar con 422 INSUFFICIENT_MATERIAL_STOCK cuando se intenta descontar más stock del disponible')` | **PASSED** |
 
 ---
 
@@ -18,30 +18,109 @@
 
 ### 2.1 Lint (`pnpm --filter backend lint`)
 ```text
-$ eslint "{src,test}/**/*.ts" --max-warnings 0
+> backend@0.0.1 lint C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
+> eslint "{src,test}/**/*.ts" --max-warnings 0
 ```
-*(Salida con código 0, cero errores y cero advertencias).*
 
 ### 2.2 Typecheck (`pnpm --filter backend typecheck`)
 ```text
-$ tsc --noEmit
+> backend@0.0.1 typecheck C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
+> tsc --noEmit
 ```
-*(Salida con código 0, cero errores de tipos TypeScript).*
 
 ### 2.3 Dependency Cruiser (`pnpm --filter backend deps:check`)
 ```text
-$ depcruise --config .dependency-cruiser.js src
+> backend@0.0.1 deps:check C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
+> depcruise --config .dependency-cruiser.js src
 
 ✔ no dependency violations found (225 modules, 986 dependencies cruised)
 ```
 
 ### 2.4 Test Coverage (`pnpm --filter backend test:cov`)
 ```text
-$ jest --coverage
+> backend@0.0.1 test:cov C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
+> jest --coverage
+
+PASS src/modules/catalogs/presentation/catalogs.controller.spec.ts (10.92 s)
+PASS src/modules/patients/infrastructure/queries/patients-queries.contract.spec.ts (5.166 s)
+PASS src/modules/catalogs/infrastructure/repositories/catalogs-repositories.contract.spec.ts
+PASS src/modules/catalogs/application/use-cases/set-patient-procedure-price.use-case.spec.ts
+PASS src/modules/patients/infrastructure/repositories/patients-repository.contract.spec.ts
+PASS src/modules/patients/presentation/patients.controller.spec.ts
+PASS src/configure-app.spec.ts
+PASS src/modules/identity/presentation/users.controller.spec.ts
+PASS src/modules/identity/infrastructure/adapters/argon2-password-hasher.adapter.spec.ts
+PASS src/modules/identity/infrastructure/repositories/identity-repositories.contract.spec.ts
+PASS src/modules/identity/presentation/clinic.controller.spec.ts
+PASS src/modules/patients/presentation/dto/search-patients-query.dto.spec.ts
+PASS src/health/health.controller.spec.ts
+PASS src/shared/presentation/guards/jwt-auth.guard.spec.ts
+PASS src/shared/infrastructure/adapters/nest-event-bus.adapter.spec.ts
+PASS src/shared/presentation/guards/roles.guard.spec.ts
+PASS src/modules/catalogs/application/use-cases/create-material.use-case.spec.ts
+PASS src/modules/catalogs/application/use-cases/create-procedure.use-case.spec.ts
+PASS src/modules/catalogs/application/use-cases/update-material.use-case.spec.ts
+PASS src/modules/catalogs/application/use-cases/update-procedure.use-case.spec.ts
+PASS src/modules/catalogs/application/use-cases/consume-material-stock.use-case.spec.ts
+PASS src/shared/infrastructure/prisma/prisma.service.spec.ts
+[Nest] 28388  - 15/10/2026, 1:49:17 p. m.     LOG [PrismaService] Prisma conectado exitosamente a PostgreSQL
+[Nest] 28388  - 15/10/2026, 1:49:17 p. m.    WARN [PrismaService] No se pudo conectar a la base de datos al iniciar: Connection error
+PASS src/modules/catalogs/application/queries/list-procedures.query.spec.ts
+PASS src/modules/identity/application/use-cases/login.use-case.spec.ts
+PASS src/modules/catalogs/application/queries/list-patient-procedure-prices.query.spec.ts
+PASS src/modules/catalogs/application/queries/list-materials.query.spec.ts
+PASS src/shared/infrastructure/adapters/prisma-unit-of-work.adapter.spec.ts
+PASS src/modules/patients/application/use-cases/create-patient.use-case.spec.ts
+PASS src/modules/identity/infrastructure/adapters/jwt-token-service.adapter.spec.ts
+PASS src/shared/infrastructure/middleware/correlation-id.middleware.spec.ts
+PASS src/modules/identity/application/queries/get-authenticated-user.query.spec.ts
+PASS src/modules/patients/application/queries/get-patient-by-id.query.spec.ts
+PASS src/modules/identity/application/queries/get-clinic-profile.query.spec.ts
+PASS src/modules/identity/application/use-cases/update-user.use-case.spec.ts
+PASS src/modules/patients/application/queries/detect-duplicate-patients.query.spec.ts
+PASS src/modules/identity/application/use-cases/refresh-session.use-case.spec.ts
+PASS src/modules/patients/application/use-cases/change-patient-status.use-case.spec.ts
+PASS src/modules/identity/application/use-cases/change-user-status.use-case.spec.ts
+PASS src/shared/infrastructure/adapters/system-clock.adapter.spec.ts
+PASS src/modules/identity/application/use-cases/create-user.use-case.spec.ts
+PASS src/modules/patients/application/use-cases/update-patient.use-case.spec.ts
+PASS src/shared/presentation/filters/domain-exception.filter.spec.ts
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_VALIDATION]: Mensaje para VALIDATION
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_UNAUTHORIZED]: Mensaje para UNAUTHORIZED
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_FORBIDDEN]: Mensaje para FORBIDDEN
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_NOT_FOUND]: Mensaje para NOT_FOUND
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_CONFLICT]: Mensaje para CONFLICT
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_INVARIANT_VIOLATION]: Mensaje para INVARIANT_VIOLATION
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-from-header] DomainError [RESOURCE_NOT_FOUND]: No encontrado
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [req-id-fallback] DomainError [CONFLICT_CODE]: Conflicto
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [unknown] DomainError [INVALID_INPUT]: Datos inválidos
+[Nest] 28388  - 15/10/2026, 1:49:26 p. m.    WARN [DomainExceptionFilter] [corr-fallback-500] DomainError [UNKNOWN_ERR]: Error desconocido
+PASS src/modules/patients/application/queries/search-patients.query.spec.ts
+PASS src/modules/identity/application/use-cases/logout.use-case.spec.ts
+PASS src/modules/identity/application/use-cases/update-clinic-profile.use-case.spec.ts
+PASS src/modules/patients/application/queries/list-patients.query.spec.ts
+PASS src/modules/identity/application/queries/list-clinic-users.query.spec.ts
+PASS src/shared/infrastructure/adapters/uuid-generator.adapter.spec.ts
+PASS src/shared/infrastructure/logger/logger.redact.spec.ts
+PASS src/modules/catalogs/domain/material.entity.spec.ts
+PASS src/modules/catalogs/domain/patient-procedure-price.entity.spec.ts
+PASS src/modules/catalogs/domain/procedure.entity.spec.ts
+PASS src/shared/domain/domain-error.spec.ts
+PASS src/modules/identity/domain/refresh-session.entity.spec.ts
+PASS src/modules/catalogs/domain/money.vo.spec.ts
+PASS src/modules/identity/domain/clinic.entity.spec.ts
+PASS src/modules/identity/domain/user.entity.spec.ts
+PASS src/modules/patients/domain/patient.entity.spec.ts
+PASS src/modules/patients/domain/document-identity.vo.spec.ts
+PASS src/shared/infrastructure/sentry/sentry.sanitizer.spec.ts
+PASS src/modules/identity/domain/email.vo.spec.ts
+PASS src/modules/patients/domain/emergency-contact.vo.spec.ts
+PASS src/modules/patients/domain/phone-number.vo.spec.ts
+PASS src/shared/domain/aggregate-root.spec.ts
 --------------------------------------------------|---------|----------|---------|---------|----------------------------------------
 File                                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                      
 --------------------------------------------------|---------|----------|---------|---------|----------------------------------------
-All files                                         |   97.29 |    89.62 |   95.75 |   97.09 |                                        
+All files                                         |   97.58 |    91.23 |   95.75 |   97.41 |                                        
  src                                              |     100 |      100 |     100 |     100 |                                        
   configure-app.ts                                |     100 |      100 |     100 |     100 |                                        
  src/health                                       |     100 |      100 |     100 |     100 |                                        
@@ -50,27 +129,27 @@ All files                                         |   97.29 |    89.62 |   95.75
   list-materials.query.ts                         |     100 |      100 |     100 |     100 |                                        
   list-patient-procedure-prices.query.ts          |     100 |      100 |     100 |     100 |                                        
   list-procedures.query.ts                        |     100 |      100 |     100 |     100 |                                        
- src/modules/catalogs/application/use-cases       |     100 |     90.9 |     100 |     100 |                                        
+ src/modules/catalogs/application/use-cases       |     100 |      100 |     100 |     100 |                                        
   consume-material-stock.use-case.ts              |     100 |      100 |     100 |     100 |                                        
   create-material.use-case.ts                     |     100 |      100 |     100 |     100 |                                        
   create-procedure.use-case.ts                    |     100 |      100 |     100 |     100 |                                        
   set-patient-procedure-price.use-case.ts         |     100 |      100 |     100 |     100 |                                        
   update-material.use-case.ts                     |     100 |      100 |     100 |     100 |                                        
-  update-procedure.use-case.ts                    |     100 |    66.66 |     100 |     100 | 36                                     
- src/modules/catalogs/domain                      |   97.86 |    90.62 |     100 |   97.86 |                                        
+  update-procedure.use-case.ts                    |     100 |      100 |     100 |     100 |                                        
+ src/modules/catalogs/domain                      |     100 |      100 |     100 |     100 |                                        
   catalogs.errors.ts                              |     100 |      100 |     100 |     100 |                                        
-  material.entity.ts                              |   98.43 |    91.66 |     100 |   98.43 | 31                                     
-  money.vo.ts                                     |    90.9 |     87.5 |     100 |    90.9 | 28                                     
-  patient-procedure-price.entity.ts               |   97.22 |    91.66 |     100 |   97.22 | 31                                     
-  procedure.entity.ts                             |   97.67 |    88.88 |     100 |   97.67 | 34                                     
+  material.entity.ts                              |     100 |      100 |     100 |     100 |                                        
+  money.vo.ts                                     |     100 |      100 |     100 |     100 |                                        
+  patient-procedure-price.entity.ts               |     100 |      100 |     100 |     100 |                                        
+  procedure.entity.ts                             |     100 |      100 |     100 |     100 |                                        
  src/modules/catalogs/infrastructure/mappers      |     100 |      100 |     100 |     100 |                                        
   material.mapper.ts                              |     100 |      100 |     100 |     100 |                                        
   patient-procedure-price.mapper.ts               |     100 |      100 |     100 |     100 |                                        
   procedure.mapper.ts                             |     100 |      100 |     100 |     100 |                                        
- src/modules/catalogs/infrastructure/repositories |   97.18 |    84.41 |     100 |   96.77 |                                        
-  in-memory-material.repository.ts                |   97.14 |     82.6 |     100 |   96.77 | 64                                     
+ src/modules/catalogs/infrastructure/repositories |   98.59 |    87.01 |     100 |   98.38 |                                        
+  in-memory-material.repository.ts                |     100 |    86.95 |     100 |     100 | 10,30-33                               
   in-memory-patient-procedure-price.repository.ts |     100 |     92.3 |     100 |     100 | 15                                     
-  in-memory-procedure.repository.ts               |   96.66 |    89.47 |     100 |      96 | 42                                     
+  in-memory-procedure.repository.ts               |     100 |    94.73 |     100 |     100 | 19                                     
   prisma-material.repository.ts                   |   95.45 |       70 |     100 |   94.73 | 69                                     
   prisma-patient-procedure-price.repository.ts    |     100 |       50 |     100 |     100 | 26                                     
   prisma-procedure.repository.ts                  |   95.83 |       90 |     100 |   95.23 | 63                                     
@@ -189,37 +268,26 @@ All files                                         |   97.29 |    89.62 |   95.75
 --------------------------------------------------|---------|----------|---------|---------|----------------------------------------
 
 Test Suites: 64 passed, 64 total
-Tests:       307 passed, 307 total
+Tests:       323 passed, 323 total
 Snapshots:   0 total
-Time:        50.006 s
+Time:        48.474 s, estimated 61 s
 Ran all test suites.
 ```
 
-### 2.5 Pruebas de Integración E2E (`pnpm --filter backend test:e2e`)
+### 2.5 E2E Tests (`pnpm --filter backend test:e2e`)
 ```text
-$ jest --config ./test/jest-e2e.json
-PASS test/auth.e2e-spec.ts
+> backend@0.0.1 test:e2e C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
+> jest --config ./test/jest-e2e.json
+
+PASS test/auth.e2e-spec.ts (14.739 s)
+PASS test/patients.e2e-spec.ts
 PASS test/catalogs.e2e-spec.ts
 PASS test/users-and-clinic.e2e-spec.ts
-PASS test/patients.e2e-spec.ts
 PASS test/health.e2e-spec.ts
 
 Test Suites: 5 passed, 5 total
-Tests:       56 passed, 56 total
+Tests:       50 passed, 50 total
 Snapshots:   0 total
-Time:        19.817 s
+Time:        23.198 s
 Ran all test suites.
 ```
-
----
-
-## 3. Verificación de Criterios de Calidad
-
-- [x] **RC-001 y RC-002 (Cobertura):** >= 80% global (obtenido 97.29% stmts, 89.62% branches, 97.09% lines) y >= 90% en `catalogs/domain` (97.86% stmts, 90.62% branches) y `catalogs/application` (100% stmts, 90.9% branches).
-- [x] **RC-005 (Permisos por rol):** Validado en `catalogs.e2e-spec.ts` con bloqueo `403 FORBIDDEN_ROLE` a `AUXILIARY` en endpoints de escritura y autorización en endpoints de lectura y consumo.
-- [x] **RC-010 (Lint y formato):** 0 errores y 0 advertencias de ESLint y Prettier.
-- [x] **RC-011 (TypeScript estricto):** Sin `any` explícito y `tsc --noEmit` exitoso.
-- [x] **RC-012 y RC-017 (Fronteras y Clean Architecture):** 0 violaciones reportadas por `dependency-cruiser` (225 módulos). Consumo del repositorio de pacientes exclusivamente a través del puerto público de `modules/patients`.
-- [x] **RC-018 y RC-050 (Suites de contrato en PostgreSQL real):** Ejecutadas contra `InMemory` y contenedor Docker `PostgreSQL` real en `catalogs-repositories.contract.spec.ts`.
-- [x] **RC-055 (onDelete: Restrict):** Validado en base de datos real con prueba explícita de restricción por clave foránea al intentar eliminar registros padres vinculados.
-- [x] **RC-070 (OpenAPI):** Archivo `Backend/openapi.json` regenerado e integrado.

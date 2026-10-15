@@ -80,6 +80,32 @@ describe('UpdateProcedureUseCase', () => {
     expect(updated.updatedAt).toEqual(clock.now());
   });
 
+  it('debe actualizar solo el nombre dejando basePriceCop como undefined y verificar que basePrice se conserva', async () => {
+    const procedure = Procedure.create({
+      id: 'proc-1',
+      clinicId: 'clinic-123',
+      code: 'RES-EST',
+      name: 'Resina estándar',
+      description: 'Descripción previa',
+      basePrice: Money.from(150000),
+      isActive: true,
+      createdAt: new Date('2026-10-15T10:00:00.000Z'),
+      updatedAt: new Date('2026-10-15T10:00:00.000Z'),
+    });
+    await repo.save(procedure);
+
+    const updated = await useCase.execute({
+      clinicId: 'clinic-123',
+      id: 'proc-1',
+      name: 'Resina con nuevo nombre',
+    });
+
+    expect(updated.name).toBe('Resina con nuevo nombre');
+    expect(updated.basePrice.amount).toBe(150000);
+    expect(updated.description).toBe('Descripción previa');
+    expect(updated.isActive).toBe(true);
+  });
+
   it('debe lanzar ProcedureNotFoundError si el procedimiento no existe en el consultorio', async () => {
     await expect(
       useCase.execute({

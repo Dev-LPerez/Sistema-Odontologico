@@ -255,7 +255,7 @@ export class CatalogsController {
   }
 
   @Post('materials/:id/consume')
-  @Roles(UserRole.ADMIN, UserRole.AUXILIARY)
+  @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Descontar existencias de un material propio' })
   @ApiResponse({

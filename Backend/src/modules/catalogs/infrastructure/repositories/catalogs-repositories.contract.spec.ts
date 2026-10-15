@@ -225,7 +225,7 @@ describe('Catalogs Repositories Contract Tests (RC-018, RC-050, RC-055)', () => 
           expect(all).toHaveLength(2);
         });
 
-        it('should isolate procedures by clinicId', async () => {
+        it('debe crear, actualizar y listar procedimientos aislando por clinicId', async () => {
           const p1 = Procedure.create({
             id: 'p-clinic-1',
             clinicId: 'clinic-cat-1',
@@ -248,18 +248,26 @@ describe('Catalogs Repositories Contract Tests (RC-018, RC-050, RC-055)', () => 
           await procedureRepo.save(p1);
           await procedureRepo.save(p2);
 
+          p1.update({
+            name: 'Proc 1 Actualizado',
+            updatedAt: new Date('2026-10-15T12:00:00.000Z'),
+          });
+          await procedureRepo.save(p1);
+
           const list1 = await procedureRepo.findAllByClinicId('clinic-cat-1', true);
           expect(list1).toHaveLength(1);
           expect(list1[0].id).toBe('p-clinic-1');
+          expect(list1[0].name).toBe('Proc 1 Actualizado');
 
           const foundIn1 = await procedureRepo.findByCode('clinic-cat-1', 'CODE-ISO');
           expect(foundIn1?.id).toBe('p-clinic-1');
+          expect(foundIn1?.name).toBe('Proc 1 Actualizado');
 
           const foundIn2 = await procedureRepo.findByCode('clinic-cat-2', 'CODE-ISO');
           expect(foundIn2?.id).toBe('p-clinic-2');
         });
 
-        it('should throw DuplicateProcedureCodeError on duplicate code in same clinic', async () => {
+        it('debe lanzar DuplicateProcedureCodeError (409) cuando el código ya existe en el mismo consultorio (P2002)', async () => {
           const p1 = Procedure.create({
             id: 'p-dup-1',
             clinicId: 'clinic-cat-1',
@@ -285,7 +293,7 @@ describe('Catalogs Repositories Contract Tests (RC-018, RC-050, RC-055)', () => 
       });
 
       describe('PatientProcedurePriceRepositoryPort', () => {
-        it('should save and find patient custom price', async () => {
+        it('debe guardar y consultar el precio personalizado por paciente y procedimiento con su motivo', async () => {
           const proc = Procedure.create({
             id: 'proc-for-price',
             clinicId: 'clinic-cat-1',
@@ -591,6 +599,32 @@ describe('Catalogs Repositories Contract Tests (RC-018, RC-050, RC-055)', () => 
 
           await materialRepo.save(m1);
           await expect(materialRepo.save(m2)).rejects.toThrow(DuplicateMaterialCatalogError);
+        });
+
+        it('debe descontar existencias del material y activar isLowStock cuando currentStock es menor o igual a minStock', async () => {
+          const material = Material.create({
+            id: 'mat-consume-contract',
+            clinicId: 'clinic-cat-1',
+            brand: '3M',
+            reference: 'Filtek Z350',
+            type: 'RESIN',
+            color: 'A2',
+            currentStock: 4,
+            minStock: 2,
+            isActive: true,
+            createdAt: fixedNow,
+            updatedAt: fixedNow,
+          });
+
+          await materialRepo.save(material);
+
+          material.consumeStock(2, new Date('2026-10-15T12:00:00.000Z'));
+          await materialRepo.save(material);
+
+          const found = await materialRepo.findById('clinic-cat-1', 'mat-consume-contract');
+          expect(found).not.toBeNull();
+          expect(found?.currentStock).toBe(2);
+          expect(found?.isLowStock).toBe(true);
         });
       });
     });

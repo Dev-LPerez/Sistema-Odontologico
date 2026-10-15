@@ -44,5 +44,31 @@ Cada escenario de `specs/catalogs-management/spec.md` DEBE estar cubierto por la
 - [x] 6.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-catalogs-procedures-and-materials/evidence.md` con la Matriz de Trazabilidad completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
 - [x] 6.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(catalogs): enforce 90% coverage thresholds, regenerate openapi.json and record B-07 evidence"` dejando `git status` limpio.
 
+## 7. Remediación de Hallazgos de Auditoría Basada en Evidencia (Bloqueantes antes de archivar)
+- [x] 7.1 **Restringir `POST /v1/catalogs/materials/:id/consume` exclusivamente al rol `ADMIN` (`RNF-B-004`, `RC-005`, `design.md` Decisión 4):**
+  - En `Backend/src/modules/catalogs/presentation/catalogs.controller.ts`, cambiar `@Roles(UserRole.ADMIN, UserRole.AUXILIARY)` a `@Roles(UserRole.ADMIN)` en `@Post('materials/:id/consume')`.
+  - En `Backend/test/catalogs.e2e-spec.ts`, ejecutar el descuento exitoso de stock con `adminAccessToken` y verificar dentro del test de bloqueo por rol que `AUXILIARY` también recibe `403 FORBIDDEN_ROLE` al invocar `POST /v1/catalogs/materials/:id/consume`.
+- [x] 7.2 **Alinear los nombres exactos de `it(...)` con la Matriz de Trazabilidad 1:1 (`tasks.md`, `catalogs-repositories.contract.spec.ts`, `Backend/test/catalogs.e2e-spec.ts` y `evidence.md`):**
+  - En `Backend/src/modules/catalogs/infrastructure/repositories/catalogs-repositories.contract.spec.ts`, renombrar las pruebas correspondientes para que existan literalmente los bloques:
+    - `it('debe crear, actualizar y listar procedimientos aislando por clinicId')`
+    - `it('debe lanzar DuplicateProcedureCodeError (409) cuando el código ya existe en el mismo consultorio (P2002)')`
+    - `it('debe guardar y consultar el precio personalizado por paciente y procedimiento con su motivo')`
+    - `it('debe descontar existencias del material y activar isLowStock cuando currentStock es menor o igual a minStock')`
+  - En `Backend/test/catalogs.e2e-spec.ts`, usar exactamente los 7 nombres de bloques `it(...)` de la columna E2E de la Matriz de Trazabilidad:
+    1. `it('debe permitir a ADMIN crear y actualizar un procedimiento y a AUXILIARY listarlo (201/200)')`
+    2. `it('debe rechazar con 409 DUPLICATE_PROCEDURE_CODE cuando el código de procedimiento ya existe en el consultorio')`
+    3. `it('debe rechazar con 403 FORBIDDEN_ROLE cuando AUXILIARY intenta crear o modificar procedimientos, precios o materiales')` (probando `POST /procedures`, `PATCH /procedures/:id`, `PUT /patient-prices`, `POST /materials`, `PATCH /materials/:id` y `POST /materials/:id/consume` verificando `errorCode: 'FORBIDDEN_ROLE'`).
+    4. `it('debe permitir a ADMIN configurar un precio especial por paciente con motivo y a AUXILIARY consultarlo (200)')`
+    5. `it('debe rechazar con 400 cuando se intenta configurar un precio por paciente con motivo vacío o monto negativo')` (probando tanto `reason: '   '` -> `400 PATIENT_PRICE_REASON_REQUIRED` como `customPriceCop: -100` -> `400`).
+    6. `it('debe registrar un material propio, descontar existencias y activar isLowStock cuando llega al umbral mínimo (201/200)')`
+    7. `it('debe rechazar con 422 INSUFFICIENT_MATERIAL_STOCK cuando se intenta descontar más stock del disponible')`
+- [x] 7.3 **Upsert atómico por clave compuesta en `PrismaPatientProcedurePriceRepository.save` y cobertura de ramas al 100% en `domain`/`application`:**
+  - En `Backend/src/modules/catalogs/infrastructure/repositories/prisma-patient-procedure-price.repository.ts`, realizar el `upsert` usando `where: { clinicId_patientId_procedureId: { clinicId: price.clinicId, patientId: price.patientId, procedureId: price.procedureId } }` para garantizar idempotencia atómica ante peticiones concurrentes.
+  - Agregar pruebas unitarias en `update-procedure.use-case.spec.ts` (actualizar solo `name` dejando `basePriceCop` como `undefined` y verificar que `basePrice` se conserva), en `money.vo.spec.ts` (`equals(null as unknown as Money)` retorna `false`) y en `procedure.entity.spec.ts` / `patient-procedure-price.entity.spec.ts` / `material.entity.spec.ts` para cubrir las ramas defensivas faltantes.
+- [x] 7.4 **Actualizar `evidence.md` con la Matriz 1:1 real y la salida literal e íntegra de consola (Cero resúmenes):**
+  - Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`.
+  - Actualizar `Backend/openspec/changes/add-catalogs-procedures-and-materials/evidence.md` corrigiendo la tabla de trazabilidad con los nombres reales en español y pegando la salida **literal y completa** de stdout/stderr de los 5 comandos (incluyendo las líneas `> backend@0.0.1 ...` y los `PASS ...` de Jest, eliminando comentarios resumidos como `*(Salida con código 0...)*`).
+  - Confirmar con commit: `git add -A && git commit -m "fix(catalogs): enforce ADMIN role on stock consumption, align traceability matrix and record literal evidence"` dejando `git status` limpio.
+
 ## Workflow follow-up
 - Pasa `evidence.md` al Arquitecto para auditoría antes de ejecutar `/opsx-sync` y `/opsx-archive`.

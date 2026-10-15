@@ -35,4 +35,11 @@ describe('Money Value Object', () => {
     expect(m1.equals(m2)).toBe(true);
     expect(m1.equals(m3)).toBe(false);
   });
+
+  it('debe retornar false al comparar con null, undefined o instancias que no sean Money', () => {
+    const money = Money.from(150000);
+    expect(money.equals(null as unknown as Money)).toBe(false);
+    expect(money.equals(undefined as unknown as Money)).toBe(false);
+    expect(money.equals({ amount: 150000 } as unknown as Money)).toBe(false);
+  });
 });

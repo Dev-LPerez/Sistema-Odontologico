@@ -42,9 +42,19 @@ export class PrismaPatientProcedurePriceRepository implements PatientProcedurePr
     const data = PatientProcedurePriceMapper.toPersistence(price);
 
     await this.prisma.client.patientProcedurePrice.upsert({
-      where: { id: price.id },
+      where: {
+        clinicId_patientId_procedureId: {
+          clinicId: price.clinicId,
+          patientId: price.patientId,
+          procedureId: price.procedureId,
+        },
+      },
       create: data,
-      update: data,
+      update: {
+        customPriceCop: data.customPriceCop,
+        reason: data.reason,
+        updatedAt: data.updatedAt,
+      },
     });
   }
 }
