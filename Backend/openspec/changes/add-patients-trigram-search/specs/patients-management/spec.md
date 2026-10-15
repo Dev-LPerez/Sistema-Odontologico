@@ -1,6 +1,6 @@
 # Spec Delta
 
-##ADDED Requirements
+## ADDED Requirements
 
 ### Requirement: Búsqueda rápida de pacientes tolerante a errores tipográficos (pg_trgm)
 El sistema SHALL permitir a usuarios autenticados (`ADMIN` o `AUXILIARY`) buscar pacientes de su `clinicId` en `GET /v1/patients/search?q=...` por nombre, apellido, número de documento o teléfono, tolerando errores tipográficos mediante trigramas (`pg_trgm`), ordenando por relevancia y respondiendo en menos de 300 ms con hasta 10.000 pacientes registrados (RF-B-012, RNF-B-004, RNF-B-031, RNF-B-032, RC-005, RC-031).

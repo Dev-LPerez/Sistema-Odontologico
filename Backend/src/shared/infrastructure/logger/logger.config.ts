@@ -18,6 +18,13 @@ export const CLINICAL_REDACT_PATHS = [
   '*.odontogram',
   '*.documentNumber',
   '*.phone',
+  '*.firstName',
+  '*.lastName',
+  '*.email',
+  '*.address',
+  '*.birthDate',
+  '*.emergencyContactName',
+  '*.emergencyContactPhone',
   'diagnosis',
   'notes',
   'privateNotes',
@@ -26,6 +33,13 @@ export const CLINICAL_REDACT_PATHS = [
   'odontogram',
   'documentNumber',
   'phone',
+  'firstName',
+  'lastName',
+  'email',
+  'address',
+  'birthDate',
+  'emergencyContactName',
+  'emergencyContactPhone',
 ];
 
 export const createPinoHttpConfig = () => {

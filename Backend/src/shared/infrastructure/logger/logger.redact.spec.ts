@@ -25,6 +25,25 @@ describe('Logger Clinical Redaction', () => {
     }
   });
 
+  it('debe redactar todos los datos personales del paciente: firstName, lastName, email, address, birthDate, emergencyContactName y emergencyContactPhone (RC-023)', () => {
+    const piiFields = [
+      'firstName',
+      'lastName',
+      'email',
+      'address',
+      'birthDate',
+      'emergencyContactName',
+      'emergencyContactPhone',
+    ];
+
+    for (const field of piiFields) {
+      const isRedacted = CLINICAL_REDACT_PATHS.some(
+        (path) => path === field || path.endsWith(`.${field}`),
+      );
+      expect(isRedacted).toBe(true);
+    }
+  });
+
   it('debe censurar datos clínicos y credenciales al serializar logs con Pino', () => {
     let loggedData = '';
     const destination = {

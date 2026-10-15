@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/shared/infrastructure/prisma/prisma.service';
+import { configureApp } from '../src/configure-app';
 
 describe('Health & Readiness Endpoints (e2e)', () => {
   let app: INestApplication;
@@ -19,7 +20,7 @@ describe('Health & Readiness Endpoints (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.setGlobalPrefix('v1', { exclude: ['health', 'ready'] });
+    configureApp(app);
     await app.init();
   });
 

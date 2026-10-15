@@ -59,7 +59,35 @@ describe('sanitizeSentryEvent', () => {
 
     // Campos no sensibles deben mantenerse intactos
     expect(sanitized.message).toBe('Error procesando historia clínica');
-    expect(sanitized.request.data.email).toBe('paciente@example.com');
+    expect(sanitized.request.data.email).toBe('[REDACTED]');
+  });
+
+  it('debe redactar todos los datos personales del paciente: firstName, lastName, email, address, birthDate, emergencyContactName y emergencyContactPhone (RC-023)', () => {
+    const event = {
+      extra: {
+        patient: {
+          firstName: 'Carlos',
+          lastName: 'Gómez',
+          email: 'carlos@example.com',
+          address: 'Calle 100',
+          birthDate: '1990-05-15',
+          emergencyContactName: 'María Gómez',
+          emergencyContactPhone: '3109876543',
+          nonSensitiveField: 'visible-value',
+        },
+      },
+    };
+
+    const sanitized = sanitizeSentryEvent(event);
+
+    expect(sanitized.extra.patient.firstName).toBe('[REDACTED]');
+    expect(sanitized.extra.patient.lastName).toBe('[REDACTED]');
+    expect(sanitized.extra.patient.email).toBe('[REDACTED]');
+    expect(sanitized.extra.patient.address).toBe('[REDACTED]');
+    expect(sanitized.extra.patient.birthDate).toBe('[REDACTED]');
+    expect(sanitized.extra.patient.emergencyContactName).toBe('[REDACTED]');
+    expect(sanitized.extra.patient.emergencyContactPhone).toBe('[REDACTED]');
+    expect(sanitized.extra.patient.nonSensitiveField).toBe('visible-value');
   });
 
   it('debe manejar eventos nulos o sin campos adicionales sin fallar', () => {

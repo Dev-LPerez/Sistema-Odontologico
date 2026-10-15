@@ -37,5 +37,17 @@ Cada escenario de `specs/patients-management/spec.md` DEBE estar cubierto por la
 - [x] 5.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-patients-trigram-search/evidence.md` con la Matriz de Trazabilidad completada y la salida literal de consola de los 5 comandos.
 - [x] 5.3 Confirmar el contrato OpenAPI, `evidence.md` y `tasks.md` con un commit: `git add -A && git commit -m "chore(patients): regenerate openapi.json and record B-06 test evidence"` dejando `git status` limpio.
 
+## 6. Correcciones de Auditoría Transversal (Bloqueantes antes de archivar B-06)
+- [x] 6.1 **Redacción completa de PII de pacientes en Logs y Sentry (`RC-023`, `RNF-B-009`):**
+  - Escribir primero las pruebas en rojo en `Backend/src/shared/infrastructure/logger/logger.redact.spec.ts` y `Backend/src/shared/infrastructure/sentry/sentry.sanitizer.spec.ts` (`it('debe redactar todos los datos personales del paciente: firstName, lastName, email, address, birthDate, emergencyContactName y emergencyContactPhone (RC-023)')`).
+  - Agregar en `CLINICAL_REDACT_PATHS` (`logger.config.ts`) y en `SENSITIVE_KEYS` (`sentry.sanitizer.ts`) los campos `firstName`, `lastName`, `email`, `address`, `birthDate`, `emergencyContactName` y `emergencyContactPhone` (y sus variantes `*.campo` en Pino).
+- [x] 6.2 **Extracción de `configureApp(app)` y validación de `CORS_ORIGIN` en producción (`RNF-B-005`):**
+  - Escribir primero la prueba unitaria `Backend/src/configure-app.spec.ts` probando que `validateEnv` falla si falta `DATABASE_URL`, que en `NODE_ENV === 'production'` falla si falta `CORS_ORIGIN` o si `CORS_ORIGIN === '*'` o si falta `JWT_SECRET`, y que `configureApp(app)` registra `helmet`, `cookieParser`, CORS sin `'*'` (usando `process.env.CORS_ORIGIN || 'http://localhost:5173'`), prefijo global `'v1'` (excluyendo `'health'` y `'ready'`), `DomainExceptionFilter` y `ValidationPipe`.
+  - Implementar `Backend/src/configure-app.ts` exportando `validateEnv` y `configureApp`, excluir `configure-app.ts` o mantenerlo cubierto al 100%, y reutilizar `configureApp(app)` en `Backend/src/main.ts` y en **todas** las suites E2E (`Backend/test/health.e2e-spec.ts`, `Backend/test/auth.e2e-spec.ts`, `Backend/test/users-and-clinic.e2e-spec.ts` y `Backend/test/patients.e2e-spec.ts`) eliminando la duplicación manual de pipes/filtros/prefijos.
+- [x] 6.3 **Evidencia 100 % literal en `evidence.md`:**
+  - Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`.
+  - Actualizar `Backend/openspec/changes/add-patients-trigram-search/evidence.md` pegando la salida **literal e íntegra** de consola de los 5 comandos (incluyendo las líneas `> backend@0.0.1 ...` de `pnpm` en `lint` y `typecheck` sin comentarios inventados, y la **tabla ASCII completa** de cobertura de Jest en `test:cov`).
+  - Confirmar con commit: `git add -A && git commit -m "fix(patients): redact full patient PII, share configureApp in E2E and record literal evidence"` dejando `git status` limpio.
+
 ## Workflow follow-up
 - Ejecutar `/opsx-sync` y `/opsx-archive` una vez auditado `evidence.md`.

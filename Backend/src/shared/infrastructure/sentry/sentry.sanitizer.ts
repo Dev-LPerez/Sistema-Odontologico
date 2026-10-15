@@ -11,6 +11,13 @@ const SENSITIVE_KEYS = new Set([
   'odontogram',
   'documentnumber',
   'phone',
+  'firstname',
+  'lastname',
+  'email',
+  'address',
+  'birthdate',
+  'emergencycontactname',
+  'emergencycontactphone',
 ]);
 
 function isSensitiveKey(key: string): boolean {

@@ -42,7 +42,7 @@ function calculatePatientRelevance(
 
   let simFirstName = 0;
   let simLastName = 0;
-  if (simFullName < 0.5) {
+  if (simFullName > 0 && simFullName < 0.5) {
     simFirstName = calculateTrigramSimilarity(
       extractTrigramsFromNormalized(normFirstName),
       queryTrigrams,
