@@ -103,8 +103,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Push Prisma schema to test DB
-        run: cd Backend && npx prisma db push
+      - name: Deploy Prisma migrations to test DB
+        run: cd Backend && npx prisma migrate deploy
 
       - name: Unit tests with coverage
         run: pnpm --filter backend test:cov

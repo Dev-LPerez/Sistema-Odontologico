@@ -1,8 +1,3 @@
-import {
-  Patient as PrismaPatient,
-  DocumentType as PrismaDocumentType,
-  Prisma,
-} from '@prisma/client';
 import { Patient } from '../../domain/patient.entity';
 import { DocumentIdentity } from '../../domain/document-identity.vo';
 import { PhoneNumber } from '../../domain/phone-number.vo';
@@ -13,6 +8,7 @@ import { PatientRepositoryPort } from '../../domain/patient.repository.port';
 import { InMemoryPatientRepository } from './in-memory-patient.repository';
 import { PrismaPatientRepository } from './prisma-patient.repository';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { DuplicatePatientDocumentError } from '../../domain/patients.errors';
 
 interface RepositoryFactory {
   name: string;
@@ -24,112 +20,39 @@ interface RepositoryFactory {
 
 describe('Patients Repository Contract Tests (RC-018)', () => {
   const fixedNow = new Date('2026-10-14T10:00:00.000Z');
+  const realPrisma = new PrismaService();
 
-  const createMockPrismaService = () => {
-    const store = new Map<string, PrismaPatient>();
+  beforeAll(async () => {
+    await realPrisma.$connect();
+  });
 
-    const patientOps = {
-      findFirst: jest.fn(async ({ where }: { where: { id?: string; clinicId?: string } }) => {
-        for (const record of store.values()) {
-          if (
-            (!where.id || record.id === where.id) &&
-            (!where.clinicId || record.clinicId === where.clinicId)
-          ) {
-            return record;
-          }
-        }
-        return null;
-      }),
-      findUnique: jest.fn(
-        async ({
-          where,
-        }: {
-          where: {
-            clinicId_documentType_documentNumber: {
-              clinicId: string;
-              documentType: PrismaDocumentType;
-              documentNumber: string;
-            };
-          };
-        }) => {
-          const key = where.clinicId_documentType_documentNumber;
-          for (const record of store.values()) {
-            if (
-              record.clinicId === key.clinicId &&
-              record.documentType === key.documentType &&
-              record.documentNumber === key.documentNumber
-            ) {
-              return record;
-            }
-          }
-          return null;
-        },
-      ),
-      findMany: jest.fn(
-        async ({
-          where,
-        }: {
-          where: {
-            clinicId: string;
-            isActive?: boolean;
-            id?: { not: string };
-            OR?: Array<{ documentNumber?: string; phone?: string }>;
-          };
-        }) => {
-          const results: PrismaPatient[] = [];
-          for (const record of store.values()) {
-            if (record.clinicId !== where.clinicId) continue;
-            if (where.isActive !== undefined && record.isActive !== where.isActive) continue;
-            if (where.id?.not && record.id === where.id.not) continue;
+  afterAll(async () => {
+    await cleanDb();
+    await realPrisma.$disconnect();
+  });
 
-            if (where.OR) {
-              const matches = where.OR.some(
-                (cond) =>
-                  (cond.documentNumber && record.documentNumber === cond.documentNumber) ||
-                  (cond.phone && record.phone === cond.phone),
-              );
-              if (!matches) continue;
-            }
+  const cleanDb = async () => {
+    await realPrisma.patient.deleteMany();
+    await realPrisma.refreshSession.deleteMany();
+    await realPrisma.user.deleteMany();
+    await realPrisma.clinic.deleteMany();
+  };
 
-            results.push(record);
-          }
-          return results;
-        },
-      ),
-      upsert: jest.fn(
-        async ({
-          where,
-          create,
-          update,
-        }: {
-          where: { id: string };
-          create: Prisma.PatientUncheckedCreateInput;
-          update: Prisma.PatientUncheckedUpdateInput;
-        }) => {
-          const existing = store.get(where.id);
-          const data = (existing ? { ...existing, ...update } : { ...create }) as PrismaPatient;
-          store.set(where.id, data);
-          return data;
-        },
-      ),
-    };
-
-    const mockPrisma = {
-      patient: patientOps,
-      client: {
-        patient: patientOps,
-      },
-    };
-
-    return {
-      service: mockPrisma as unknown as PrismaService,
-      clear: () => store.clear(),
-    };
+  const ensurePrerequisiteClinics = async () => {
+    await realPrisma.clinic.upsert({
+      where: { id: 'clinic-1' },
+      create: { id: 'clinic-1', name: 'Clínica Uno' },
+      update: {},
+    });
+    await realPrisma.clinic.upsert({
+      where: { id: 'clinic-2' },
+      create: { id: 'clinic-2', name: 'Clínica Dos' },
+      update: {},
+    });
   };
 
   const inMemoryRepo = new InMemoryPatientRepository();
-  const mockPrismaContext = createMockPrismaService();
-  const prismaRepo = new PrismaPatientRepository(mockPrismaContext.service);
+  const prismaRepo = new PrismaPatientRepository(realPrisma);
 
   const factories: RepositoryFactory[] = [
     {
@@ -143,7 +66,10 @@ describe('Patients Repository Contract Tests (RC-018)', () => {
       name: 'PrismaPatientRepository',
       createRepo: () => ({
         repo: prismaRepo,
-        cleanup: async () => mockPrismaContext.clear(),
+        cleanup: async () => {
+          await cleanDb();
+          await ensurePrerequisiteClinics();
+        },
       }),
     },
   ];
@@ -280,6 +206,30 @@ describe('Patients Repository Contract Tests (RC-018)', () => {
         const inactivesOnly = await repo.findAllByClinicId('clinic-1', { isActive: false });
         expect(inactivesOnly).toHaveLength(1);
         expect(inactivesOnly[0].id).toBe('p-inactive');
+      });
+
+      it('debe lanzar DuplicatePatientDocumentError (409) cuando dos registros distintos chocan en el índice único de documento (P2002)', async () => {
+        const patient1 = createTestPatient({
+          id: 'p-dup-1',
+          document: DocumentIdentity.create(DocumentType.CC, '777888999'),
+        });
+        const patient2 = createTestPatient({
+          id: 'p-dup-2',
+          document: DocumentIdentity.create(DocumentType.CC, '777888999'),
+        });
+
+        await repo.save(patient1);
+        await expect(repo.save(patient2)).rejects.toThrow(DuplicatePatientDocumentError);
+      });
+
+      it('debe impedir el borrado físico de un consultorio que tiene pacientes registrados (onDelete: Restrict, RF-B-010, RC-055)', async () => {
+        if (name === 'PrismaPatientRepository') {
+          const patient = createTestPatient({ id: 'p-restrict-1', clinicId: 'clinic-1' });
+          await repo.save(patient);
+
+          // En PostgreSQL real, la clave foránea ON DELETE RESTRICT debe bloquear la eliminación
+          await expect(realPrisma.clinic.delete({ where: { id: 'clinic-1' } })).rejects.toThrow();
+        }
       });
     });
   });

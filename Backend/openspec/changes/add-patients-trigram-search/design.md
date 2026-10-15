@@ -1,15 +1,16 @@
 # Design
 
 ## Context
-En **B-05 (`add-patients-core`)** implementamos el agregado `Patient` y el puerto `PatientRepositoryPort` con exactamente 5 métodos (`findById`, `findByDocument`, `findPotentialDuplicates`, `findAllByClinicId` y `save`). Para implementar ahora la búsqueda difusa tolerante a errores tipográficos (`RF-B-012`) en $<300\text{ ms}$ con hasta 10.000 pacientes (`RNF-B-031`, `RC-031`) sin violar el límite de 5 métodos por interfaz del Principio de Segregación de Interfaces (ISP, Sección 3.3 del documento de Stack), segregamos la lectura especializada en `PatientQueriesPort`.
+En **B-05 (`add-patients-core`)** implementamos el agregado `Patient` y el puerto `PatientRepositoryPort` (5 métodos). En **B-06** segregamos la lectura difusa en `PatientQueriesPort` (`ISP`) y cerramos además las brechas de infraestructura detectadas en auditoría sobre `patients`: ejecución de pruebas de contrato contra PostgreSQL real (`RC-018`, `RC-050`), protección contra borrado físico (`onDelete: Restrict`, `RF-B-010`, `RC-055`), traducción de errores de unicidad `P2002` en condiciones de carrera (`409 CONFLICT`), y activación real de índices GIN con `pg_trgm` + `unaccent` verificada mediante `EXPLAIN ANALYZE` (`RC-031`).
 
 ## Goals / Non-Goals
 
 **Goals:**
 - Segregar las lecturas de búsqueda rápida en `PatientQueriesPort` (`PATIENT_QUERIES_TOKEN`) dentro de `modules/patients/application/ports/patient.queries.port.ts` (CQRS ligero e ISP).
-- Añadir índices GIN con `gin_trgm_ops` en PostgreSQL mediante migración versionada para garantizar tiempos $<300\text{ ms}$.
-- Mantener paridad funcional entre `InMemoryPatientQueriesAdapter` y `PrismaPatientQueriesAdapter` validada con una suite de pruebas de contrato (`RC-018`) y prueba de rendimiento con 10.000 registros (`RC-031`).
-- Exponer `GET /v1/patients/search` protegido para `ADMIN` y `AUXILIARY` (`RC-005`).
+- Garantizar paridad exacta de tildes (`"Ines"` <-> `"Inés"`) y trigramas entre `InMemoryPatientQueriesAdapter` y PostgreSQL mediante la extensión `unaccent` y una función inmutable `immutable_unaccent(text)`.
+- Activar el uso real de los índices GIN `gin_trgm_ops` en PostgreSQL usando los operadores indexables de `pg_trgm` (`%`, `%>`, `ILIKE`) sobre las expresiones indexadas y verificarlo con `EXPLAIN ANALYZE` sobre 10.000 pacientes reales en `< 300 ms`.
+- Reemplazar `onDelete: Cascade` por `onDelete: Restrict` en `Patient` (`RF-B-010`, `RC-055`) y traducir `P2002` a `DuplicatePatientDocumentError` (`409`).
+- Ejecutar todas las suites de contrato (`*.contract.spec.ts`) contra PostgreSQL real (sin mocks de Prisma).
 
 **Non-Goals:**
 - Motor de búsqueda externo como Elasticsearch o Algolia (descartado en Sección 3.5 del Stack a favor de `pg_trgm`).
@@ -18,17 +19,27 @@ En **B-05 (`add-patients-core`)** implementamos el agregado `Patient` y el puert
 
 1. **Puerto Segregado `PatientQueriesPort` (ISP y CQRS Ligero):**
    - *Decisión:* Crear `Backend/src/modules/patients/application/ports/patient.queries.port.ts` con un único método `searchByTrigram(params: SearchPatientsByTrigramParams): Promise<PatientSearchItemDto[]>`.
-   - *Justificación:* `PatientRepositoryPort` ya tiene 5 métodos orientados al ciclo de vida del agregado `Patient`. La búsqueda global para autocompletado en el iPad (`RF-F-012`) devuelve proyecciones ligeras ordenadas por relevancia sin necesidad de hidratar agregados completos para escritura.
 
-2. **Índices GIN `pg_trgm` y Consulta Parametrizada Segura en Prisma:**
+2. **Extensión `unaccent`, Función `immutable_unaccent` e Índices GIN que PostgreSQL Realmente Utiliza (`RC-031`):**
+   - *Problema detectado:* Filtrar con `similarity(concat(...), q) >= 0.25` o `regexp_replace(p.phone, ...)` impide que PostgreSQL use índices GIN `gin_trgm_ops` (forzando `Seq Scan`), y además `pg_trgm` sin `unaccent` falla en nombres cortos con tilde (`"Ines"` vs `"Inés"`).
    - *Decisión:*
-     - Crear la migración `20261014010000_add_patients_trigram_indexes` con índices GIN `gin_trgm_ops` sobre `first_name`, `last_name`, `document_number` y `phone`.
-     - En `PrismaPatientQueriesAdapter`, usar `this.prisma.client.$queryRaw` con *tagged templates* de Prisma (`Prisma.sql`), evaluando `word_similarity` / `similarity` sobre `first_name || ' ' || last_name`, además de `ILIKE` sobre nombre, `document_number` y `phone`, siempre restringido por `clinic_id = ${clinicId}`.
-   - *Justificación:* Previene inyección SQL (`RNF-B-005`), respeta el contexto transaccional (`this.prisma.client`) y aprovecha los índices GIN en PostgreSQL.
+     - Crear la migración `20261014013000_fix_patients_restrict_and_trgm_unaccent` que:
+       1. Activa `CREATE EXTENSION IF NOT EXISTS "unaccent";`.
+       2. Define la función `immutable_unaccent(text)` marcada como `IMMUTABLE PARALLEL SAFE STRICT`.
+       3. Elimina los índices separados no utilizados (`patients_first_name_trgm_idx`, `patients_last_name_trgm_idx`) y crea el índice funcional compuesto:
+          `CREATE INDEX "patients_full_name_unaccent_trgm_idx" ON "patients" USING GIN ((immutable_unaccent("first_name" || ' ' || "last_name")) gin_trgm_ops);`
+          conservando `patients_document_number_trgm_idx` y `patients_phone_trgm_idx`.
+     - En `PrismaPatientQueriesAdapter`, usar en el `WHERE` únicamente operadores indexables por GIN sobre las expresiones indexadas:
+       - `immutable_unaccent(p.first_name || ' ' || p.last_name) % immutable_unaccent(${query})`
+       - `OR immutable_unaccent(p.first_name || ' ' || p.last_name) %> immutable_unaccent(${query})`
+       - `OR immutable_unaccent(p.first_name || ' ' || p.last_name) ILIKE ('%' || immutable_unaccent(${query}) || '%')`
+       - `OR p.document_number ILIKE ${digitPattern} OR p.phone ILIKE ${digitPattern}` (aprovechando que `PhoneNumber` ya persiste el teléfono normalizado sin guiones ni espacios).
 
-3. **Algoritmo de Trigramas Determinista en `InMemoryPatientQueriesAdapter` (`RC-018`, `RC-031`):**
-   - *Decisión:* Implementar una función pura de similitud de trigramas (coeficiente de Dice / intersección de trigramas normalizados sin tildes + coincidencia de subcadenas en documento y teléfono) que permita a la suite de contrato (`patients-queries.contract.spec.ts`) probar tanto errores tipográficos reales (`"Carls Gomz"` -> `"Carlos Gómez"`) como el benchmark de 10.000 pacientes en $<300\text{ ms}$.
+3. **Prohibición de Borrado Físico (`onDelete: Restrict`) y Traducción de `P2002` (`RF-B-010`, `RC-055`):**
+   - *Decisión:* Cambiar la relación `Patient.clinic` en `schema.prisma` a `onDelete: Restrict` y capturar `Prisma.PrismaClientKnownRequestError` (`code === 'P2002'`) en `PrismaPatientRepository.save` (y su equivalente en `InMemoryPatientRepository.save`) lanzando `DuplicatePatientDocumentError` (`409 CONFLICT`).
+
+4. **Pruebas de Contrato contra PostgreSQL Real (`RC-018`, `RC-050`):**
+   - *Decisión:* Eliminar los mocks manuales de `PrismaService` en `identity-repositories.contract.spec.ts`, `patients-repository.contract.spec.ts` y `patients-queries.contract.spec.ts` para que corran contra la base PostgreSQL real con `prisma migrate deploy` aplicado.
 
 ## Risks / Trade-offs
-- **[Risk] Colisión de ruta en NestJS entre `GET /v1/patients/search` y `GET /v1/patients/:id`** → *Mitigación:* Declarar `@Get('search')` antes de `@Get(':id')` en `PatientsController`.
-- **[Risk] Términos vacíos o de 1 solo carácter disparan escaneos costosos** → *Mitigación:* Si `q.trim().length < 2`, `SearchPatientsQuery` retorna `[]` inmediatamente sin consultar la base de datos.
+- **[Risk] Tiempo de inserción de 10.000 pacientes en la prueba de contrato contra PostgreSQL real** → *Mitigación:* Usar `prisma.client.patient.createMany({ data: ... })` en un solo lote dentro del test de benchmark, lo que inserta las 10.000 filas en ~150 ms antes de medir `searchByTrigram` y `EXPLAIN ANALYZE`.

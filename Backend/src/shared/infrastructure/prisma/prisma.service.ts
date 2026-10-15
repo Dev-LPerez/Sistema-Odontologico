@@ -24,6 +24,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
           }
         : undefined,
     });
+
+    Object.defineProperty(this, 'client', {
+      get: () => this.als.getStore() ?? this,
+      configurable: true,
+      enumerable: false,
+    });
   }
 
   get client(): Prisma.TransactionClient | PrismaClient {

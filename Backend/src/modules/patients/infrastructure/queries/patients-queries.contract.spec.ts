@@ -1,4 +1,4 @@
-import { Patient as PrismaPatient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { Patient } from '../../domain/patient.entity';
 import { DocumentIdentity } from '../../domain/document-identity.vo';
 import { PhoneNumber } from '../../domain/phone-number.vo';
@@ -9,229 +9,103 @@ import { PatientQueriesPort } from '../../application/ports/patient.queries.port
 import { InMemoryPatientQueriesAdapter } from './in-memory-patient.queries';
 import { PrismaPatientQueriesAdapter } from './prisma-patient.queries';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
-import {
-  normalizeText,
-  extractTrigrams,
-  extractTrigramsFromNormalized,
-  calculateTrigramSimilarity,
-} from './trigram-similarity.util';
 import { PatientMapper } from '../mappers/patient.mapper';
 
 interface QueriesAdapterFactory {
   name: string;
   createAdapter: () => {
     adapter: PatientQueriesPort;
-    savePatient: (patient: Patient) => void;
-    clear: () => void;
+    savePatient: (patient: Patient) => Promise<void>;
+    bulkInsert?: (patients: Patient[]) => Promise<void>;
+    clear: () => Promise<void>;
   };
-}
-
-interface ParsedQueryOptions {
-  clinicId: string;
-  queryStr: string;
-  digits: string;
-  limit: number;
-  onlyActive: boolean;
-}
-
-interface SqlLikeInput {
-  strings?: string[];
-  values?: unknown[];
-}
-
-function parseSqlInput(input: unknown, rest: unknown[]): { strings: string[]; values: unknown[] } {
-  if (
-    input &&
-    typeof input === 'object' &&
-    'strings' in input &&
-    Array.isArray((input as SqlLikeInput).strings)
-  ) {
-    const typed = input as SqlLikeInput;
-    return { strings: typed.strings ?? [], values: typed.values ?? [] };
-  }
-  if (Array.isArray(input)) {
-    return { strings: input as string[], values: rest };
-  }
-  return { strings: [], values: [] };
-}
-
-function extractQueryOptions(strings: string[], values: unknown[]): ParsedQueryOptions {
-  const fullSql = strings.join(' ? ');
-  const onlyActive = fullSql.includes('p.is_active = true');
-  const queryStr = String(values[0] ?? '');
-
-  let clinicId = '';
-  for (let i = 0; i < strings.length; i++) {
-    if (strings[i].includes('clinic_id =')) {
-      clinicId = String(values[i]);
-      break;
-    }
-  }
-
-  let digits = '';
-  for (let i = 0; i < strings.length; i++) {
-    if (strings[i].includes('document_number ILIKE')) {
-      const val = String(values[i]);
-      digits = val.replace(/%/g, '');
-      break;
-    }
-  }
-
-  let limit = 20;
-  for (let i = values.length - 1; i >= 0; i--) {
-    if (typeof values[i] === 'number') {
-      limit = values[i] as number;
-      break;
-    }
-  }
-
-  return { clinicId, queryStr, digits, limit, onlyActive };
-}
-
-function calculateRecordScore(
-  record: PrismaPatient,
-  normQuery: string,
-  queryTrigrams: Set<string>,
-  digits: string,
-): number {
-  const normFirstName = normalizeText(record.firstName);
-  const normLastName = normalizeText(record.lastName);
-  const normFullName = `${normFirstName} ${normLastName}`;
-
-  let digitMatchBonus = 0;
-  if (digits) {
-    const rawPhoneDigits = record.phone.replace(/\D/g, '');
-    if (record.documentNumber.includes(digits) || rawPhoneDigits.includes(digits)) {
-      digitMatchBonus = 0.8;
-    }
-  }
-
-  let subMatchBonus = 0;
-  if (normFullName.includes(normQuery) || normQuery.includes(normFullName)) {
-    subMatchBonus = 0.6;
-  } else if (normFirstName.includes(normQuery) || normLastName.includes(normQuery)) {
-    subMatchBonus = 0.5;
-  }
-
-  const fullTrigrams = extractTrigramsFromNormalized(normFullName);
-  const simFullName = calculateTrigramSimilarity(fullTrigrams, queryTrigrams);
-
-  let simFirstName = 0;
-  let simLastName = 0;
-  if (simFullName > 0 && simFullName < 0.5) {
-    simFirstName = calculateTrigramSimilarity(
-      extractTrigramsFromNormalized(normFirstName),
-      queryTrigrams,
-    );
-    simLastName = calculateTrigramSimilarity(
-      extractTrigramsFromNormalized(normLastName),
-      queryTrigrams,
-    );
-  }
-
-  return Math.max(simFullName, simFirstName, simLastName, subMatchBonus, digitMatchBonus);
 }
 
 describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
   const fixedNow = new Date('2026-10-14T10:00:00.000Z');
+  const realPrisma = new PrismaService();
 
-  const createMockPrismaForQueries = () => {
-    const store = new Map<string, PrismaPatient>();
+  beforeAll(async () => {
+    await realPrisma.$connect();
+  });
 
-    const mockPrisma = {
-      client: {
-        $queryRaw: jest.fn(async (input: unknown, ...rest: unknown[]) => {
-          const { strings, values } = parseSqlInput(input, rest);
-          const { clinicId, queryStr, digits, limit, onlyActive } = extractQueryOptions(
-            strings,
-            values,
-          );
+  afterAll(async () => {
+    await cleanDb();
+    await realPrisma.$disconnect();
+  });
 
-          const normQuery = normalizeText(queryStr);
-          const queryTrigrams = extractTrigrams(queryStr);
-
-          const candidates = Array.from(store.values()).filter((p) => p.clinicId === clinicId);
-          const scored: Array<{ record: PrismaPatient; score: number }> = [];
-
-          for (const record of candidates) {
-            if (onlyActive && !record.isActive) {
-              continue;
-            }
-
-            const score = calculateRecordScore(record, normQuery, queryTrigrams, digits);
-            if (score >= 0.25) {
-              scored.push({ record, score });
-            }
-          }
-
-          scored.sort((a, b) => {
-            if (b.score !== a.score) {
-              return b.score - a.score;
-            }
-            return b.record.createdAt.getTime() - a.record.createdAt.getTime();
-          });
-
-          return scored.slice(0, limit).map(({ record, score }) => ({
-            id: record.id,
-            clinicId: record.clinicId,
-            firstName: record.firstName,
-            lastName: record.lastName,
-            documentType: record.documentType,
-            documentNumber: record.documentNumber,
-            birthDate: record.birthDate,
-            phone: record.phone,
-            email: record.email,
-            address: record.address,
-            emergencyContactName: record.emergencyContactName,
-            emergencyContactPhone: record.emergencyContactPhone,
-            acquisitionSource: record.acquisitionSource,
-            dataTreatmentConsent: record.dataTreatmentConsent,
-            dataTreatmentConsentAt: record.dataTreatmentConsentAt,
-            isActive: record.isActive,
-            createdAt: record.createdAt,
-            updatedAt: record.updatedAt,
-            similarityScore: score,
-          }));
-        }),
-      },
-    };
-
-    return {
-      service: mockPrisma as unknown as PrismaService,
-      save: (patient: Patient) => {
-        const raw = PatientMapper.toPersistence(patient);
-        store.set(patient.id, raw as unknown as PrismaPatient);
-      },
-      clear: () => store.clear(),
-    };
+  const cleanDb = async () => {
+    await realPrisma.patient.deleteMany();
+    await realPrisma.refreshSession.deleteMany();
+    await realPrisma.user.deleteMany();
+    await realPrisma.clinic.deleteMany();
   };
 
-  const inMemoryQueries = new InMemoryPatientQueriesAdapter();
-  const mockPrismaContext = createMockPrismaForQueries();
-  const prismaQueries = new PrismaPatientQueriesAdapter(mockPrismaContext.service);
+  const ensureClinics = async () => {
+    await realPrisma.clinic.upsert({
+      where: { id: 'clinic-123' },
+      create: { id: 'clinic-123', name: 'Clínica 123' },
+      update: {},
+    });
+    await realPrisma.clinic.upsert({
+      where: { id: 'other-clinic-999' },
+      create: { id: 'other-clinic-999', name: 'Otra Clínica' },
+      update: {},
+    });
+  };
+
+  const inMemoryAdapter = new InMemoryPatientQueriesAdapter();
+  const prismaAdapter = new PrismaPatientQueriesAdapter(realPrisma);
 
   const factories: QueriesAdapterFactory[] = [
     {
       name: 'InMemoryPatientQueriesAdapter',
       createAdapter: () => ({
-        adapter: inMemoryQueries,
-        savePatient: (patient: Patient) => inMemoryQueries.save(patient),
-        clear: () => inMemoryQueries.clear(),
+        adapter: inMemoryAdapter,
+        savePatient: async (patient: Patient) => {
+          inMemoryAdapter.save(patient);
+        },
+        bulkInsert: async (patients: Patient[]) => {
+          for (const p of patients) {
+            inMemoryAdapter.save(p);
+          }
+        },
+        clear: async () => {
+          inMemoryAdapter.clear();
+        },
       }),
     },
     {
       name: 'PrismaPatientQueriesAdapter',
       createAdapter: () => ({
-        adapter: prismaQueries,
-        savePatient: (patient: Patient) => mockPrismaContext.save(patient),
-        clear: () => mockPrismaContext.clear(),
+        adapter: prismaAdapter,
+        savePatient: async (patient: Patient) => {
+          const data = PatientMapper.toPersistence(patient);
+          await realPrisma.patient.upsert({
+            where: { id: patient.id },
+            create: data,
+            update: data,
+          });
+        },
+        bulkInsert: async (patients: Patient[]) => {
+          const raw = patients.map((p) => PatientMapper.toPersistence(p));
+          for (let i = 0; i < raw.length; i += 2000) {
+            await realPrisma.patient.createMany({
+              data: raw.slice(i, i + 2000),
+            });
+          }
+        },
+        clear: async () => {
+          await cleanDb();
+          await ensureClinics();
+        },
       }),
     },
   ];
 
-  const buildPatient = (overrides?: Partial<Parameters<typeof Patient.create>[0]>) => {
+  const buildPatient = (overrides?: Partial<Parameters<typeof Patient.create>[0]>): Patient => {
     return Patient.create({
-      id: 'patient-test-1',
+      id: 'patient-default-id',
       clinicId: 'clinic-123',
       firstName: 'Carlos',
       lastName: 'Gómez',
@@ -239,9 +113,9 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
       birthDate: new Date('1990-05-15T00:00:00.000Z'),
       phone: PhoneNumber.create('3001234567'),
       email: 'carlos@example.com',
-      address: 'Calle 100 # 15-20',
+      address: 'Calle 10 # 20-30',
       emergencyContact: EmergencyContact.create('María Gómez', PhoneNumber.create('3109876543')),
-      acquisitionSource: AcquisitionSource.INSTAGRAM,
+      acquisitionSource: AcquisitionSource.DIRECT,
       dataTreatmentConsent: true,
       dataTreatmentConsentAt: fixedNow,
       isActive: true,
@@ -254,22 +128,24 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
   factories.forEach(({ name, createAdapter }) => {
     describe(`Implementation: ${name}`, () => {
       let adapter: PatientQueriesPort;
-      let savePatient: (patient: Patient) => void;
-      let clear: () => void;
+      let savePatient: (patient: Patient) => Promise<void>;
+      let bulkInsert: ((patients: Patient[]) => Promise<void>) | undefined;
+      let clear: () => Promise<void>;
 
-      beforeEach(() => {
+      beforeEach(async () => {
         const fixture = createAdapter();
         adapter = fixture.adapter;
         savePatient = fixture.savePatient;
+        bulkInsert = fixture.bulkInsert;
         clear = fixture.clear;
-        clear();
+        await clear();
       });
 
-      afterEach(() => {
-        clear();
+      afterEach(async () => {
+        await clear();
       });
 
-      it('debe encontrar pacientes por nombre tolerando errores tipográficos y ordenando por relevancia dentro del mismo clinicId', async () => {
+      it('debe encontrar pacientes por nombre tolerando errores tipográficos y omisión de tildes ordenando por relevancia dentro del mismo clinicId', async () => {
         const patientClinic1 = buildPatient({
           id: 'patient-1',
           clinicId: 'clinic-123',
@@ -290,10 +166,19 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
           document: DocumentIdentity.create(DocumentType.CC, '9988776655'),
           phone: PhoneNumber.create('3159998877'),
         });
+        const patientTildes = buildPatient({
+          id: 'patient-tildes',
+          clinicId: 'clinic-123',
+          firstName: 'Inés',
+          lastName: 'Martínez',
+          document: DocumentIdentity.create(DocumentType.CC, '4455667788'),
+          phone: PhoneNumber.create('3112223344'),
+        });
 
-        savePatient(patientClinic1);
-        savePatient(patientOtherClinic);
-        savePatient(patientRandom);
+        await savePatient(patientClinic1);
+        await savePatient(patientOtherClinic);
+        await savePatient(patientRandom);
+        await savePatient(patientTildes);
 
         const results = await adapter.searchByTrigram({
           clinicId: 'clinic-123',
@@ -307,6 +192,14 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
         expect(results[0].firstName).toBe('Carlos');
         expect(results[0].lastName).toBe('Gómez');
         expect(results.some((r) => r.id === 'patient-2')).toBe(false);
+
+        // Búsqueda omitiendo tildes ("Ines" -> "Inés Martínez")
+        const resultsTildes = await adapter.searchByTrigram({
+          clinicId: 'clinic-123',
+          query: 'Ines',
+          limit: 20,
+        });
+        expect(resultsTildes.some((r) => r.id === 'patient-tildes')).toBe(true);
       });
 
       it('debe encontrar pacientes por fragmento de documento o teléfono normalizando guiones y espacios', async () => {
@@ -316,7 +209,7 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
           document: DocumentIdentity.create(DocumentType.CC, '1020304050'),
           phone: PhoneNumber.create('3001234567'),
         });
-        savePatient(patient);
+        await savePatient(patient);
 
         const resultsByDoc = await adapter.searchByTrigram({
           clinicId: 'clinic-123',
@@ -347,7 +240,7 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
           lastName: 'Martínez',
           isActive: false,
         });
-        savePatient(inactivePatient);
+        await savePatient(inactivePatient);
 
         const defaultResults = await adapter.searchByTrigram({
           clinicId: 'clinic-123',
@@ -370,7 +263,8 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
         expect(found?.isActive).toBe(false);
       });
 
-      it('debe responder en menos de 300 ms al buscar sobre 10.000 pacientes sintéticos (RNF-B-031, RC-031)', async () => {
+      it('debe responder en menos de 300 ms sobre 10.000 pacientes reales y usar Bitmap Index Scan sobre el índice GIN en EXPLAIN ANALYZE (RNF-B-031, RC-031)', async () => {
+        const syntheticBatch: Patient[] = [];
         for (let i = 0; i < 10000; i++) {
           const synth = Patient.create({
             id: `synth-${i}`,
@@ -393,7 +287,15 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
             createdAt: fixedNow,
             updatedAt: fixedNow,
           });
-          savePatient(synth);
+          syntheticBatch.push(synth);
+        }
+
+        if (bulkInsert) {
+          await bulkInsert(syntheticBatch);
+        } else {
+          for (const p of syntheticBatch) {
+            await savePatient(p);
+          }
         }
 
         const start = Date.now();
@@ -409,7 +311,16 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
         expect(results[0].id).toBe('synth-5000');
         expect(results[0].firstName).toBe('Carlos');
         expect(results[0].lastName).toBe('Gómez');
-      });
+
+        if (name === 'PrismaPatientQueriesAdapter') {
+          await realPrisma.$executeRawUnsafe('ANALYZE patients;');
+          const plan = await realPrisma.$queryRaw<Array<{ 'QUERY PLAN': string }>>(
+            Prisma.sql`EXPLAIN ANALYZE SELECT p.id FROM patients p WHERE immutable_unaccent(p.first_name || ' ' || p.last_name) %> 'Carls';`,
+          );
+          const planText = plan.map((row) => row['QUERY PLAN']).join('\n');
+          expect(planText).toContain('patients_full_name_unaccent_trgm_idx');
+        }
+      }, 30000);
     });
   });
 });

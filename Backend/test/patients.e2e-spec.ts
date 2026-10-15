@@ -293,14 +293,14 @@ describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-012, RF-B-013, RF-
     expect(verifyRes.body.isActive).toBe(false);
   });
 
-  // Scenario: Búsqueda exitosa por nombre con errores tipográficos para ADMIN o AUXILIARY
-  it('debe permitir a ADMIN y AUXILIARY buscar pacientes tolerando errores tipográficos en GET /v1/patients/search (200)', async () => {
+  // Scenario: Búsqueda exitosa por nombre con errores tipográficos y sin tildes para ADMIN o AUXILIARY
+  it('debe permitir a ADMIN y AUXILIARY buscar pacientes tolerando errores tipográficos y sin tildes en GET /v1/patients/search (200)', async () => {
     const carlosPatient = Patient.create({
       id: 'patient-carlos-e2e',
       clinicId: testClinicId,
       firstName: 'Carlos',
       lastName: 'Gómez',
-      document: DocumentIdentity.create(DocumentType.CC, '1020304050'),
+      document: DocumentIdentity.create(DocumentType.CC, '1020309999'),
       birthDate: new Date('1990-05-15T00:00:00.000Z'),
       phone: PhoneNumber.create('3001234567'),
       email: 'carlos@example.com',
@@ -313,7 +313,7 @@ describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-012, RF-B-013, RF-
       createdAt: new Date('2026-10-14T10:00:00.000Z'),
       updatedAt: new Date('2026-10-14T10:00:00.000Z'),
     });
-    patientQueriesAdapter.save(carlosPatient);
+    await patientQueriesAdapter.save(carlosPatient);
 
     const adminRes = await request(app.getHttpServer())
       .get('/v1/patients/search?q=Carls Gomz')
@@ -334,6 +334,14 @@ describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-012, RF-B-013, RF-
     expect(Array.isArray(auxRes.body)).toBe(true);
     expect(auxRes.body.length).toBeGreaterThanOrEqual(1);
     expect(auxRes.body[0].firstName).toBe('Carlos');
+
+    const tildesRes = await request(app.getHttpServer())
+      .get('/v1/patients/search?q=Gomez')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(Array.isArray(tildesRes.body)).toBe(true);
+    expect(tildesRes.body.some((p: { id: string }) => p.id === 'patient-carlos-e2e')).toBe(true);
   });
 
   // Scenario: Búsqueda exitosa por fragmento de documento o teléfono con caracteres de formato
@@ -353,7 +361,7 @@ describe('Patients Management (e2e) (RF-B-010, RF-B-011, RF-B-012, RF-B-013, RF-
 
     expect(Array.isArray(docRes.body)).toBe(true);
     expect(
-      docRes.body.some((p: { documentNumber: string }) => p.documentNumber === '1020304050'),
+      docRes.body.some((p: { documentNumber: string }) => p.documentNumber === '1020309999'),
     ).toBe(true);
   });
 
