@@ -1089,6 +1089,223 @@
         ]
       }
     },
+    "/v1/clinical-histories": {
+      "post": {
+        "operationId": "ClinicalHistoryController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClinicalHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Historia clínica creada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalHistoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Abrir la historia clínica única de un paciente",
+        "tags": [
+          "Clinical Histories"
+        ]
+      }
+    },
+    "/v1/clinical-histories/patient/{patientId}": {
+      "patch": {
+        "operationId": "ClinicalHistoryController_update",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClinicalHistoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Historia clínica actualizada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalHistoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar antecedentes, examen y diagnósticos de la historia clínica",
+        "tags": [
+          "Clinical Histories"
+        ]
+      },
+      "get": {
+        "operationId": "ClinicalHistoryController_getByPatient",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historia clínica obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalHistoryResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar la historia clínica completa de un paciente",
+        "tags": [
+          "Clinical Histories"
+        ]
+      }
+    },
+    "/v1/clinical-histories/patient/{patientId}/treatment-plan-items": {
+      "post": {
+        "operationId": "ClinicalHistoryController_addTreatmentPlanItem",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTreatmentPlanItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ítem agregado exitosamente al plan de tratamiento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanItemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Agregar un ítem o procedimiento al plan de tratamiento",
+        "tags": [
+          "Clinical Histories"
+        ]
+      }
+    },
+    "/v1/clinical-histories/patient/{patientId}/treatment-plan-items/{itemId}/status": {
+      "patch": {
+        "operationId": "ClinicalHistoryController_updateTreatmentItemStatus",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTreatmentItemStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del ítem actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TreatmentPlanItemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar el estado de un ítem del plan de tratamiento",
+        "tags": [
+          "Clinical Histories"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -2307,6 +2524,443 @@
         },
         "required": [
           "quantity"
+        ]
+      },
+      "PersonalAntecedentsDto": {
+        "type": "object",
+        "properties": {
+          "hypertension": {
+            "type": "boolean",
+            "description": "Hipertensión arterial",
+            "example": false
+          },
+          "diabetes": {
+            "type": "boolean",
+            "description": "Diabetes",
+            "example": false
+          },
+          "allergies": {
+            "type": "boolean",
+            "description": "Alergias conocidas",
+            "example": true
+          },
+          "allergiesDetails": {
+            "type": "string",
+            "description": "Detalle de alergias (obligatorio si allergies es true)",
+            "example": "Penicilina",
+            "nullable": true
+          },
+          "medications": {
+            "type": "boolean",
+            "description": "Medicación activa",
+            "example": false
+          },
+          "medicationsDetails": {
+            "type": "string",
+            "description": "Detalle de medicamentos (obligatorio si medications es true)",
+            "example": "Losartán 50mg",
+            "nullable": true
+          },
+          "bleedingDisorders": {
+            "type": "boolean",
+            "description": "Trastornos hemorrágicos o de coagulación",
+            "example": false
+          },
+          "pregnancy": {
+            "type": "boolean",
+            "description": "Estado de embarazo",
+            "example": false
+          },
+          "otherNotes": {
+            "type": "string",
+            "description": "Otras observaciones médicas",
+            "example": "Sin antecedentes quirúrgicos",
+            "nullable": true
+          }
+        },
+        "required": [
+          "hypertension",
+          "diabetes",
+          "allergies",
+          "medications",
+          "bleedingDisorders",
+          "pregnancy"
+        ]
+      },
+      "CreateClinicalHistoryDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "description": "ID del paciente",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "chiefComplaint": {
+            "type": "string",
+            "description": "Motivo de consulta",
+            "example": "Dolor agudo en molar superior"
+          },
+          "currentIllness": {
+            "type": "string",
+            "description": "Enfermedad actual",
+            "example": "Paciente refiere dolor pulsátil de 3 días de evolución"
+          },
+          "personalAntecedents": {
+            "description": "Antecedentes médicos personales",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PersonalAntecedentsDto"
+              }
+            ]
+          },
+          "familyAntecedents": {
+            "type": "string",
+            "description": "Antecedentes médicos familiares",
+            "example": "Madre hipertensa",
+            "nullable": true
+          },
+          "clinicalExamination": {
+            "type": "string",
+            "description": "Examen clínico e intraoral",
+            "example": "Pieza 16 con cavidad oclusal profunda",
+            "nullable": true
+          },
+          "diagnoses": {
+            "description": "Diagnósticos clínicos (CIE-10 o descripción)",
+            "example": [
+              {
+                "code": "K02.1",
+                "description": "Caries de la dentina"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "patientId",
+          "chiefComplaint",
+          "currentIllness",
+          "personalAntecedents"
+        ]
+      },
+      "TreatmentPlanItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "clinicalHistoryId": {
+            "type": "string",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "procedureId": {
+            "type": "string",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "procedureCode": {
+            "type": "string",
+            "example": "RES-EST"
+          },
+          "procedureName": {
+            "type": "string",
+            "example": "Resina Estética"
+          },
+          "toothNumber": {
+            "type": "string",
+            "example": "16",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "example": "PENDING"
+          },
+          "estimatedCostCop": {
+            "type": "number",
+            "example": 150000
+          },
+          "notes": {
+            "type": "string",
+            "example": "Aislamiento absoluto",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-15T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-15T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "clinicalHistoryId",
+          "procedureId",
+          "procedureCode",
+          "procedureName",
+          "toothNumber",
+          "status",
+          "estimatedCostCop",
+          "notes",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ClinicalHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "patientId": {
+            "type": "string",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "chiefComplaint": {
+            "type": "string",
+            "example": "Dolor agudo en molar superior"
+          },
+          "currentIllness": {
+            "type": "string",
+            "example": "Evolución de 3 días"
+          },
+          "personalAntecedents": {
+            "type": "object",
+            "example": {
+              "hypertension": false,
+              "diabetes": false,
+              "allergies": true,
+              "allergiesDetails": "Penicilina",
+              "medications": false,
+              "medicationsDetails": null,
+              "bleedingDisorders": false,
+              "pregnancy": false,
+              "otherNotes": null
+            }
+          },
+          "familyAntecedents": {
+            "type": "string",
+            "example": "Madre hipertensa",
+            "nullable": true
+          },
+          "clinicalExamination": {
+            "type": "string",
+            "example": "Caries cavitada en 16",
+            "nullable": true
+          },
+          "diagnoses": {
+            "example": [
+              {
+                "code": "K02.1",
+                "description": "Caries de la dentina"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "treatmentItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreatmentPlanItemResponseDto"
+            }
+          },
+          "totalEstimatedCostCop": {
+            "type": "number",
+            "example": 150000
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-15T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-15T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "patientId",
+          "chiefComplaint",
+          "currentIllness",
+          "personalAntecedents",
+          "familyAntecedents",
+          "clinicalExamination",
+          "diagnoses",
+          "treatmentItems",
+          "totalEstimatedCostCop",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdatePersonalAntecedentsDto": {
+        "type": "object",
+        "properties": {
+          "hypertension": {
+            "type": "boolean",
+            "description": "Hipertensión arterial",
+            "example": false
+          },
+          "diabetes": {
+            "type": "boolean",
+            "description": "Diabetes",
+            "example": false
+          },
+          "allergies": {
+            "type": "boolean",
+            "description": "Alergias conocidas",
+            "example": true
+          },
+          "allergiesDetails": {
+            "type": "string",
+            "description": "Detalle de alergias",
+            "example": "Penicilina",
+            "nullable": true
+          },
+          "medications": {
+            "type": "boolean",
+            "description": "Medicación activa",
+            "example": false
+          },
+          "medicationsDetails": {
+            "type": "string",
+            "description": "Detalle de medicamentos",
+            "example": "Losartán 50mg",
+            "nullable": true
+          },
+          "bleedingDisorders": {
+            "type": "boolean",
+            "description": "Trastornos hemorrágicos",
+            "example": false
+          },
+          "pregnancy": {
+            "type": "boolean",
+            "description": "Estado de embarazo",
+            "example": false
+          },
+          "otherNotes": {
+            "type": "string",
+            "description": "Otras observaciones médicas",
+            "example": "Sin antecedentes adicionales",
+            "nullable": true
+          }
+        }
+      },
+      "UpdateClinicalHistoryDto": {
+        "type": "object",
+        "properties": {
+          "chiefComplaint": {
+            "type": "string",
+            "description": "Motivo de consulta",
+            "example": "Control y revisión de obturación"
+          },
+          "currentIllness": {
+            "type": "string",
+            "description": "Enfermedad actual",
+            "example": "Evolución satisfactoria sin dolor"
+          },
+          "personalAntecedents": {
+            "description": "Antecedentes médicos personales actualizados",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UpdatePersonalAntecedentsDto"
+              }
+            ]
+          },
+          "familyAntecedents": {
+            "type": "string",
+            "description": "Antecedentes médicos familiares",
+            "example": "Madre hipertensa",
+            "nullable": true
+          },
+          "clinicalExamination": {
+            "type": "string",
+            "description": "Examen clínico e intraoral",
+            "example": "Pieza 16 restaurada adecuadamente",
+            "nullable": true
+          },
+          "diagnoses": {
+            "description": "Diagnósticos clínicos",
+            "example": [
+              {
+                "code": "Z01.2",
+                "description": "Examen odontológico"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "AddTreatmentPlanItemDto": {
+        "type": "object",
+        "properties": {
+          "procedureId": {
+            "type": "string",
+            "description": "ID del procedimiento en el catálogo",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "toothNumber": {
+            "type": "string",
+            "description": "Número de diente (FDI)",
+            "example": "16",
+            "nullable": true
+          },
+          "estimatedCostCop": {
+            "type": "number",
+            "description": "Costo estimado manual en COP (si no se proporciona se resuelve del catálogo)",
+            "example": 150000
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas o indicaciones del procedimiento",
+            "example": "Aislamiento absoluto requerido",
+            "nullable": true
+          }
+        },
+        "required": [
+          "procedureId"
+        ]
+      },
+      "UpdateTreatmentItemStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
+            "description": "Nuevo estado del ítem en el plan de tratamiento",
+            "example": "COMPLETED"
+          }
+        },
+        "required": [
+          "status"
         ]
       }
     }

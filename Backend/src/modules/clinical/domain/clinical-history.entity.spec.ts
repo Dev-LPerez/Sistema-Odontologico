@@ -182,4 +182,45 @@ describe('ClinicalHistory AggregateRoot', () => {
     expect(history.diagnoses).toEqual([{ code: 'K02.2', description: 'Caries recurrente' }]);
     expect(history.updatedAt).toEqual(newDate);
   });
+
+  it('debe rechazar datos inválidos en creación, actualización y plan de tratamiento', () => {
+    // Sin medicalAntecedents
+    expect(() =>
+      ClinicalHistory.create({
+        ...defaultProps,
+        medicalAntecedents: null as unknown as MedicalAntecedents,
+      }),
+    ).toThrow(InvalidClinicalHistoryDataError);
+
+    const history = ClinicalHistory.create(defaultProps);
+
+    // Update con medicalAntecedents inválido
+    expect(() =>
+      history.update({
+        medicalAntecedents: {} as unknown as MedicalAntecedents,
+        updatedAt: new Date(),
+      }),
+    ).toThrow(InvalidClinicalHistoryDataError);
+
+    // Update con diagnoses no arreglo
+    expect(() =>
+      history.update({
+        diagnoses: 'no-array' as unknown as unknown[],
+        updatedAt: new Date(),
+      }),
+    ).toThrow(InvalidClinicalHistoryDataError);
+
+    // Add treatment item inválido
+    expect(() => history.addTreatmentPlanItem(null as unknown as TreatmentPlanItem)).toThrow(
+      InvalidClinicalHistoryDataError,
+    );
+
+    // Update con medicalAntecedents válido y clinicalExamination null
+    history.update({
+      medicalAntecedents: antecedents,
+      clinicalExamination: null,
+      updatedAt: new Date(),
+    });
+    expect(history.clinicalExamination).toBeNull();
+  });
 });

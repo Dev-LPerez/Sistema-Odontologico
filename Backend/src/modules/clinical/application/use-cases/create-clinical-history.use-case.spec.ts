@@ -146,4 +146,58 @@ describe('CreateClinicalHistoryUseCase', () => {
       }),
     ).rejects.toThrow(PatientNotFoundError);
   });
+
+  it('debe lanzar PatientNotFoundError cuando el paciente pertenece a otra clínica', async () => {
+    patientRepo.findById.mockResolvedValue({
+      id: 'patient-123',
+      clinicId: 'otra-clinica',
+    } as unknown as Patient);
+
+    await expect(
+      useCase.execute({
+        clinicId: 'clinic-123',
+        patientId: 'patient-123',
+        chiefComplaint: 'Dolor',
+        currentIllness: 'Molestia',
+        personalAntecedents: {
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        },
+      }),
+    ).rejects.toThrow(PatientNotFoundError);
+  });
+
+  it('debe crear historia clínica con medicación activa, notas adicionales y sin examen clínico', async () => {
+    patientRepo.findById.mockResolvedValue({
+      id: 'patient-456',
+      clinicId: 'clinic-123',
+    } as unknown as Patient);
+    historyRepo.findByPatientId.mockResolvedValue(null);
+
+    const result = await useCase.execute({
+      clinicId: 'clinic-123',
+      patientId: 'patient-456',
+      chiefComplaint: 'Revisión periódica',
+      currentIllness: 'Control',
+      personalAntecedents: {
+        hypertension: true,
+        diabetes: true,
+        allergies: false,
+        medications: true,
+        medicationsDetails: 'Metformina 850mg',
+        bleedingDisorders: false,
+        pregnancy: false,
+        otherNotes: 'Paciente ansioso',
+      },
+    });
+
+    expect(result.medicalAntecedents.medications).toBe(true);
+    expect(result.medicalAntecedents.medicationsDetails).toBe('Metformina 850mg');
+    expect(result.medicalAntecedents.otherNotes).toBe('Paciente ansioso');
+    expect(result.clinicalExamination).toBeNull();
+  });
 });

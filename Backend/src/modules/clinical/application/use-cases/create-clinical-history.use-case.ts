@@ -39,18 +39,18 @@ export interface CreateClinicalHistoryCommand {
 }
 
 function buildMedicalAntecedents(command: CreateClinicalHistoryCommand): MedicalAntecedents {
-  const p = command.personalAntecedents || {};
+  const p = command.personalAntecedents ?? {};
   const props: MedicalAntecedentsProps = {
     hypertension: Boolean(p.hypertension),
     diabetes: Boolean(p.diabetes),
     allergies: Boolean(p.allergies),
-    allergiesDetails: p.allergiesDetails || null,
+    allergiesDetails: p.allergiesDetails ?? null,
     medications: Boolean(p.medications),
-    medicationsDetails: p.medicationsDetails || null,
+    medicationsDetails: p.medicationsDetails ?? null,
     bleedingDisorders: Boolean(p.bleedingDisorders),
     pregnancy: Boolean(p.pregnancy),
-    otherNotes: p.otherNotes || null,
-    familyAntecedents: command.familyAntecedents || null,
+    otherNotes: p.otherNotes ?? null,
+    familyAntecedents: command.familyAntecedents ?? null,
   };
   return MedicalAntecedents.create(props);
 }

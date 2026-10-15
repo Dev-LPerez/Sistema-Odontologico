@@ -94,4 +94,44 @@ describe('UpdateClinicalHistoryUseCase', () => {
       }),
     ).rejects.toThrow(ClinicalHistoryNotFoundError);
   });
+
+  it('debe actualizar solo motivo y solo antecedentes familiares manteniendo los demás', async () => {
+    const existingHistory = ClinicalHistory.create({
+      id: 'hist-123',
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      chiefComplaint: 'Dolor inicial',
+      currentIllness: 'Enfermedad inicial',
+      medicalAntecedents: MedicalAntecedents.create({
+        hypertension: false,
+        diabetes: false,
+        allergies: false,
+        medications: false,
+        bleedingDisorders: false,
+        pregnancy: false,
+      }),
+      createdAt: initialDate,
+      updatedAt: initialDate,
+    });
+    historyRepo.findByPatientId.mockResolvedValue(existingHistory);
+
+    // 1. Actualización sin modificar antecedentes
+    const res1 = await useCase.execute({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      chiefComplaint: 'Nuevo motivo únicamente',
+    });
+    expect(res1.chiefComplaint).toBe('Nuevo motivo únicamente');
+    expect(res1.medicalAntecedents.hypertension).toBe(false);
+
+    // 2. Actualización solo con familyAntecedents
+    const res2 = await useCase.execute({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      familyAntecedents: 'Sin antecedentes patológicos familiares',
+    });
+    expect(res2.medicalAntecedents.familyAntecedents).toBe(
+      'Sin antecedentes patológicos familiares',
+    );
+  });
 });
