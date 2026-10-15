@@ -22,18 +22,21 @@ enum UserRole {
 }
 
 model Clinic {
-  id              String           @id @default(uuid())
-  name            String
-  address         String?
-  phone           String?
-  email           String?
-  logoUrl         String?          @map("logo_url")
-  settings        Json?
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  users           User[]
-  refreshSessions RefreshSession[]
-  patients        Patient[]
+  id                     String                  @id @default(uuid())
+  name                   String
+  address                String?
+  phone                  String?
+  email                  String?
+  logoUrl                String?                 @map("logo_url")
+  settings               Json?
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  users                  User[]
+  refreshSessions        RefreshSession[]
+  patients               Patient[]
+  procedures             Procedure[]
+  patientProcedurePrices PatientProcedurePrice[]
+  materials              Material[]
 
   @@map("clinics")
 }
@@ -89,26 +92,27 @@ enum AcquisitionSource {
 }
 
 model Patient {
-  id                    String            @id @default(uuid())
-  clinicId              String            @map("clinic_id")
-  firstName             String            @map("first_name")
-  lastName              String            @map("last_name")
-  documentType          DocumentType      @map("document_type")
-  documentNumber        String            @map("document_number")
-  birthDate             DateTime          @map("birth_date")
-  phone                 String
-  email                 String?
-  address               String?
-  emergencyContactName  String?           @map("emergency_contact_name")
-  emergencyContactPhone String?           @map("emergency_contact_phone")
-  acquisitionSource     AcquisitionSource @default(DIRECT) @map("acquisition_source")
-  dataTreatmentConsent  Boolean           @map("data_treatment_consent")
-  dataTreatmentConsentAt DateTime         @map("data_treatment_consent_at")
-  isActive              Boolean           @default(true) @map("is_active")
-  createdAt             DateTime          @default(now()) @map("created_at")
-  updatedAt             DateTime          @updatedAt @map("updated_at")
+  id                     String            @id @default(uuid())
+  clinicId               String            @map("clinic_id")
+  firstName              String            @map("first_name")
+  lastName               String            @map("last_name")
+  documentType           DocumentType      @map("document_type")
+  documentNumber         String            @map("document_number")
+  birthDate              DateTime          @map("birth_date")
+  phone                  String
+  email                  String?
+  address                String?
+  emergencyContactName   String?           @map("emergency_contact_name")
+  emergencyContactPhone  String?           @map("emergency_contact_phone")
+  acquisitionSource      AcquisitionSource @default(DIRECT) @map("acquisition_source")
+  dataTreatmentConsent   Boolean           @map("data_treatment_consent")
+  dataTreatmentConsentAt DateTime          @map("data_treatment_consent_at")
+  isActive               Boolean           @default(true) @map("is_active")
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
 
-  clinic                Clinic            @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  clinic          Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  procedurePrices PatientProcedurePrice[]
 
   @@unique([clinicId, documentType, documentNumber])
   @@index([clinicId, isActive])
@@ -116,3 +120,57 @@ model Patient {
   @@map("patients")
 }
 
+model Procedure {
+  id            String                  @id @default(uuid())
+  clinicId      String                  @map("clinic_id")
+  code          String
+  name          String
+  description   String?
+  basePriceCop  Int                     @map("base_price_cop")
+  isActive      Boolean                 @default(true) @map("is_active")
+  createdAt     DateTime                @default(now()) @map("created_at")
+  updatedAt     DateTime                @updatedAt @map("updated_at")
+  clinic        Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientPrices PatientProcedurePrice[]
+
+  @@unique([clinicId, code])
+  @@index([clinicId, isActive])
+  @@map("procedures")
+}
+
+model PatientProcedurePrice {
+  id             String    @id @default(uuid())
+  clinicId       String    @map("clinic_id")
+  patientId      String    @map("patient_id")
+  procedureId    String    @map("procedure_id")
+  customPriceCop Int       @map("custom_price_cop")
+  reason         String
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  clinic         Clinic    @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patient        Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  procedure      Procedure @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+
+  @@unique([clinicId, patientId, procedureId])
+  @@index([clinicId, patientId])
+  @@map("patient_procedure_prices")
+}
+
+model Material {
+  id           String   @id @default(uuid())
+  clinicId     String   @map("clinic_id")
+  brand        String
+  reference    String
+  type         String
+  color        String
+  currentStock Int      @map("current_stock")
+  minStock     Int      @map("min_stock")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+
+  @@unique([clinicId, brand, reference, color])
+  @@index([clinicId, isActive])
+  @@map("materials")
+}
