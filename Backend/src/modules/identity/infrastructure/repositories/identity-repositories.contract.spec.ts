@@ -38,6 +38,9 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
   });
 
   const cleanDb = async () => {
+    await realPrisma.patientProcedurePrice.deleteMany();
+    await realPrisma.procedure.deleteMany();
+    await realPrisma.material.deleteMany();
     await realPrisma.patient.deleteMany();
     await realPrisma.refreshSession.deleteMany();
     await realPrisma.user.deleteMany();
