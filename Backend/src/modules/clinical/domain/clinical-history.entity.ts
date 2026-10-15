@@ -172,6 +172,7 @@ export class ClinicalHistory extends AggregateRoot<string> {
       throw new InvalidClinicalHistoryDataError('El ítem del plan de tratamiento debe ser válido');
     }
     this._treatmentItems.push(item);
+    this._updatedAt = item.createdAt;
   }
 
   updateTreatmentPlanItemStatus(

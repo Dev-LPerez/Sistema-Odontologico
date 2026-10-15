@@ -305,7 +305,7 @@ All files                                         |   97.82 |    91.71 |   95.73
 Test Suites: 74 passed, 74 total
 Tests:       371 passed, 371 total
 Snapshots:   0 total
-Time:        53.829 s, estimated 69 s
+Time:        63.788 s
 Ran all test suites.
 ```
 
@@ -324,6 +324,6 @@ PASS test/health.e2e-spec.ts
 Test Suites: 6 passed, 6 total
 Tests:       55 passed, 55 total
 Snapshots:   0 total
-Time:        26.761 s
+Time:        25.965 s, estimated 26 s
 Ran all test suites.
 ```
