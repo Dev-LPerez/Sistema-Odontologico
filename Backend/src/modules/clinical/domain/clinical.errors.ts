@@ -93,3 +93,33 @@ export class ClinicalAttentionClosedError extends DomainError {
     super(`La atención clínica '${identifier}' se encuentra cerrada y no permite modificaciones`);
   }
 }
+
+export class IncompleteClinicalAttentionError extends DomainError {
+  readonly category: DomainErrorCategory = 'INVARIANT_VIOLATION';
+  readonly code = 'INCOMPLETE_CLINICAL_ATTENTION';
+
+  constructor(identifier: string, reason?: string) {
+    super(
+      reason ??
+        `No se puede cerrar la atención clínica '${identifier}' porque requiere al menos un procedimiento realizado y notas de evolución`,
+    );
+  }
+}
+
+export class ClinicalAttentionNotClosedError extends DomainError {
+  readonly category: DomainErrorCategory = 'INVARIANT_VIOLATION';
+  readonly code = 'CLINICAL_ATTENTION_NOT_CLOSED';
+
+  constructor(identifier: string) {
+    super(`La atención clínica '${identifier}' no se encuentra cerrada y no permite enmiendas`);
+  }
+}
+
+export class DuplicateClinicalAttentionVersionError extends DomainError {
+  readonly category: DomainErrorCategory = 'CONFLICT';
+  readonly code = 'DUPLICATE_CLINICAL_ATTENTION_VERSION';
+
+  constructor(attentionId: string, versionNumber: number) {
+    super(`Ya existe la versión '${versionNumber}' para la atención clínica '${attentionId}'`);
+  }
+}

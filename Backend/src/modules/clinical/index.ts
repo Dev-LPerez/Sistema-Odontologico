@@ -20,6 +20,8 @@ export * from './domain/clinical-attention-status.enum';
 export * from './domain/attention-material-used.entity';
 export * from './domain/clinical-attention.entity';
 export * from './domain/clinical-attention.repository.port';
+export * from './domain/clinical-attention-version.entity';
+export * from './domain/clinical-attention-version.repository.port';
 
 export * from './application/use-cases/create-clinical-history.use-case';
 export * from './application/use-cases/update-clinical-history.use-case';

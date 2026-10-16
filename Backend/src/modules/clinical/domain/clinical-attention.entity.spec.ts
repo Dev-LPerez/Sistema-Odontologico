@@ -1,6 +1,11 @@
 import { ClinicalAttention } from './clinical-attention.entity';
 import { ClinicalAttentionStatus } from './clinical-attention-status.enum';
-import { InvalidClinicalAttentionDataError, ClinicalAttentionClosedError } from './clinical.errors';
+import {
+  InvalidClinicalAttentionDataError,
+  ClinicalAttentionClosedError,
+  IncompleteClinicalAttentionError,
+  ClinicalAttentionNotClosedError,
+} from './clinical.errors';
 import { AttentionMaterialUsed } from './attention-material-used.entity';
 
 describe('ClinicalAttention Aggregate', () => {
@@ -257,5 +262,116 @@ describe('ClinicalAttention Aggregate', () => {
 
     expect(attention.status).toBe(ClinicalAttentionStatus.CLOSED);
     expect(attention.updatedAt).toEqual(closeTime);
+  });
+
+  it('debe lanzar IncompleteClinicalAttentionError (422) cuando se intenta cerrar una atención sin procedimientos realizados', () => {
+    const attentionWithoutProcedures = ClinicalAttention.create({
+      ...validProps,
+      proceduresPerformed: [],
+    });
+
+    const closeTime = new Date('2026-10-16T13:00:00.000Z');
+    expect(() => attentionWithoutProcedures.close(closeTime)).toThrow(
+      IncompleteClinicalAttentionError,
+    );
+
+    const attentionWithInvalidProcedure = ClinicalAttention.create({
+      ...validProps,
+      proceduresPerformed: [{ code: '   ' }],
+    });
+    expect(() => attentionWithInvalidProcedure.close(closeTime)).toThrow(
+      IncompleteClinicalAttentionError,
+    );
+  });
+
+  it('debe rechazar close() si la atención ya está CLOSED con ClinicalAttentionClosedError', () => {
+    const attention = ClinicalAttention.create(validProps);
+    const closeTime = new Date('2026-10-16T13:00:00.000Z');
+    attention.close(closeTime);
+
+    expect(() => attention.close(new Date('2026-10-16T13:30:00.000Z'))).toThrow(
+      ClinicalAttentionClosedError,
+    );
+  });
+
+  it('debe capturar toSnapshotData() como una instantánea inmutable y desacoplada del estado actual', () => {
+    const attention = ClinicalAttention.create(validProps);
+    const snapshot = attention.toSnapshotData();
+
+    expect(snapshot.proceduresPerformed).toHaveLength(1);
+    expect(snapshot.proceduresPerformed[0].code).toBe('RES-01');
+    expect(snapshot.evolutionNotes).toBe(validProps.evolutionNotes);
+    expect(snapshot.prescription).toBe(validProps.prescription);
+    expect(snapshot.postOperativeIndications).toBe(validProps.postOperativeIndications);
+    expect(snapshot.privateNotes).toBe(validProps.privateNotes);
+    expect(snapshot.attendedAt).toBe(fixedAttendedAt.toISOString());
+    expect(snapshot.updatedAt).toBe(fixedUpdatedAt.toISOString());
+    expect(snapshot.materialsUsed).toEqual([]);
+
+    snapshot.evolutionNotes = 'Modificado externamente';
+    expect(attention.evolutionNotes).toBe(validProps.evolutionNotes);
+  });
+
+  it('debe lanzar InvalidClinicalAttentionDataError si changeReason está vacío o ClinicalAttentionNotClosedError si la atención sigue OPEN', () => {
+    const openAttention = ClinicalAttention.create(validProps);
+    const amendTime = new Date('2026-10-16T14:00:00.000Z');
+
+    expect(() =>
+      openAttention.amend({
+        changeReason: 'Ajuste de notas',
+        evolutionNotes: 'Nueva evolución',
+        updatedAt: amendTime,
+      }),
+    ).toThrow(ClinicalAttentionNotClosedError);
+
+    const closedAttention = ClinicalAttention.create(validProps);
+    closedAttention.close(new Date('2026-10-16T13:00:00.000Z'));
+
+    expect(() =>
+      closedAttention.amend({
+        changeReason: '',
+        evolutionNotes: 'Nueva evolución',
+        updatedAt: amendTime,
+      }),
+    ).toThrow(InvalidClinicalAttentionDataError);
+
+    expect(() =>
+      closedAttention.amend({
+        changeReason: '   ',
+        evolutionNotes: 'Nueva evolución',
+        updatedAt: amendTime,
+      }),
+    ).toThrow(InvalidClinicalAttentionDataError);
+  });
+
+  it('debe enmendar una atención cerrada actualizando los campos solicitados y renovando updatedAt', () => {
+    const attention = ClinicalAttention.create(validProps);
+    attention.close(new Date('2026-10-16T13:00:00.000Z'));
+
+    const amendTime = new Date('2026-10-16T15:00:00.000Z');
+    attention.amend({
+      changeReason: 'Corrección de evolución y actualización de receta',
+      evolutionNotes: 'Evolución rectificada con detalles adicionales',
+      prescription: 'Ibuprofeno 600mg cada 8 horas',
+      postOperativeIndications: 'Indicaciones revisadas',
+      privateNotes: 'Nota privada complementada',
+      proceduresPerformed: [
+        {
+          code: 'RES-02',
+          name: 'Resina compuesta posterior',
+          toothNumber: '16',
+        },
+      ],
+      updatedAt: amendTime,
+    });
+
+    expect(attention.evolutionNotes).toBe('Evolución rectificada con detalles adicionales');
+    expect(attention.prescription).toBe('Ibuprofeno 600mg cada 8 horas');
+    expect(attention.postOperativeIndications).toBe('Indicaciones revisadas');
+    expect(attention.privateNotes).toBe('Nota privada complementada');
+    expect(attention.proceduresPerformed).toHaveLength(1);
+    expect(attention.proceduresPerformed[0].code).toBe('RES-02');
+    expect(attention.updatedAt).toEqual(amendTime);
+    expect(attention.status).toBe(ClinicalAttentionStatus.CLOSED);
   });
 });
