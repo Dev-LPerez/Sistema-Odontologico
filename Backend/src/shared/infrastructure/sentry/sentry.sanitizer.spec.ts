@@ -138,6 +138,28 @@ describe('sanitizeSentryEvent', () => {
     expect(sanitized.extra.odontogramDetails.odontogramId).toBe('odon-123');
   });
 
+  it('debe redactar todos los campos de atención clínica en Sentry: evolutionNotes, prescription, postOperativeIndications y proceduresPerformed (RNF-B-009, RC-023)', () => {
+    const event = {
+      extra: {
+        attention: {
+          evolutionNotes: 'Diente 16 restaurado exitosamente',
+          prescription: 'Ibuprofeno 400mg cada 8h',
+          postOperativeIndications: 'No masticar alimentos duros por 24h',
+          proceduresPerformed: [{ code: 'RES-01' }],
+          attentionId: 'att-123',
+        },
+      },
+    };
+
+    const sanitized = sanitizeSentryEvent(event);
+
+    expect(sanitized.extra.attention.evolutionNotes).toBe('[REDACTED]');
+    expect(sanitized.extra.attention.prescription).toBe('[REDACTED]');
+    expect(sanitized.extra.attention.postOperativeIndications).toBe('[REDACTED]');
+    expect(sanitized.extra.attention.proceduresPerformed).toBe('[REDACTED]');
+    expect(sanitized.extra.attention.attentionId).toBe('att-123');
+  });
+
   it('debe manejar eventos nulos o sin campos adicionales sin fallar', () => {
     expect(sanitizeSentryEvent(null as unknown as Record<string, unknown>)).toBeNull();
     const minimalEvent = { message: 'Simple error' };

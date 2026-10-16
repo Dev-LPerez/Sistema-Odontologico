@@ -75,6 +75,22 @@ describe('Logger Clinical Redaction', () => {
     }
   });
 
+  it('debe redactar todos los campos de atención clínica: evolutionNotes, prescription, postOperativeIndications y proceduresPerformed (RNF-B-009, RC-023)', () => {
+    const attentionFields = [
+      'evolutionNotes',
+      'prescription',
+      'postOperativeIndications',
+      'proceduresPerformed',
+    ];
+
+    for (const field of attentionFields) {
+      const isRedacted = CLINICAL_REDACT_PATHS.some(
+        (path) => path === field || path.endsWith(`.${field}`),
+      );
+      expect(isRedacted).toBe(true);
+    }
+  });
+
   it('debe censurar datos clínicos y credenciales al serializar logs con Pino', () => {
     let loggedData = '';
     const destination = {
@@ -107,6 +123,10 @@ describe('Logger Clinical Redaction', () => {
         odontogram: { tooth16: 'decayed' },
         teethState: { '16': { findings: ['CARIES'] } },
         snapshotData: { reason: 'INITIAL' },
+        evolutionNotes: 'Diente 16 restaurado',
+        prescription: 'Ibuprofeno 400mg',
+        postOperativeIndications: 'No comer cosas duras',
+        proceduresPerformed: [{ code: 'RES-01' }],
       },
     });
 
@@ -123,6 +143,10 @@ describe('Logger Clinical Redaction', () => {
     expect(parsed.patient.odontogram).toBe('[REDACTED]');
     expect(parsed.patient.teethState).toBe('[REDACTED]');
     expect(parsed.patient.snapshotData).toBe('[REDACTED]');
+    expect(parsed.patient.evolutionNotes).toBe('[REDACTED]');
+    expect(parsed.patient.prescription).toBe('[REDACTED]');
+    expect(parsed.patient.postOperativeIndications).toBe('[REDACTED]');
+    expect(parsed.patient.proceduresPerformed).toBe('[REDACTED]');
   });
 
   describe('createPinoHttpConfig', () => {

@@ -41,6 +41,8 @@ model Clinic {
   treatmentPlanItems     TreatmentPlanItem[]
   odontograms            Odontogram[]
   odontogramSnapshots    OdontogramSnapshot[]
+  clinicalAttentions     ClinicalAttention[]
+  attentionMaterialsUsed AttentionMaterialUsed[]
 
   @@map("clinics")
 }
@@ -57,6 +59,7 @@ model User {
   updatedAt       DateTime         @updatedAt @map("updated_at")
   clinic          Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
   refreshSessions RefreshSession[]
+  clinicalAttentions ClinicalAttention[]
 
   @@index([clinicId, role])
   @@map("users")
@@ -120,6 +123,7 @@ model Patient {
   clinicalHistories   ClinicalHistory[]
   odontograms         Odontogram[]
   odontogramSnapshots OdontogramSnapshot[]
+  clinicalAttentions  ClinicalAttention[]
 
   @@unique([clinicId, documentType, documentNumber])
   @@index([clinicId, isActive])
@@ -176,7 +180,8 @@ model Material {
   isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
-  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  clinic                 Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  attentionMaterialsUsed AttentionMaterialUsed[]
 
   @@unique([clinicId, brand, reference, color])
   @@index([clinicId, isActive])
@@ -204,6 +209,7 @@ model ClinicalHistory {
   clinic              Clinic              @relation(fields: [clinicId], references: [id], onDelete: Restrict)
   patient             Patient             @relation(fields: [patientId], references: [id], onDelete: Restrict)
   treatmentItems      TreatmentPlanItem[]
+  attentions          ClinicalAttention[]
 
   @@unique([clinicId, patientId])
   @@index([clinicId, patientId])
@@ -265,5 +271,60 @@ model OdontogramSnapshot {
 
   @@index([clinicId, patientId, createdAt])
   @@map("odontogram_snapshots")
+}
+
+enum ClinicalAttentionStatus {
+  OPEN
+  CLOSED
+}
+
+model ClinicalAttention {
+  id                       String                  @id @default(uuid())
+  clinicId                 String                  @map("clinic_id")
+  patientId                String                  @map("patient_id")
+  clinicalHistoryId        String                  @map("clinical_history_id")
+  attendedByUserId         String                  @map("attended_by_user_id")
+  status                   ClinicalAttentionStatus @default(OPEN)
+  proceduresPerformed      Json                    @map("procedures_performed")
+  evolutionNotes           String                  @map("evolution_notes")
+  prescription             String?
+  postOperativeIndications String?                 @map("post_operative_indications")
+  privateNotes             String?                 @map("private_notes")
+  attendedAt               DateTime                @map("attended_at")
+  createdAt                DateTime                @default(now()) @map("created_at")
+  updatedAt                DateTime                @updatedAt @map("updated_at")
+
+  clinic          Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patient         Patient                 @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  clinicalHistory ClinicalHistory         @relation(fields: [clinicalHistoryId], references: [id], onDelete: Restrict)
+  attendedByUser  User                    @relation(fields: [attendedByUserId], references: [id], onDelete: Restrict)
+  materialsUsed   AttentionMaterialUsed[]
+
+  @@index([clinicId, patientId, attendedAt])
+  @@index([clinicId, clinicalHistoryId])
+  @@map("clinical_attentions")
+}
+
+model AttentionMaterialUsed {
+  id          String   @id @default(uuid())
+  clinicId    String   @map("clinic_id")
+  attentionId String   @map("attention_id")
+  materialId  String   @map("material_id")
+  brand       String
+  reference   String
+  type        String
+  color       String
+  toothNumber String?  @map("tooth_number")
+  quantity    Int
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  clinic    Clinic            @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  attention ClinicalAttention @relation(fields: [attentionId], references: [id], onDelete: Restrict)
+  material  Material          @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, attentionId])
+  @@index([clinicId, materialId])
+  @@map("attention_materials_used")
 }
 

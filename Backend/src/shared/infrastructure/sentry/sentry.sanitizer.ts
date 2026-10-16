@@ -28,6 +28,10 @@ const SENSITIVE_KEYS = new Set([
   'medicationsdetails',
   'teethstate',
   'snapshotdata',
+  'evolutionnotes',
+  'prescription',
+  'postoperativeindications',
+  'proceduresperformed',
 ]);
 
 function isSensitiveKey(key: string): boolean {
