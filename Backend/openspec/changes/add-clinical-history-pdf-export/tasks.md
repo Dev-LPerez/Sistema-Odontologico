@@ -75,7 +75,7 @@ Cada escenario de `specs/clinical-history-management/spec.md` DEBE estar cubiert
   - Actualizar `ExportClinicalHistoryPdfQuery` y `export-clinical-history-pdf.query.spec.ts` (usando un `formatInBogota` realista con `Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' })` en el test para demostrar que `'1990-05-15'` no sufre desfase).
   - Hacer commit: `git add Backend/src/shared Backend/src/modules/clinical/application && git commit -m "fix(clinical): fix birthDate UTC formatting, Bogota age calculation, diagnosis formatting and es-CO labels"`
 
-- [ ] 6.4 **Endurecer seguridad en `PdfmakeClinicalHistoryPdfGeneratorAdapter`, agregar renderizado SVG del odontograma y prueba de infiltración de `privateNotes` (`RF-B-044`, `RC-023`):**
+- [x] 6.4 **Endurecer seguridad en `PdfmakeClinicalHistoryPdfGeneratorAdapter`, agregar renderizado SVG del odontograma y prueba de infiltración de `privateNotes` (`RF-B-044`, `RC-023`):**
   - En `Backend/src/modules/clinical/infrastructure/adapters/pdfmake-clinical-history-pdf-generator.adapter.ts`:
     - Cambiar `pdfMake.setLocalAccessPolicy(() => true)` a `pdfMake.setLocalAccessPolicy(() => false)`.
     - Permitir configurar `compress` (por defecto `process.env.NODE_ENV === 'production'`, manteniendo `false` en `test` o vía parámetro opcional para inspección de streams).

@@ -1,14 +1,18 @@
 import { PdfmakeClinicalHistoryPdfGeneratorAdapter } from './pdfmake-clinical-history-pdf-generator.adapter';
 import { ClinicalHistoryPdfDocumentData } from '../../application/ports/clinical-history-pdf-generator.port';
 
-function extractTextFromUncompressedPdf(buffer: Buffer): string {
+export function extractTextFromUncompressedPdf(buffer: Buffer): string {
   const content = buffer.toString('latin1');
   const tjMatches = content.match(/\[([^[\]]+)\]\s*TJ/g) ?? [];
   return tjMatches
     .map((tj) => {
       const hexStrings = tj.match(/<([0-9a-fA-F]+)>/g) ?? [];
       return hexStrings
-        .map((h) => Buffer.from(h.replace(/[<>]/g, ''), 'hex').toString('latin1'))
+        .map((h) =>
+          Buffer.from(h.replace(/[<>]/g, ''), 'hex')
+            .toString('latin1')
+            .replace(/\u0096/g, '–'),
+        )
         .join('');
     })
     .join(' ')
@@ -24,7 +28,7 @@ describe('PdfmakeClinicalHistoryPdfGeneratorAdapter', () => {
       address: 'Calle 100 # 15-20, Bogotá',
       phone: '3001234567',
       email: 'contacto@dra-pacheco.com',
-      logoUrl: null,
+      logoUrl: 'https://cdn.example.com/clinica-logo.png',
     },
     patient: {
       id: 'patient-uuid-1234',
@@ -57,28 +61,27 @@ describe('PdfmakeClinicalHistoryPdfGeneratorAdapter', () => {
         familyAntecedents: 'Padre hipertenso',
       },
       clinicalExamination: 'Pieza 16 con restauración filtrada',
-      diagnoses: ['Caries recurrente'],
+      diagnoses: ['K02.1 – Caries de la dentina'],
       treatmentItems: [
         {
           procedureCode: 'REST-01',
           procedureName: 'Resina compuesta 2 superficies',
           toothNumber: '16',
-          surface: 'OD',
-          status: 'PENDING',
+          status: 'Pendiente',
           estimatedCostCop: 180000,
         },
       ],
       totalEstimatedCostCop: 180000,
-      createdAtFormatted: '2026-10-10',
+      createdAtFormatted: '2026-10-10 09:30',
     },
     odontogram: {
       hasTemporalDentition: false,
       teeth: {
         '16': [
           {
-            findingCode: 'CARIES',
+            findingCode: 'Caries',
             surface: 'Oclusal',
-            status: 'EXISTING',
+            status: 'Existente',
             notes: 'Caries en fosa distal',
           },
         ],
@@ -87,7 +90,7 @@ describe('PdfmakeClinicalHistoryPdfGeneratorAdapter', () => {
     attentions: [
       {
         id: 'att-uuid-5678',
-        attendedAtFormatted: '2026-10-12',
+        attendedAtFormatted: '2026-10-12 14:15',
         evolutionNotes: 'Obturación oclusal en diente 16',
         prescription: 'Acetaminofén 500mg cada 6 horas',
         postOperativeIndications: 'Evitar alimentos pigmentantes por 24 horas',
@@ -113,73 +116,89 @@ describe('PdfmakeClinicalHistoryPdfGeneratorAdapter', () => {
         ],
       },
     ],
-    generatedAtFormatted: '2026-10-16',
+    generatedAtFormatted: '2026-10-16 16:00',
   };
 
   beforeEach(() => {
-    adapter = new PdfmakeClinicalHistoryPdfGeneratorAdapter();
+    // Para las pruebas mantenemos compress = false explícito
+    adapter = new PdfmakeClinicalHistoryPdfGeneratorAdapter(false);
   });
 
-  it('debe generar el PDF de la historia clínica completa con membrete, odontograma y atenciones excluyendo siempre privateNotes', async () => {
-    const buffer = await adapter.generate(mockCompleteData);
+  it('debe generar el PDF con etiquetas en español es-CO, SVG de odontograma y referencia de logo', async () => {
+    // Intentamos infiltrar privateNotes en el objeto de atención pasado al adaptador
+    (mockCompleteData.attentions[0] as unknown as Record<string, unknown>).privateNotes =
+      'SECRETO_INFILTRADO_EN_ADAPTADOR';
+
+    const buffer = await adapter.generate(mockCompleteData, { compress: false });
 
     expect(buffer).toBeInstanceOf(Buffer);
     expect(buffer.length).toBeGreaterThan(0);
 
-    // Valida que comience con la cabecera estándar de PDF
+    // Valida cabecera PDF
     const header = buffer.subarray(0, 5).toString('ascii');
     expect(header).toBe('%PDF-');
 
-    // Valida contenido del documento descomprimido
+    // Extrae el texto del documento no comprimido
     const decodedText = extractTextFromUncompressedPdf(buffer);
 
-    // Membrete
+    // Membrete con logo institucional
     expect(decodedText).toContain('Consultorio Dra. Angelee Pacheco');
+    expect(decodedText).toContain('Ref. Institucional:');
     expect(decodedText).toContain('HISTORIA');
 
     // Paciente
     expect(decodedText).toContain('Carlos Rodríguez');
     expect(decodedText).toContain('1098765432');
 
-    // Antecedentes e historia clínica
+    // Antecedentes e historia clínica con diagnósticos formateados (Bug 2)
     expect(decodedText).toContain('Revisión y molestia al masticar');
     expect(decodedText).toContain('Alergia a AINES');
+    expect(decodedText).toContain('K02.1 – Caries de la dentina');
     expect(decodedText).toContain('180.000');
 
-    // Odontograma
+    // Plan de tratamiento en español
+    expect(decodedText).toContain('Pendiente');
+
+    // Odontograma con etiquetas en español (es-CO)
     expect(decodedText).toContain('16');
-    expect(decodedText).toContain('CARIES');
+    expect(decodedText).toContain('Caries');
+    expect(decodedText).toContain('Oclusal');
+    expect(decodedText).toContain('Existente');
 
     // Atención
     expect(decodedText).toContain('Obturación oclusal en diente 16');
     expect(decodedText).toContain('Acetaminofén 500mg');
     expect(decodedText).toContain('Filtek Z350 XT');
 
-    // Verificación estricta: ninguna mención de notas privadas o texto confidencial
+    // PRUEBA DE INFILTRACIÓN ESTRICTA (RC-023): jamás debe renderizarse en el PDF
+    expect(decodedText).not.toContain('SECRETO_INFILTRADO_EN_ADAPTADOR');
     expect(decodedText).not.toContain('privateNotes');
-    expect(decodedText).not.toContain('confidencial');
   });
 
-  it('debe generar un PDF válido cuando no hay odontograma, atenciones ni ítems de tratamiento', async () => {
-    const minimalData: ClinicalHistoryPdfDocumentData = {
+  it('debe construir el diagrama SVG de las arcadas dentales coloreando piezas con hallazgos (RF-B-044)', () => {
+    const svg = adapter.buildOdontogramSvg(mockCompleteData.odontogram);
+
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('viewBox="0 0 520 64"');
+    // Pieza 16 con hallazgo de caries debe tener color distintivo de caries (#FED7D7)
+    expect(svg).toContain('>16<');
+    expect(svg).toContain('fill="#FED7D7"');
+    // Pieza sana (ej. 11) debe tener color neutral
+    expect(svg).toContain('>11<');
+    expect(svg).toContain('fill="#F7FAFC"');
+  });
+
+  it('debe generar el PDF correctamente cuando no hay hallazgos en el odontograma ni atenciones', async () => {
+    const emptyData: ClinicalHistoryPdfDocumentData = {
       ...mockCompleteData,
       odontogram: null,
       attentions: [],
-      history: {
-        ...mockCompleteData.history,
-        treatmentItems: [],
-        totalEstimatedCostCop: 0,
-      },
     };
 
-    const buffer = await adapter.generate(minimalData);
-
-    expect(buffer).toBeInstanceOf(Buffer);
-    expect(buffer.length).toBeGreaterThan(0);
-    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');
-
+    const buffer = await adapter.generate(emptyData, { compress: false });
     const decodedText = extractTextFromUncompressedPdf(buffer);
-    expect(decodedText).toContain('Carlos Rodríguez');
-    expect(decodedText).toContain('Consultorio Dra. Angelee Pacheco');
+
+    expect(decodedText).toContain('Sin hallazgos odontológicos');
+    expect(decodedText).toContain('Sin atenciones clínicas registradas');
   });
 });

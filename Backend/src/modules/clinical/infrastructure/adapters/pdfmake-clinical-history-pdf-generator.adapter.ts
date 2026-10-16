@@ -14,6 +14,7 @@ import {
   ClinicalHistoryPdfHistoryData,
   ClinicalHistoryPdfMedicalAntecedentsData,
   ClinicalHistoryPdfOdontogramData,
+  ClinicalHistoryPdfToothFindingData,
   ClinicalHistoryPdfAttentionData,
   ClinicalHistoryPdfClinicData,
 } from '../../application/ports/clinical-history-pdf-generator.port';
@@ -33,17 +34,27 @@ const STANDARD_FONTS = {
   },
 };
 
+const ALLOWED_STANDARD_FONTS = new Set([
+  'Helvetica',
+  'Helvetica-Bold',
+  'Helvetica-Oblique',
+  'Helvetica-BoldOblique',
+]);
+
 @Injectable()
 export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistoryPdfGeneratorPort {
-  constructor() {
+  constructor(private readonly defaultCompress = process.env.NODE_ENV === 'production') {
     pdfMake.setFonts(STANDARD_FONTS);
     pdfMake.setUrlAccessPolicy(() => false);
-    pdfMake.setLocalAccessPolicy(() => true);
+    pdfMake.setLocalAccessPolicy((path: string) => ALLOWED_STANDARD_FONTS.has(path));
   }
 
-  async generate(data: ClinicalHistoryPdfDocumentData): Promise<Buffer> {
+  async generate(
+    data: ClinicalHistoryPdfDocumentData,
+    options?: { compress?: boolean },
+  ): Promise<Buffer> {
     const docDefinition: TDocumentDefinitions = {
-      compress: false,
+      compress: options?.compress ?? this.defaultCompress,
       pageSize: 'A4',
       pageMargins: [36, 36, 36, 36],
       defaultStyle: {
@@ -87,36 +98,144 @@ export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistor
     return await doc.getBuffer();
   }
 
+  buildOdontogramSvg(odontogram?: ClinicalHistoryPdfOdontogramData | null): string {
+    const teethData = odontogram?.teeth ?? {};
+    const upperAdult = [
+      '18',
+      '17',
+      '16',
+      '15',
+      '14',
+      '13',
+      '12',
+      '11',
+      '21',
+      '22',
+      '23',
+      '24',
+      '25',
+      '26',
+      '27',
+      '28',
+    ];
+    const lowerAdult = [
+      '48',
+      '47',
+      '46',
+      '45',
+      '44',
+      '43',
+      '42',
+      '41',
+      '31',
+      '32',
+      '33',
+      '34',
+      '35',
+      '36',
+      '37',
+      '38',
+    ];
+
+    const elements: string[] = [];
+    elements.push(this.renderRowSvg(upperAdult, 8, teethData));
+    elements.push(this.renderRowSvg(lowerAdult, 36, teethData));
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 64" width="520" height="64">${elements.join('')}</svg>`;
+  }
+
+  private renderRowSvg(
+    teeth: string[],
+    y: number,
+    teethData: Record<string, ClinicalHistoryPdfToothFindingData[]>,
+  ): string {
+    const parts: string[] = [];
+    for (let i = 0; i < teeth.length; i++) {
+      const tooth = teeth[i];
+      const gap = i >= 8 ? 14 : 0;
+      const x = 20 + i * 29 + gap;
+      parts.push(this.renderToothSvg(tooth, x, y, teethData[tooth]));
+    }
+    return parts.join('');
+  }
+
+  private renderToothSvg(
+    tooth: string,
+    x: number,
+    y: number,
+    findings?: ClinicalHistoryPdfToothFindingData[],
+  ): string {
+    const colors = this.getToothColors(findings);
+    return (
+      `<rect x="${x}" y="${y}" width="26" height="22" rx="3" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1.2"/>` +
+      `<text x="${x + 13}" y="${y + 14}" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="${colors.text}" text-anchor="middle">${tooth}</text>`
+    );
+  }
+
+  private getToothColors(findings?: ClinicalHistoryPdfToothFindingData[]): {
+    fill: string;
+    stroke: string;
+    text: string;
+  } {
+    if (!findings || findings.length === 0) {
+      return { fill: '#F7FAFC', stroke: '#CBD5E0', text: '#4A5568' };
+    }
+    const codes = findings.map((f) => f.findingCode.toLowerCase());
+    const hasCaries = codes.some((c) => c.includes('caries'));
+    if (hasCaries) {
+      return { fill: '#FED7D7', stroke: '#E53E3E', text: '#9B2C2C' };
+    }
+    const hasRestoration = codes.some(
+      (c) => c.includes('resina') || c.includes('amalgama') || c.includes('corona'),
+    );
+    if (hasRestoration) {
+      return { fill: '#BEE3F8', stroke: '#3182CE', text: '#2B6CB0' };
+    }
+    return { fill: '#FEEBC8', stroke: '#DD6B20', text: '#C05621' };
+  }
+
   private buildHeader(clinic: ClinicalHistoryPdfClinicData, generatedAt: string): Content {
+    const stack: Content[] = [{ text: clinic.name, style: 'title', alignment: 'center' }];
+
+    if (clinic.logoUrl) {
+      stack.push({
+        text: `Ref. Institucional: ${clinic.logoUrl}`,
+        alignment: 'center',
+        fontSize: 7.5,
+        color: '#718096',
+      });
+    }
+
+    stack.push(
+      {
+        text: `${clinic.address ?? ''} | Tel: ${clinic.phone ?? ''} | ${clinic.email ?? ''}`,
+        alignment: 'center',
+        fontSize: 8,
+        color: '#718096',
+      },
+      {
+        text: 'HISTORIA CLÍNICA ODONTOLÓGICA',
+        alignment: 'center',
+        bold: true,
+        fontSize: 11,
+        margin: [0, 3, 0, 1],
+        color: '#2C5282',
+      },
+      {
+        text: `Fecha de emisión: ${generatedAt}`,
+        alignment: 'right',
+        fontSize: 7.5,
+        color: '#A0AEC0',
+      },
+    );
+
     return {
       table: {
         widths: ['*'],
         body: [
           [
             {
-              stack: [
-                { text: clinic.name, style: 'title', alignment: 'center' },
-                {
-                  text: `${clinic.address ?? ''} | Tel: ${clinic.phone ?? ''} | ${clinic.email ?? ''}`,
-                  alignment: 'center',
-                  fontSize: 8,
-                  color: '#718096',
-                },
-                {
-                  text: 'HISTORIA CLÍNICA ODONTOLÓGICA',
-                  alignment: 'center',
-                  bold: true,
-                  fontSize: 11,
-                  margin: [0, 3, 0, 1],
-                  color: '#2C5282',
-                },
-                {
-                  text: `Fecha de emisión: ${generatedAt}`,
-                  alignment: 'right',
-                  fontSize: 7.5,
-                  color: '#A0AEC0',
-                },
-              ],
+              stack,
               fillColor: '#EDF2F7',
             },
           ],
@@ -233,10 +352,13 @@ export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistor
   }
 
   private buildOdontogramSection(odontogram?: ClinicalHistoryPdfOdontogramData | null): Content {
+    const svgDiagram = this.buildOdontogramSvg(odontogram);
+
     if (!odontogram || Object.keys(odontogram.teeth).length === 0) {
       return {
         stack: [
           { text: '3. ODONTOGRAMA', style: 'sectionHeader' },
+          { svg: svgDiagram, alignment: 'center', margin: [0, 4, 0, 6] },
           {
             text: 'Sin hallazgos odontológicos registrados a la fecha.',
             italics: true,
@@ -271,6 +393,7 @@ export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistor
     return {
       stack: [
         { text: '3. ODONTOGRAMA', style: 'sectionHeader' },
+        { svg: svgDiagram, alignment: 'center', margin: [0, 4, 0, 6] },
         {
           table: {
             widths: ['15%', '20%', '25%', '20%', '20%'],
