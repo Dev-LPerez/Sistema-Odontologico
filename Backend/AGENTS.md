@@ -10,8 +10,8 @@ El frontend está en `../Frontend` con su propio OpenSpec. Este backend es dueñ
 
 ## 2. Documentos de referencia (`docs/`)
 
-- `docs/Requerimientos Backend – Sistema de Gestión Odontológica.md`: qué construir (RF-B y RNF-B). La columna MVP manda.
-- `docs/Backend - Stack tecnológico, metodología y calidad.md`: cómo construirlo (arquitectura, tecnologías, metodología y requisitos de calidad RC).
+- `docs/requerimientos_backend_sistema_de_gestión_odontológica_V1.1.md`: qué construir (RF-B y RNF-B). La columna MVP manda.
+- `docs/backend_stack_tecnologico_metodologia_y_calidad_V1.1.md`: cómo construirlo (arquitectura, tecnologías, metodología y requisitos de calidad RC).
 
 No cargues los documentos completos. Lee solo las secciones que necesita el change:
 
