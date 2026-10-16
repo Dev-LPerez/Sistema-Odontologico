@@ -12,12 +12,12 @@ Cada escenario de `specs/clinical-history-management/spec.md` DEBE estar cubiert
 ---
 
 ## 0. Archivar B-11 antes de iniciar B-12
-- [ ] 0.1 Ejecutar `/opsx-sync` y `/opsx-archive` para archivar `add-attention-closing-and-versioning` (`B-11`), verificando que su especificación quede sincronizada en `Backend/openspec/specs/clinical-attentions-management/spec.md` y hacer commit.
+- [x] 0.1 Ejecutar `/opsx-sync` y `/opsx-archive` para archivar `add-attention-closing-and-versioning` (`B-11`), verificando que su especificación quede sincronizada en `Backend/openspec/specs/clinical-attentions-management/spec.md` y hacer commit.
 
 ## 1. Instalación de `pdfmake` y puerto `ClinicalHistoryPdfGeneratorPort` (RC-012, RC-015)
-- [ ] 1.1 Instalar `pdfmake` y `@types/pdfmake` en `Backend` (`pnpm --filter backend add pdfmake && pnpm --filter backend add -D @types/pdfmake`).
-- [ ] 1.2 Crear el puerto `Backend/src/modules/clinical/application/ports/clinical-history-pdf-generator.port.ts` definiendo `CLINICAL_HISTORY_PDF_GENERATOR_PORT`, las interfaces de datos del documento (`ClinicalHistoryPdfDocumentData`, sin incluir `privateNotes`) y el método `generate(data: ClinicalHistoryPdfDocumentData): Promise<Buffer>`.
-- [ ] 1.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend deps:check` en verde, y hacer commit: `git add package.json pnpm-lock.yaml Backend/package.json Backend/src/modules/clinical/application/ports && git commit -m "feat(clinical): add pdfmake dependency and ClinicalHistoryPdfGeneratorPort"`
+- [x] 1.1 Instalar `pdfmake` y `@types/pdfmake` en `Backend` (`pnpm --filter backend add pdfmake && pnpm --filter backend add -D @types/pdfmake`).
+- [x] 1.2 Crear el puerto `Backend/src/modules/clinical/application/ports/clinical-history-pdf-generator.port.ts` definiendo `CLINICAL_HISTORY_PDF_GENERATOR_PORT`, las interfaces de datos del documento (`ClinicalHistoryPdfDocumentData`, sin incluir `privateNotes`) y el método `generate(data: ClinicalHistoryPdfDocumentData): Promise<Buffer>`.
+- [x] 1.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend deps:check` en verde, y hacer commit: `git add package.json pnpm-lock.yaml Backend/package.json Backend/src/modules/clinical/application/ports && git commit -m "feat(clinical): add pdfmake dependency and ClinicalHistoryPdfGeneratorPort"`
 
 ## 2. Capa application: `ExportClinicalHistoryPdfQuery` con TDD (RC-002, RC-015, RC-016, RC-017, RC-054)
 - [ ] 2.1 Escribir las pruebas unitarias en rojo en `Backend/src/modules/clinical/application/queries/export-clinical-history-pdf.query.spec.ts` usando los nombres exactos de la Matriz de Trazabilidad, verificando la recopilación de `Clinic`, `Patient`, `ClinicalHistory`, `Odontogram` (con y sin odontograma registrado) y `ClinicalAttention[]`, la omisión total de `privateNotes`, el formateo de fechas en `America/Bogota` con `ClockPort` y los errores `ClinicNotFoundError`, `PatientNotFoundError` y `ClinicalHistoryNotFoundError`.
