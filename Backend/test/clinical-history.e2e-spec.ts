@@ -41,7 +41,7 @@ import { FindingCatalogCode } from '../src/modules/clinical/domain/finding-catal
 import { FindingStatus } from '../src/modules/clinical/domain/finding-status.enum';
 import { ClinicalAttention } from '../src/modules/clinical/domain/clinical-attention.entity';
 import { ClinicalAttentionStatus } from '../src/modules/clinical/domain/clinical-attention-status.enum';
-import { extractTextFromUncompressedPdf } from '../src/modules/clinical/infrastructure/adapters/pdfmake-clinical-history-pdf-generator.adapter.spec';
+import { extractTextFromUncompressedPdf } from '../src/modules/clinical/infrastructure/adapters/pdfmake-clinical-history-pdf-generator.adapter';
 import {
   PasswordHasherPort,
   PASSWORD_HASHER_PORT,
@@ -491,6 +491,20 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
     expect(getRes.body.treatmentItems).toHaveLength(1);
     expect(getRes.body.treatmentItems[0].status).toBe(TreatmentItemStatus.COMPLETED);
     expect(getRes.body.totalEstimatedCostCop).toBe(120000);
+  });
+
+  it('debe rechazar con 400 INVALID_ODONTOGRAM_DATA al agregar un ítem al plan de tratamiento con diente FDI inválido', async () => {
+    const res = await request(app.getHttpServer())
+      .post(`/v1/clinical-histories/patient/${testPatientId}/treatment-plan-items`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        procedureId: testProcedureId,
+        toothNumber: '99',
+        notes: 'Diente inválido fuera de sistema FDI',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.errorCode).toBe('INVALID_ODONTOGRAM_DATA');
   });
 
   it('debe permitir a ADMIN exportar la historia clínica completa en PDF recibiendo application/pdf válido sin incluir privateNotes (200)', async () => {

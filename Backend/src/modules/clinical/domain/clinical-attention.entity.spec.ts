@@ -2,12 +2,14 @@ import { ClinicalAttention } from './clinical-attention.entity';
 import { ClinicalAttentionStatus } from './clinical-attention-status.enum';
 import {
   InvalidClinicalAttentionDataError,
+  InvalidOdontogramDataError,
   ClinicalAttentionClosedError,
   IncompleteClinicalAttentionError,
   ClinicalAttentionNotClosedError,
 } from './clinical.errors';
 import { AttentionMaterialUsed } from './attention-material-used.entity';
 import { AttentionClosedEvent } from './attention-closed.event';
+import { ToothSurface } from './tooth-surface.enum';
 
 describe('ClinicalAttention Aggregate', () => {
   const fixedAttendedAt = new Date('2026-10-16T09:00:00.000Z');
@@ -397,5 +399,48 @@ describe('ClinicalAttention Aggregate', () => {
 
     const otherRoleView = attention.maskPrivateNotesForViewer('OTHER');
     expect(otherRoleView.privateNotes).toBeNull();
+  });
+
+  it('debe rechazar procedimientos con código inexistente en el catálogo (404) o con diente FDI o superficie inválidos (400)', () => {
+    // Diente FDI inválido (99)
+    expect(() =>
+      ClinicalAttention.create({
+        ...validProps,
+        proceduresPerformed: [
+          {
+            code: 'RES-01',
+            toothNumber: '99',
+            surface: 'OCCLUSAL',
+          },
+        ],
+      }),
+    ).toThrow(InvalidOdontogramDataError);
+
+    // Superficie inválida
+    expect(() =>
+      ClinicalAttention.create({
+        ...validProps,
+        proceduresPerformed: [
+          {
+            code: 'RES-01',
+            toothNumber: '16',
+            surface: 'SUPERFICIE_FALSA',
+          },
+        ],
+      }),
+    ).toThrow(InvalidOdontogramDataError);
+
+    // Superficie válida en español normalizada a ToothSurface.OCCLUSAL
+    const attention = ClinicalAttention.create({
+      ...validProps,
+      proceduresPerformed: [
+        {
+          code: 'RES-01',
+          toothNumber: '16',
+          surface: 'Oclusal',
+        },
+      ],
+    });
+    expect(attention.proceduresPerformed[0].surface).toBe(ToothSurface.OCCLUSAL);
   });
 });

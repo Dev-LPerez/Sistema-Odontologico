@@ -1,5 +1,6 @@
 // Public API exports for Clinical module (Regla 9)
 export * from './domain/clinical-history.entity';
+export * from './domain/clinical-diagnosis.vo';
 export * from './domain/medical-antecedents.vo';
 export * from './domain/treatment-plan-item.entity';
 export * from './domain/treatment-item-status.enum';

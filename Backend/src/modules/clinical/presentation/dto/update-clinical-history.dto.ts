@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { UpdatePersonalAntecedentsDto } from './medical-antecedents.dto';
+import { ClinicalDiagnosisDto } from './clinical-diagnosis.dto';
 
 export class UpdateClinicalHistoryDto {
   @ApiPropertyOptional({
@@ -51,7 +52,7 @@ export class UpdateClinicalHistoryDto {
   @ApiPropertyOptional({
     description: 'Diagnósticos clínicos',
     example: [{ code: 'Z01.2', description: 'Examen odontológico' }],
-    type: [Object],
+    type: () => [ClinicalDiagnosisDto],
   })
   @IsOptional()
   @IsArray()

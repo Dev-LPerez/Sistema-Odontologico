@@ -2,6 +2,7 @@ import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { ClinicalAttentionStatus } from './clinical-attention-status.enum';
 import {
   InvalidClinicalAttentionDataError,
+  InvalidOdontogramDataError,
   ClinicalAttentionClosedError,
   IncompleteClinicalAttentionError,
   ClinicalAttentionNotClosedError,
@@ -9,6 +10,8 @@ import {
 import { AttentionMaterialUsed } from './attention-material-used.entity';
 import { AttentionSnapshotData } from './clinical-attention-version.entity';
 import { AttentionClosedEvent } from './attention-closed.event';
+import { ToothNumber } from './tooth-number.vo';
+import { ToothSurface } from './tooth-surface.enum';
 
 export interface ProcedurePerformed {
   code: string;
@@ -76,7 +79,9 @@ export class ClinicalAttention extends AggregateRoot<string> {
         ? props.postOperativeIndications.trim()
         : null,
       privateNotes: props.privateNotes ? props.privateNotes.trim() : null,
-      proceduresPerformed: props.proceduresPerformed ?? [],
+      proceduresPerformed: ClinicalAttention.validateAndNormalizeProcedures(
+        props.proceduresPerformed ?? [],
+      ),
       materialsUsed: props.materialsUsed ?? [],
     });
   }
@@ -125,6 +130,63 @@ export class ClinicalAttention extends AggregateRoot<string> {
     }
   }
 
+  private static normalizeProcedureTooth(rawTooth: unknown): string | null {
+    if (rawTooth === undefined || rawTooth === null) {
+      return null;
+    }
+    const trimmed = String(rawTooth).trim();
+    return trimmed !== '' ? ToothNumber.of(trimmed).code : null;
+  }
+
+  private static normalizeProcedureSurface(rawSurface: unknown): string | null {
+    if (rawSurface === undefined || rawSurface === null) {
+      return null;
+    }
+    const trimmed = String(rawSurface).trim();
+    if (trimmed === '') {
+      return null;
+    }
+    const upper = trimmed.toUpperCase();
+    const surfaceMap: Record<string, ToothSurface> = {
+      OCCLUSAL: ToothSurface.OCCLUSAL,
+      OCLUSAL: ToothSurface.OCCLUSAL,
+      VESTIBULAR: ToothSurface.VESTIBULAR,
+      LINGUAL: ToothSurface.LINGUAL,
+      PALATINO: ToothSurface.LINGUAL,
+      PALATINA: ToothSurface.LINGUAL,
+      MESIAL: ToothSurface.MESIAL,
+      DISTAL: ToothSurface.DISTAL,
+      WHOLE_TOOTH: ToothSurface.WHOLE_TOOTH,
+      'DIENTE COMPLETO': ToothSurface.WHOLE_TOOTH,
+      DIENTECOMPLETO: ToothSurface.WHOLE_TOOTH,
+    };
+
+    const matched = surfaceMap[upper];
+    if (!matched) {
+      throw new InvalidOdontogramDataError(`La superficie dental '${trimmed}' es inválida`);
+    }
+    return matched;
+  }
+
+  public static validateAndNormalizeProcedures(
+    procedures: ProcedurePerformed[],
+  ): ProcedurePerformed[] {
+    if (!procedures || !Array.isArray(procedures)) {
+      return [];
+    }
+
+    return procedures.map((p) => {
+      const normalizedCode = p && typeof p.code === 'string' ? p.code.trim() : '';
+      return {
+        code: normalizedCode,
+        name: p?.name ? p.name.trim() : null,
+        toothNumber: ClinicalAttention.normalizeProcedureTooth(p?.toothNumber),
+        surface: ClinicalAttention.normalizeProcedureSurface(p?.surface),
+        notes: p?.notes ? p.notes.trim() : null,
+      };
+    });
+  }
+
   public update(data: UpdateClinicalAttentionProps): void {
     if (this.props.status === ClinicalAttentionStatus.CLOSED) {
       throw new ClinicalAttentionClosedError(this.id);
@@ -150,7 +212,9 @@ export class ClinicalAttention extends AggregateRoot<string> {
     }
 
     if (data.proceduresPerformed !== undefined) {
-      this.props.proceduresPerformed = [...data.proceduresPerformed];
+      this.props.proceduresPerformed = ClinicalAttention.validateAndNormalizeProcedures(
+        data.proceduresPerformed,
+      );
     }
 
     ClinicalAttention.validateDates(this.props.attendedAt, this.props.createdAt, data.updatedAt);
@@ -287,21 +351,14 @@ export class ClinicalAttention extends AggregateRoot<string> {
 
   private applyAmendedProcedures(proceduresPerformed?: ProcedurePerformed[]): void {
     if (proceduresPerformed !== undefined) {
-      const isInvalid =
-        proceduresPerformed.length === 0 ||
-        proceduresPerformed.some(
-          (p) => !p.code || typeof p.code !== 'string' || p.code.trim().length === 0,
-        );
-      if (isInvalid) {
+      if (!Array.isArray(proceduresPerformed) || proceduresPerformed.length === 0) {
         throw new IncompleteClinicalAttentionError(
           this.id,
           'Una atención enmendada debe conservar al menos un procedimiento realizado válido',
         );
       }
-      this.props.proceduresPerformed = proceduresPerformed.map((p) => ({
-        ...p,
-        code: p.code.trim(),
-      }));
+      this.props.proceduresPerformed =
+        ClinicalAttention.validateAndNormalizeProcedures(proceduresPerformed);
     }
   }
 

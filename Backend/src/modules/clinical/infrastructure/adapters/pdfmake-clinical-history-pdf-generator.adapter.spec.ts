@@ -200,4 +200,39 @@ describe('PdfmakeClinicalHistoryPdfGeneratorAdapter', () => {
     expect(decodedText).toContain('Sin hallazgos odontológicos');
     expect(decodedText).toContain('Sin atenciones clínicas registradas');
   });
+
+  it('debe generar el PDF para un paciente con 200 atenciones en menos de 2000 ms y con incremento de heap menor a 100 MB (RC-030)', async () => {
+    const baseAttention = mockCompleteData.attentions[0];
+    const attentions200 = Array.from({ length: 200 }, (_, index) => ({
+      ...baseAttention,
+      id: `att-uuid-${index + 1}`,
+      attendedAtFormatted: `2026-10-${String((index % 28) + 1).padStart(2, '0')} 10:00`,
+      evolutionNotes: `Atención de control número ${index + 1} del paciente`,
+    }));
+
+    const benchmarkData: ClinicalHistoryPdfDocumentData = {
+      ...mockCompleteData,
+      attentions: attentions200,
+    };
+
+    // Calentamiento inicial de motor V8 y pdfmake antes de medir benchmark
+    await adapter.generate({ ...benchmarkData, attentions: [] });
+
+    if (global.gc) {
+      global.gc();
+    }
+    const initialHeap = process.memoryUsage().heapUsed;
+    const startTime = Date.now();
+
+    const buffer = await adapter.generate(benchmarkData);
+
+    const elapsed = Date.now() - startTime;
+    const finalHeap = process.memoryUsage().heapUsed;
+    const heapIncreaseMb = (finalHeap - initialHeap) / (1024 * 1024);
+
+    expect(buffer).toBeInstanceOf(Buffer);
+    expect(buffer.length).toBeGreaterThan(0);
+    expect(elapsed).toBeLessThan(2000);
+    expect(heapIncreaseMb).toBeLessThan(100);
+  });
 });

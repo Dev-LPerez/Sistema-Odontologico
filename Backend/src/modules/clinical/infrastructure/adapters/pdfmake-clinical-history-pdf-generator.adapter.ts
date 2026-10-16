@@ -41,6 +41,24 @@ const ALLOWED_STANDARD_FONTS = new Set([
   'Helvetica-BoldOblique',
 ]);
 
+export function extractTextFromUncompressedPdf(buffer: Buffer): string {
+  const content = buffer.toString('latin1');
+  const tjMatches = content.match(/\[([^[\]]+)\]\s*TJ/g) ?? [];
+  return tjMatches
+    .map((tj) => {
+      const hexStrings = tj.match(/<([0-9a-fA-F]+)>/g) ?? [];
+      return hexStrings
+        .map((h) =>
+          Buffer.from(h.replace(/[<>]/g, ''), 'hex')
+            .toString('latin1')
+            .replace(/\u0096/g, '–'),
+        )
+        .join('');
+    })
+    .join(' ')
+    .replace(/\s+/g, ' ');
+}
+
 @Injectable()
 export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistoryPdfGeneratorPort {
   private readonly defaultCompress = process.env.NODE_ENV === 'production';
@@ -143,7 +161,7 @@ export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistor
     elements.push(this.renderRowSvg(upperAdult, 8, teethData));
     elements.push(this.renderRowSvg(lowerAdult, 36, teethData));
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 64" width="520" height="64">${elements.join('')}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 64" width="520" height="64"><g font-family="Helvetica" font-size="8.5" font-weight="bold" text-anchor="middle">${elements.join('')}</g></svg>`;
   }
 
   private renderRowSvg(
@@ -170,7 +188,7 @@ export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistor
     const colors = this.getToothColors(findings);
     return (
       `<rect x="${x}" y="${y}" width="26" height="22" rx="3" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="1.2"/>` +
-      `<text x="${x + 13}" y="${y + 14}" font-family="Helvetica" font-size="8.5" font-weight="bold" fill="${colors.text}" text-anchor="middle">${tooth}</text>`
+      `<text x="${x + 13}" y="${y + 14}" fill="${colors.text}">${tooth}</text>`
     );
   }
 
@@ -488,36 +506,35 @@ export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistor
               .join(', ')
           : null;
 
-      const body: TableCell[][] = [
-        [{ text: 'Fecha:', style: 'label' }, { text: att.attendedAtFormatted }],
-        [
-          { text: 'Procedimientos:', style: 'label' },
-          { text: procs.length > 0 ? procs : 'No especificado' },
-        ],
-        [{ text: 'Evolución:', style: 'label' }, { text: att.evolutionNotes }],
+      const textSpans: Content[] = [
+        { text: 'Fecha: ', style: 'label' },
+        { text: `${att.attendedAtFormatted}   ` },
+        { text: 'Procedimientos: ', style: 'label' },
+        { text: `${procs.length > 0 ? procs : 'No especificado'}\n` },
+        { text: 'Evolución: ', style: 'label' },
+        { text: `${att.evolutionNotes}\n` },
       ];
 
       if (att.prescription) {
-        body.push([{ text: 'Prescripción:', style: 'label' }, { text: att.prescription }]);
+        textSpans.push(
+          { text: 'Prescripción: ', style: 'label' },
+          { text: `${att.prescription}\n` },
+        );
       }
 
       if (att.postOperativeIndications) {
-        body.push([
-          { text: 'Indicaciones:', style: 'label' },
-          { text: att.postOperativeIndications },
-        ]);
+        textSpans.push(
+          { text: 'Indicaciones: ', style: 'label' },
+          { text: `${att.postOperativeIndications}\n` },
+        );
       }
 
       if (materials) {
-        body.push([{ text: 'Materiales Usados:', style: 'label' }, { text: materials }]);
+        textSpans.push({ text: 'Materiales Usados: ', style: 'label' }, { text: `${materials}\n` });
       }
 
       attentionBlocks.push({
-        table: {
-          widths: ['25%', '75%'],
-          body,
-        },
-        layout: 'lightHorizontalLines',
+        text: textSpans,
         margin: [0, 2, 0, 4],
       });
     }

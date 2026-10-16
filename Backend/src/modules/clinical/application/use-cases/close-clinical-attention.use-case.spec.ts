@@ -3,6 +3,7 @@ import {
   CloseClinicalAttentionCommand,
 } from './close-clinical-attention.use-case';
 import { ClinicalAttentionRepositoryPort } from '../../domain/clinical-attention.repository.port';
+import { UnitOfWorkPort } from '../../../../shared/application/ports/unit-of-work.port';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
 import { EventBusPort } from '../../../../shared/application/ports/event-bus.port';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
@@ -16,6 +17,7 @@ import {
 describe('CloseClinicalAttentionUseCase', () => {
   let useCase: CloseClinicalAttentionUseCase;
   let attentionRepo: jest.Mocked<ClinicalAttentionRepositoryPort>;
+  let unitOfWork: jest.Mocked<UnitOfWorkPort>;
   let clock: jest.Mocked<ClockPort>;
   let eventBus: jest.Mocked<EventBusPort>;
 
@@ -30,6 +32,10 @@ describe('CloseClinicalAttentionUseCase', () => {
       save: jest.fn().mockResolvedValue(undefined),
     };
 
+    unitOfWork = {
+      execute: jest.fn().mockImplementation((work) => work()),
+    };
+
     clock = {
       now: jest.fn().mockReturnValue(closeTime),
       todayInBogota: jest.fn().mockReturnValue('2026-10-16'),
@@ -42,7 +48,7 @@ describe('CloseClinicalAttentionUseCase', () => {
       publishAll: jest.fn().mockResolvedValue(undefined),
     };
 
-    useCase = new CloseClinicalAttentionUseCase(attentionRepo, clock, eventBus);
+    useCase = new CloseClinicalAttentionUseCase(attentionRepo, unitOfWork, clock, eventBus);
   });
 
   const createAttentionWithProcedures = () =>
@@ -159,5 +165,24 @@ describe('CloseClinicalAttentionUseCase', () => {
 
     await expect(useCase.execute(command)).rejects.toThrow(ClinicalAttentionClosedError);
     expect(attentionRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('debe ejecutar el guardado y la publicación de AttentionClosedEvent dentro de UnitOfWorkPort propagando errores si un manejador falla', async () => {
+    const attention = createAttentionWithProcedures();
+    attentionRepo.findById.mockResolvedValue(attention);
+
+    eventBus.publishAll.mockRejectedValueOnce(
+      new Error('Fallo simulado en manejador de evento AttentionClosedEvent'),
+    );
+
+    const command: CloseClinicalAttentionCommand = {
+      clinicId: 'clinic-123',
+      id: 'att-1',
+    };
+
+    await expect(useCase.execute(command)).rejects.toThrow(
+      'Fallo simulado en manejador de evento AttentionClosedEvent',
+    );
+    expect(unitOfWork.execute).toHaveBeenCalled();
   });
 });

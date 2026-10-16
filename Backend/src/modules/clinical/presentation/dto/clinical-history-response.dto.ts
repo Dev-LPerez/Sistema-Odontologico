@@ -3,6 +3,7 @@ import { TreatmentItemStatus } from '../../domain/treatment-item-status.enum';
 import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
 import { ClinicalHistory } from '../../domain/clinical-history.entity';
 import { ClinicalHistoryVersion } from '../../domain/clinical-history-version.entity';
+import { ClinicalDiagnosisDto } from './clinical-diagnosis.dto';
 
 export class TreatmentPlanItemResponseDto {
   @ApiProperty({ example: 'd3b07384-d113-494b-9c8e-aa6725345759' })
@@ -97,10 +98,10 @@ export class ClinicalHistoryResponseDto {
   clinicalExamination!: string | null;
 
   @ApiProperty({
-    type: [Object],
+    type: () => [ClinicalDiagnosisDto],
     example: [{ code: 'K02.1', description: 'Caries de la dentina' }],
   })
-  diagnoses!: unknown[];
+  diagnoses!: ClinicalDiagnosisDto[];
 
   @ApiProperty({ type: [TreatmentPlanItemResponseDto] })
   treatmentItems!: TreatmentPlanItemResponseDto[];
@@ -124,7 +125,10 @@ export class ClinicalHistoryResponseDto {
       personalAntecedents: history.medicalAntecedents.toPersonalAntecedentsJson(),
       familyAntecedents: history.medicalAntecedents.familyAntecedents,
       clinicalExamination: history.clinicalExamination,
-      diagnoses: history.diagnoses,
+      diagnoses: history.diagnoses.map((d) => ({
+        code: d.code,
+        description: d.description,
+      })),
       treatmentItems: history.treatmentItems.map((item) =>
         TreatmentPlanItemResponseDto.fromDomain(item),
       ),

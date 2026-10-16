@@ -3,6 +3,11 @@ import {
   CLINICAL_ATTENTION_REPOSITORY_PORT,
   ClinicalAttentionRepositoryPort,
 } from '../../domain/clinical-attention.repository.port';
+import {
+  PROCEDURE_REPOSITORY_PORT,
+  ProcedureRepositoryPort,
+  ProcedureNotFoundError,
+} from '../../../catalogs';
 import { CLOCK_PORT, ClockPort } from '../../../../shared/application/ports/clock.port';
 import { ClinicalAttention, ProcedurePerformed } from '../../domain/clinical-attention.entity';
 import { ClinicalAttentionNotFoundError } from '../../domain/clinical.errors';
@@ -22,6 +27,8 @@ export class UpdateClinicalAttentionUseCase {
   constructor(
     @Inject(CLINICAL_ATTENTION_REPOSITORY_PORT)
     private readonly attentionRepository: ClinicalAttentionRepositoryPort,
+    @Inject(PROCEDURE_REPOSITORY_PORT)
+    private readonly procedureRepository: ProcedureRepositoryPort,
     @Inject(CLOCK_PORT)
     private readonly clock: ClockPort,
   ) {}
@@ -32,6 +39,21 @@ export class UpdateClinicalAttentionUseCase {
       throw new ClinicalAttentionNotFoundError(command.id);
     }
 
+    let procedures: ProcedurePerformed[] | undefined;
+    if (command.proceduresPerformed !== undefined) {
+      procedures = [];
+      for (const item of command.proceduresPerformed) {
+        const procedure = await this.procedureRepository.findByCode(command.clinicId, item.code);
+        if (!procedure) {
+          throw new ProcedureNotFoundError(item.code);
+        }
+        procedures.push({
+          ...item,
+          name: item.name ?? procedure.name,
+        });
+      }
+    }
+
     const now = this.clock.now();
 
     attention.update({
@@ -39,7 +61,7 @@ export class UpdateClinicalAttentionUseCase {
       prescription: command.prescription,
       postOperativeIndications: command.postOperativeIndications,
       privateNotes: command.privateNotes,
-      proceduresPerformed: command.proceduresPerformed,
+      proceduresPerformed: procedures,
       updatedAt: now,
     });
 

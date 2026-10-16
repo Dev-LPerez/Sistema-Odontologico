@@ -13,6 +13,8 @@ import {
   PATIENT_PROCEDURE_PRICE_REPOSITORY_PORT,
   MATERIAL_REPOSITORY_PORT,
   Material,
+  Procedure,
+  Money,
 } from '../src/modules/catalogs';
 import { CLINICAL_HISTORY_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-history.repository.port';
 import { CLINICAL_ATTENTION_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-attention.repository.port';
@@ -255,6 +257,32 @@ describe('Clinical Attentions and Materials Management (e2e) (RF-B-024, RF-B-025
       }),
     );
 
+    await procedureRepo.save(
+      Procedure.create({
+        id: 'proc-res-01',
+        clinicId: testClinicId,
+        code: 'RES-01',
+        name: 'Resina compuesta 1 superficie',
+        basePrice: Money.from(80000),
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    await procedureRepo.save(
+      Procedure.create({
+        id: 'proc-rest-01',
+        clinicId: testClinicId,
+        code: 'REST-01',
+        name: 'Restauración integral',
+        basePrice: Money.from(120000),
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
     const adminLoginRes = await request(app.getHttpServer())
       .post('/v1/auth/login')
       .send({ email: 'admin.attentions@clinica.com', password: rawPassword });
@@ -370,6 +398,49 @@ describe('Clinical Attentions and Materials Management (e2e) (RF-B-024, RF-B-025
 
     expect(noHistoryRes.body.statusCode).toBe(404);
     expect(noHistoryRes.body.errorCode).toBe('CLINICAL_HISTORY_NOT_FOUND');
+  });
+
+  it('debe rechazar con 404 PROCEDURE_NOT_FOUND cuando el procedimiento no existe en el catálogo o con 400 si el diente FDI o superficie son inválidos', async () => {
+    // 1. Procedimiento no existe en el catálogo -> 404 PROCEDURE_NOT_FOUND
+    const procNotFoundRes = await request(app.getHttpServer())
+      .post('/v1/clinical-attentions')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        patientId: testPatientId,
+        evolutionNotes: 'Atención con código inexistente',
+        proceduresPerformed: [{ code: 'NO-EXISTE-999' }],
+      })
+      .expect(404);
+
+    expect(procNotFoundRes.body.errorCode).toBe('PROCEDURE_NOT_FOUND');
+
+    // 2. Diente FDI inválido -> 400 INVALID_ODONTOGRAM_DATA
+    const invalidToothRes = await request(app.getHttpServer())
+      .post('/v1/clinical-attentions')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        patientId: testPatientId,
+        evolutionNotes: 'Atención con diente inválido',
+        proceduresPerformed: [{ code: 'RES-01', toothNumber: '99' }],
+      })
+      .expect(400);
+
+    expect(invalidToothRes.body.errorCode).toBe('INVALID_ODONTOGRAM_DATA');
+
+    // 3. Superficie inválida -> 400 INVALID_ODONTOGRAM_DATA
+    const invalidSurfaceRes = await request(app.getHttpServer())
+      .post('/v1/clinical-attentions')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        patientId: testPatientId,
+        evolutionNotes: 'Atención con superficie inválida',
+        proceduresPerformed: [
+          { code: 'RES-01', toothNumber: '16', surface: 'SUPERFICIE_INVENTADA' },
+        ],
+      })
+      .expect(400);
+
+    expect(invalidSurfaceRes.body.errorCode).toBe('INVALID_ODONTOGRAM_DATA');
   });
 
   it('debe rechazar con 403 FORBIDDEN_ROLE cuando AUXILIARY intenta crear, editar o registrar materiales en una atención clínica', async () => {

@@ -1,6 +1,6 @@
 import { TreatmentPlanItem } from './treatment-plan-item.entity';
 import { TreatmentItemStatus } from './treatment-item-status.enum';
-import { InvalidClinicalHistoryDataError } from './clinical.errors';
+import { InvalidClinicalHistoryDataError, InvalidOdontogramDataError } from './clinical.errors';
 
 describe('TreatmentPlanItem Entity', () => {
   const defaultProps = {
@@ -72,5 +72,21 @@ describe('TreatmentPlanItem Entity', () => {
         procedureName: '',
       }),
     ).toThrow(InvalidClinicalHistoryDataError);
+  });
+
+  it('debe lanzar InvalidOdontogramDataError (400) cuando toothNumber en el plan de tratamiento no es un código FDI válido', () => {
+    expect(() =>
+      TreatmentPlanItem.create({
+        ...defaultProps,
+        toothNumber: '99',
+      }),
+    ).toThrow(InvalidOdontogramDataError);
+
+    expect(() =>
+      TreatmentPlanItem.create({
+        ...defaultProps,
+        toothNumber: 'diente-invalido',
+      }),
+    ).toThrow(InvalidOdontogramDataError);
   });
 });

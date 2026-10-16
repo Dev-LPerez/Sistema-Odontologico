@@ -12,6 +12,11 @@ import {
   PatientRepositoryPort,
   PatientNotFoundError,
 } from '../../../patients';
+import {
+  PROCEDURE_REPOSITORY_PORT,
+  ProcedureRepositoryPort,
+  ProcedureNotFoundError,
+} from '../../../catalogs';
 import { CLOCK_PORT, ClockPort } from '../../../../shared/application/ports/clock.port';
 import {
   ID_GENERATOR_PORT,
@@ -42,6 +47,8 @@ export class CreateClinicalAttentionUseCase {
     private readonly historyRepository: ClinicalHistoryRepositoryPort,
     @Inject(PATIENT_REPOSITORY_TOKEN)
     private readonly patientRepository: PatientRepositoryPort,
+    @Inject(PROCEDURE_REPOSITORY_PORT)
+    private readonly procedureRepository: ProcedureRepositoryPort,
     @Inject(CLOCK_PORT)
     private readonly clock: ClockPort,
     @Inject(ID_GENERATOR_PORT)
@@ -66,6 +73,20 @@ export class CreateClinicalAttentionUseCase {
     const id = this.idGenerator.generate();
     const attendedAt = command.attendedAt ?? now;
 
+    const procedures: ProcedurePerformed[] = [];
+    if (command.proceduresPerformed && command.proceduresPerformed.length > 0) {
+      for (const item of command.proceduresPerformed) {
+        const procedure = await this.procedureRepository.findByCode(command.clinicId, item.code);
+        if (!procedure) {
+          throw new ProcedureNotFoundError(item.code);
+        }
+        procedures.push({
+          ...item,
+          name: item.name ?? procedure.name,
+        });
+      }
+    }
+
     const attention = ClinicalAttention.create({
       id,
       clinicId: command.clinicId,
@@ -73,7 +94,7 @@ export class CreateClinicalAttentionUseCase {
       clinicalHistoryId: history.id,
       attendedByUserId: command.attendedByUserId,
       status: ClinicalAttentionStatus.OPEN,
-      proceduresPerformed: command.proceduresPerformed ?? [],
+      proceduresPerformed: procedures,
       evolutionNotes: command.evolutionNotes,
       prescription: command.prescription,
       postOperativeIndications: command.postOperativeIndications,

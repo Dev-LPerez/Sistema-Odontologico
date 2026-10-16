@@ -2,6 +2,7 @@ import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { MedicalAntecedents } from './medical-antecedents.vo';
 import { TreatmentPlanItem } from './treatment-plan-item.entity';
 import { TreatmentItemStatus } from './treatment-item-status.enum';
+import { ClinicalDiagnosis, PlainClinicalDiagnosis } from './clinical-diagnosis.vo';
 import { InvalidClinicalHistoryDataError, TreatmentPlanItemNotFoundError } from './clinical.errors';
 
 export interface ClinicalHistoryProps {
@@ -12,7 +13,7 @@ export interface ClinicalHistoryProps {
   currentIllness: string;
   medicalAntecedents: MedicalAntecedents;
   clinicalExamination?: string | null;
-  diagnoses?: unknown[];
+  diagnoses?: Array<ClinicalDiagnosis | unknown>;
   treatmentItems?: TreatmentPlanItem[];
   createdAt: Date;
   updatedAt: Date;
@@ -23,7 +24,7 @@ export interface UpdateClinicalHistoryProps {
   currentIllness?: string;
   medicalAntecedents?: MedicalAntecedents;
   clinicalExamination?: string | null;
-  diagnoses?: unknown[];
+  diagnoses?: Array<ClinicalDiagnosis | unknown>;
   updatedAt: Date;
 }
 
@@ -33,7 +34,7 @@ export interface ClinicalHistorySnapshotData {
   personalAntecedents: Record<string, unknown>;
   familyAntecedents: string | null;
   clinicalExamination: string | null;
-  diagnoses: unknown[];
+  diagnoses: PlainClinicalDiagnosis[];
   treatmentItems: Array<{
     id: string;
     procedureId: string;
@@ -61,7 +62,7 @@ export class ClinicalHistory extends AggregateRoot<string> {
   private _currentIllness: string;
   private _medicalAntecedents: MedicalAntecedents;
   private _clinicalExamination: string | null;
-  private _diagnoses: unknown[];
+  private _diagnoses: ClinicalDiagnosis[];
   private readonly _treatmentItems: TreatmentPlanItem[];
   private _updatedAt: Date;
 
@@ -73,7 +74,7 @@ export class ClinicalHistory extends AggregateRoot<string> {
     currentIllness: string,
     medicalAntecedents: MedicalAntecedents,
     clinicalExamination: string | null,
-    diagnoses: unknown[],
+    diagnoses: ClinicalDiagnosis[],
     treatmentItems: TreatmentPlanItem[],
     readonly createdAt: Date,
     updatedAt: Date,
@@ -83,7 +84,7 @@ export class ClinicalHistory extends AggregateRoot<string> {
     this._currentIllness = currentIllness;
     this._medicalAntecedents = medicalAntecedents;
     this._clinicalExamination = clinicalExamination;
-    this._diagnoses = diagnoses;
+    this._diagnoses = [...diagnoses];
     this._treatmentItems = [...treatmentItems];
     this._updatedAt = updatedAt;
   }
@@ -106,7 +107,10 @@ export class ClinicalHistory extends AggregateRoot<string> {
         ? props.clinicalExamination.trim()
         : null;
 
-    const diagnoses = Array.isArray(props.diagnoses) ? props.diagnoses : [];
+    const rawDiagnoses = Array.isArray(props.diagnoses) ? props.diagnoses : [];
+    const diagnoses: ClinicalDiagnosis[] = rawDiagnoses.map((d) =>
+      d instanceof ClinicalDiagnosis ? d : ClinicalDiagnosis.create(d),
+    );
     const treatmentItems = Array.isArray(props.treatmentItems) ? props.treatmentItems : [];
 
     return new ClinicalHistory(
@@ -140,8 +144,8 @@ export class ClinicalHistory extends AggregateRoot<string> {
     return this._clinicalExamination;
   }
 
-  get diagnoses(): unknown[] {
-    return [...this._diagnoses];
+  get diagnoses(): ReadonlyArray<ClinicalDiagnosis> {
+    return this._diagnoses;
   }
 
   get treatmentItems(): ReadonlyArray<TreatmentPlanItem> {
@@ -183,7 +187,9 @@ export class ClinicalHistory extends AggregateRoot<string> {
       if (!Array.isArray(props.diagnoses)) {
         throw new InvalidClinicalHistoryDataError('diagnoses debe ser un arreglo');
       }
-      this._diagnoses = props.diagnoses;
+      this._diagnoses = props.diagnoses.map((d) =>
+        d instanceof ClinicalDiagnosis ? d : ClinicalDiagnosis.create(d),
+      );
     }
 
     this._updatedAt = props.updatedAt;
@@ -217,7 +223,7 @@ export class ClinicalHistory extends AggregateRoot<string> {
       personalAntecedents: this._medicalAntecedents.toPersonalAntecedentsJson(),
       familyAntecedents: this._medicalAntecedents.familyAntecedents,
       clinicalExamination: this._clinicalExamination,
-      diagnoses: structuredClone(this._diagnoses),
+      diagnoses: this._diagnoses.map((d) => d.toPlainObject()),
       treatmentItems: this._treatmentItems.map((item) => ({
         id: item.id,
         procedureId: item.procedureId,

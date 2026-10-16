@@ -4,6 +4,7 @@ import {
 } from './amend-closed-clinical-attention.use-case';
 import { ClinicalAttentionRepositoryPort } from '../../domain/clinical-attention.repository.port';
 import { ClinicalAttentionVersionRepositoryPort } from '../../domain/clinical-attention-version.repository.port';
+import { ProcedureRepositoryPort } from '../../../catalogs';
 import { UnitOfWorkPort } from '../../../../shared/application/ports/unit-of-work.port';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
 import { IdGeneratorPort } from '../../../../shared/application/ports/id-generator.port';
@@ -21,6 +22,7 @@ describe('AmendClosedClinicalAttentionUseCase', () => {
   let useCase: AmendClosedClinicalAttentionUseCase;
   let attentionRepo: jest.Mocked<ClinicalAttentionRepositoryPort>;
   let versionRepo: jest.Mocked<ClinicalAttentionVersionRepositoryPort>;
+  let procedureRepo: jest.Mocked<ProcedureRepositoryPort>;
   let unitOfWork: jest.Mocked<UnitOfWorkPort>;
   let clock: jest.Mocked<ClockPort>;
   let idGenerator: jest.Mocked<IdGeneratorPort>;
@@ -42,6 +44,22 @@ describe('AmendClosedClinicalAttentionUseCase', () => {
       save: jest.fn().mockResolvedValue(undefined),
     };
 
+    procedureRepo = {
+      findById: jest.fn(),
+      findByCode: jest.fn().mockImplementation(async (clinicId: string, code: string) => ({
+        id: 'proc-1',
+        clinicId,
+        code,
+        name: 'Resina fotocurado',
+        basePrice: 50000,
+        isActive: true,
+        category: null,
+      })),
+      findAllByClinicId: jest.fn(),
+      save: jest.fn(),
+      delete: jest.fn(),
+    } as unknown as jest.Mocked<ProcedureRepositoryPort>;
+
     unitOfWork = {
       execute: jest.fn().mockImplementation((work) => work()),
     };
@@ -60,6 +78,7 @@ describe('AmendClosedClinicalAttentionUseCase', () => {
     useCase = new AmendClosedClinicalAttentionUseCase(
       attentionRepo,
       versionRepo,
+      procedureRepo,
       unitOfWork,
       clock,
       idGenerator,

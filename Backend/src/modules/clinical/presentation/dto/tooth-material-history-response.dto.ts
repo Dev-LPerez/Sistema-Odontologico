@@ -58,6 +58,7 @@ export class ToothMaterialHistoryResponseDto {
   @ApiPropertyOptional({
     description: 'Notas adicionales del uso del material',
     example: 'Restauración en cara oclusal con aislamiento absoluto',
+    type: String,
     nullable: true,
   })
   notes!: string | null;

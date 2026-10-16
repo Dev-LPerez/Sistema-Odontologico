@@ -5,6 +5,7 @@ import {
 import { ClinicalAttentionRepositoryPort } from '../../domain/clinical-attention.repository.port';
 import { ClinicalHistoryRepositoryPort } from '../../domain/clinical-history.repository.port';
 import { PatientRepositoryPort, PatientNotFoundError, Patient } from '../../../patients';
+import { ProcedureRepositoryPort, ProcedureNotFoundError, Procedure } from '../../../catalogs';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
 import { IdGeneratorPort } from '../../../../shared/application/ports/id-generator.port';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
@@ -12,6 +13,7 @@ import { ClinicalHistory } from '../../domain/clinical-history.entity';
 import { MedicalAntecedents } from '../../domain/medical-antecedents.vo';
 import {
   InvalidClinicalAttentionDataError,
+  InvalidOdontogramDataError,
   ClinicalHistoryNotFoundError,
 } from '../../domain/clinical.errors';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
@@ -21,6 +23,7 @@ describe('CreateClinicalAttentionUseCase', () => {
   let attentionRepo: jest.Mocked<ClinicalAttentionRepositoryPort>;
   let historyRepo: jest.Mocked<ClinicalHistoryRepositoryPort>;
   let patientRepo: jest.Mocked<PatientRepositoryPort>;
+  let procedureRepo: jest.Mocked<ProcedureRepositoryPort>;
   let clock: jest.Mocked<ClockPort>;
   let idGenerator: jest.Mocked<IdGeneratorPort>;
 
@@ -47,6 +50,22 @@ describe('CreateClinicalAttentionUseCase', () => {
       save: jest.fn(),
     } as unknown as jest.Mocked<PatientRepositoryPort>;
 
+    procedureRepo = {
+      findById: jest.fn(),
+      findByCode: jest.fn().mockImplementation(async (clinicId: string, code: string) => ({
+        id: 'proc-1',
+        clinicId,
+        code,
+        name: 'Resina fotocurado',
+        basePrice: 50000,
+        isActive: true,
+        category: null,
+      })),
+      findAllByClinicId: jest.fn(),
+      save: jest.fn(),
+      delete: jest.fn(),
+    } as unknown as jest.Mocked<ProcedureRepositoryPort>;
+
     clock = {
       now: jest.fn().mockReturnValue(fixedDate),
       todayInBogota: jest.fn().mockReturnValue('2026-10-16'),
@@ -62,6 +81,7 @@ describe('CreateClinicalAttentionUseCase', () => {
       attentionRepo,
       historyRepo,
       patientRepo,
+      procedureRepo,
       clock,
       idGenerator,
     );
@@ -170,5 +190,66 @@ describe('CreateClinicalAttentionUseCase', () => {
     await expect(useCase.execute(validCommand)).rejects.toThrow(PatientNotFoundError);
     expect(historyRepo.findByPatientId).not.toHaveBeenCalled();
     expect(attentionRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('debe rechazar procedimientos con código inexistente en el catálogo (404) o con diente FDI o superficie inválidos (400)', async () => {
+    patientRepo.findById.mockResolvedValue({
+      id: 'pat-123',
+      clinicId: 'clinic-123',
+    } as unknown as Patient);
+
+    historyRepo.findByPatientId.mockResolvedValue(
+      ClinicalHistory.create({
+        id: 'hist-123',
+        clinicId: 'clinic-123',
+        patientId: 'pat-123',
+        chiefComplaint: 'Dolor dental',
+        currentIllness: 'Dolor leve',
+        medicalAntecedents: MedicalAntecedents.create({
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        }),
+        createdAt: fixedDate,
+        updatedAt: fixedDate,
+      }),
+    );
+
+    // Procedure not found in catalog -> 404 ProcedureNotFoundError
+    procedureRepo.findByCode.mockResolvedValue(null);
+    await expect(
+      useCase.execute({
+        ...validCommand,
+        proceduresPerformed: [{ code: 'INEXISTENT-01' }],
+      }),
+    ).rejects.toThrow(ProcedureNotFoundError);
+
+    // Procedure found, but invalid FDI toothNumber -> 400 InvalidOdontogramDataError
+    procedureRepo.findByCode.mockResolvedValue({
+      id: 'proc-1',
+      clinicId: 'clinic-123',
+      code: 'RES-01',
+      name: 'Resina',
+    } as unknown as Procedure);
+
+    await expect(
+      useCase.execute({
+        ...validCommand,
+        proceduresPerformed: [{ code: 'RES-01', toothNumber: '99' }],
+      }),
+    ).rejects.toThrow(InvalidOdontogramDataError);
+
+    // Procedure found, but invalid surface -> 400 InvalidOdontogramDataError
+    await expect(
+      useCase.execute({
+        ...validCommand,
+        proceduresPerformed: [
+          { code: 'RES-01', toothNumber: '16', surface: 'INVENTADA' as unknown as string },
+        ],
+      }),
+    ).rejects.toThrow(InvalidOdontogramDataError);
   });
 });

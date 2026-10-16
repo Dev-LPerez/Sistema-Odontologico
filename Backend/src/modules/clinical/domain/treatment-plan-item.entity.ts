@@ -1,4 +1,5 @@
 import { TreatmentItemStatus } from './treatment-item-status.enum';
+import { ToothNumber } from './tooth-number.vo';
 import { InvalidClinicalHistoryDataError } from './clinical.errors';
 
 export interface TreatmentPlanItemProps {
@@ -57,10 +58,14 @@ export class TreatmentPlanItem {
       );
     }
 
-    const toothNumber =
-      typeof props.toothNumber === 'string' && props.toothNumber.trim() !== ''
-        ? props.toothNumber.trim()
-        : null;
+    let toothNumber: string | null = null;
+    if (props.toothNumber !== undefined && props.toothNumber !== null) {
+      const rawTooth = String(props.toothNumber).trim();
+      if (rawTooth !== '') {
+        const parsed = ToothNumber.of(rawTooth);
+        toothNumber = parsed.code;
+      }
+    }
 
     const notes =
       typeof props.notes === 'string' && props.notes.trim() !== '' ? props.notes.trim() : null;

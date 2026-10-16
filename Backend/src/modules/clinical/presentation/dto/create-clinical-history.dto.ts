@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PersonalAntecedentsDto } from './medical-antecedents.dto';
+import { ClinicalDiagnosisDto } from './clinical-diagnosis.dto';
 
 export class CreateClinicalHistoryDto {
   @ApiProperty({ description: 'ID del paciente', example: 'd3b07384-d113-494b-9c8e-aa6725345759' })
@@ -49,7 +50,7 @@ export class CreateClinicalHistoryDto {
   @ApiPropertyOptional({
     description: 'Diagnósticos clínicos (CIE-10 o descripción)',
     example: [{ code: 'K02.1', description: 'Caries de la dentina' }],
-    type: [Object],
+    type: () => [ClinicalDiagnosisDto],
   })
   @IsOptional()
   @IsArray()

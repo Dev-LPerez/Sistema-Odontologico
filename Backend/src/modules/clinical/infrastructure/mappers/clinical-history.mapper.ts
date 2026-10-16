@@ -86,7 +86,7 @@ export class ClinicalHistoryMapper {
         domain.medicalAntecedents.toPersonalAntecedentsJson() as Prisma.InputJsonValue,
       familyAntecedents: domain.medicalAntecedents.familyAntecedents,
       clinicalExamination: domain.clinicalExamination,
-      diagnoses: domain.diagnoses as Prisma.InputJsonValue,
+      diagnoses: domain.diagnoses.map((d) => d.toPlainObject()) as unknown as Prisma.InputJsonValue,
       createdAt: domain.createdAt,
       updatedAt: domain.updatedAt,
     };

@@ -3,6 +3,7 @@ import {
   UpdateClinicalAttentionCommand,
 } from './update-clinical-attention.use-case';
 import { ClinicalAttentionRepositoryPort } from '../../domain/clinical-attention.repository.port';
+import { ProcedureRepositoryPort } from '../../../catalogs';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
@@ -15,6 +16,7 @@ import {
 describe('UpdateClinicalAttentionUseCase', () => {
   let useCase: UpdateClinicalAttentionUseCase;
   let attentionRepo: jest.Mocked<ClinicalAttentionRepositoryPort>;
+  let procedureRepo: jest.Mocked<ProcedureRepositoryPort>;
   let clock: jest.Mocked<ClockPort>;
 
   const fixedDate = new Date('2026-10-16T10:00:00.000Z');
@@ -27,6 +29,22 @@ describe('UpdateClinicalAttentionUseCase', () => {
       save: jest.fn().mockResolvedValue(undefined),
     };
 
+    procedureRepo = {
+      findById: jest.fn(),
+      findByCode: jest.fn().mockImplementation(async (clinicId: string, code: string) => ({
+        id: 'proc-1',
+        clinicId,
+        code,
+        name: 'Resina fotocurado',
+        basePrice: 50000,
+        isActive: true,
+        category: null,
+      })),
+      findAllByClinicId: jest.fn(),
+      save: jest.fn(),
+      delete: jest.fn(),
+    } as unknown as jest.Mocked<ProcedureRepositoryPort>;
+
     clock = {
       now: jest.fn().mockReturnValue(updateDate),
       todayInBogota: jest.fn().mockReturnValue('2026-10-16'),
@@ -34,7 +52,7 @@ describe('UpdateClinicalAttentionUseCase', () => {
       isSameDayInBogota: jest.fn().mockReturnValue(true),
     };
 
-    useCase = new UpdateClinicalAttentionUseCase(attentionRepo, clock);
+    useCase = new UpdateClinicalAttentionUseCase(attentionRepo, procedureRepo, clock);
   });
 
   const baseAttention = ClinicalAttention.create({

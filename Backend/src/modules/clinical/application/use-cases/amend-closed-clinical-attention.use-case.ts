@@ -8,6 +8,11 @@ import {
   ClinicalAttentionVersionRepositoryPort,
 } from '../../domain/clinical-attention-version.repository.port';
 import {
+  PROCEDURE_REPOSITORY_PORT,
+  ProcedureRepositoryPort,
+  ProcedureNotFoundError,
+} from '../../../catalogs';
+import {
   UNIT_OF_WORK_PORT,
   UnitOfWorkPort,
 } from '../../../../shared/application/ports/unit-of-work.port';
@@ -39,6 +44,8 @@ export class AmendClosedClinicalAttentionUseCase {
     private readonly attentionRepository: ClinicalAttentionRepositoryPort,
     @Inject(CLINICAL_ATTENTION_VERSION_REPOSITORY_PORT)
     private readonly versionRepository: ClinicalAttentionVersionRepositoryPort,
+    @Inject(PROCEDURE_REPOSITORY_PORT)
+    private readonly procedureRepository: ProcedureRepositoryPort,
     @Inject(UNIT_OF_WORK_PORT)
     private readonly unitOfWork: UnitOfWorkPort,
     @Inject(CLOCK_PORT)
@@ -73,13 +80,28 @@ export class AmendClosedClinicalAttentionUseCase {
         createdAt: now,
       });
 
+      let procedures: ProcedurePerformed[] | undefined;
+      if (command.proceduresPerformed !== undefined) {
+        procedures = [];
+        for (const item of command.proceduresPerformed) {
+          const procedure = await this.procedureRepository.findByCode(command.clinicId, item.code);
+          if (!procedure) {
+            throw new ProcedureNotFoundError(item.code);
+          }
+          procedures.push({
+            ...item,
+            name: item.name ?? procedure.name,
+          });
+        }
+      }
+
       attention.amend({
         changeReason: command.changeReason,
         evolutionNotes: command.evolutionNotes,
         prescription: command.prescription,
         postOperativeIndications: command.postOperativeIndications,
         privateNotes: command.privateNotes,
-        proceduresPerformed: command.proceduresPerformed,
+        proceduresPerformed: procedures,
         updatedAt: now,
       });
 

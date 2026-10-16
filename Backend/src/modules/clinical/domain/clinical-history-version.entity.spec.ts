@@ -192,7 +192,7 @@ describe('ClinicalHistoryVersion Entity', () => {
       chiefComplaint: 'Dolor inicial',
       currentIllness: 'Caries activa',
       medicalAntecedents: antecedents,
-      diagnoses: ['K02.1'],
+      diagnoses: [{ code: 'K02.1', description: 'Caries de la dentina' }],
       treatmentItems: [item],
       createdAt: fixedCreatedAt,
       updatedAt: fixedCreatedAt,
@@ -205,7 +205,7 @@ describe('ClinicalHistoryVersion Entity', () => {
     expect(snapshot.personalAntecedents.hypertension).toBe(true);
     expect(snapshot.personalAntecedents.allergiesDetails).toBe('Penicilina');
     expect(snapshot.familyAntecedents).toBe('Madre hipertensa');
-    expect(snapshot.diagnoses).toEqual(['K02.1']);
+    expect(snapshot.diagnoses).toEqual([{ code: 'K02.1', description: 'Caries de la dentina' }]);
     expect(snapshot.treatmentItems.length).toBe(1);
     expect(snapshot.treatmentItems[0].procedureCode).toBe('RES-01');
     expect(snapshot.updatedAt).toBe(fixedCreatedAt.toISOString());
