@@ -120,8 +120,7 @@ describe('PdfmakeClinicalHistoryPdfGeneratorAdapter', () => {
   };
 
   beforeEach(() => {
-    // Para las pruebas mantenemos compress = false explícito
-    adapter = new PdfmakeClinicalHistoryPdfGeneratorAdapter(false);
+    adapter = new PdfmakeClinicalHistoryPdfGeneratorAdapter();
   });
 
   it('debe generar el PDF con etiquetas en español es-CO, SVG de odontograma y referencia de logo', async () => {

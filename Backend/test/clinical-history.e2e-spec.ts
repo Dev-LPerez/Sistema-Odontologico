@@ -39,6 +39,7 @@ import { FindingCatalogCode } from '../src/modules/clinical/domain/finding-catal
 import { FindingStatus } from '../src/modules/clinical/domain/finding-status.enum';
 import { ClinicalAttention } from '../src/modules/clinical/domain/clinical-attention.entity';
 import { ClinicalAttentionStatus } from '../src/modules/clinical/domain/clinical-attention-status.enum';
+import { extractTextFromUncompressedPdf } from '../src/modules/clinical/infrastructure/adapters/pdfmake-clinical-history-pdf-generator.adapter.spec';
 import {
   PasswordHasherPort,
   PASSWORD_HASHER_PORT,
@@ -474,11 +475,12 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
     });
     await odontogramRepo.save(odontogram);
 
-    // Obtener la historia clínica creada para testPatientId
-    const history = await clinicalHistoryRepo.findByPatientId(testPatientId, testClinicId);
-    const historyId = history?.id ?? '00000000-0000-4000-8000-000000000001';
+    // Obtener la historia clínica creada para testPatientId (argumentos en orden correcto: clinicId, patientId)
+    const history = await clinicalHistoryRepo.findByPatientId(testClinicId, testPatientId);
+    expect(history).not.toBeNull();
+    const historyId = history!.id;
 
-    // Registrar una atención clínica con notas privadas confidenciales
+    // Registrar una atención clínica en estado OPEN con procedimiento válido y cerrarla formalmente (B-11, RC-023)
     const attention = ClinicalAttention.create({
       id: '00000000-0000-4000-8000-000000000088',
       patientId: testPatientId,
@@ -487,13 +489,21 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
       attendedByUserId: adminId,
       evolutionNotes: 'Evolución favorable del paciente tras la restauración en resina.',
       privateNotes: 'Nota super confidencial que NO debe salir en el PDF',
-      status: ClinicalAttentionStatus.CLOSED,
+      status: ClinicalAttentionStatus.OPEN,
       attendedAt: now,
-      proceduresPerformed: [],
+      proceduresPerformed: [
+        {
+          code: 'RES-EST',
+          name: 'Resina Estética',
+          toothNumber: '16',
+          surface: 'Oclusal',
+        },
+      ],
       materialsUsed: [],
       createdAt: now,
       updatedAt: now,
     });
+    attention.close(now);
     await attentionRepo.save(attention);
 
     // Descargar el PDF como ADMIN
@@ -512,13 +522,25 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
     expect(res.headers['content-disposition']).toBe(
       `attachment; filename="historia-clinica-${testPatientId}.pdf"`,
     );
+    // 1. Cabecera Cache-Control no-store (RC-070)
+    expect(res.headers['cache-control']).toContain('no-store');
     expect(Buffer.isBuffer(res.body)).toBe(true);
     expect((res.body as Buffer).length).toBeGreaterThan(500);
 
-    const pdfContent = (res.body as Buffer).toString('latin1');
-    expect(pdfContent).toMatch(/^%PDF-/);
-    // Garantizar que la nota privada confidencial jamás se filtre en el PDF (RC-023)
-    expect(pdfContent).not.toContain('Nota super confidencial');
+    const pdfBuffer = res.body as Buffer;
+    const header = pdfBuffer.subarray(0, 5).toString('ascii');
+    expect(header).toBe('%PDF-');
+
+    // 2. Controles positivos decodificados usando extractTextFromUncompressedPdf
+    const decodedText = extractTextFromUncompressedPdf(pdfBuffer);
+    expect(decodedText).toContain(
+      'Evolución favorable del paciente tras la restauración en resina.',
+    );
+    expect(decodedText).toContain('K02.1 – Caries de la dentina');
+    expect(decodedText).toContain('Caries oclusal profunda');
+
+    // 3. Control negativo real sobre el texto decodificado (RC-023)
+    expect(decodedText).not.toContain('Nota super confidencial');
   });
 
   it('debe rechazar con 404 CLINICAL_HISTORY_NOT_FOUND cuando se intenta exportar el PDF de un paciente sin historia clínica', async () => {

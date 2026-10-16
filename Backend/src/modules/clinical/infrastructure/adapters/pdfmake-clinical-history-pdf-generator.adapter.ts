@@ -43,7 +43,9 @@ const ALLOWED_STANDARD_FONTS = new Set([
 
 @Injectable()
 export class PdfmakeClinicalHistoryPdfGeneratorAdapter implements ClinicalHistoryPdfGeneratorPort {
-  constructor(private readonly defaultCompress = process.env.NODE_ENV === 'production') {
+  private readonly defaultCompress = process.env.NODE_ENV === 'production';
+
+  constructor() {
     pdfMake.setFonts(STANDARD_FONTS);
     pdfMake.setUrlAccessPolicy(() => false);
     pdfMake.setLocalAccessPolicy((path: string) => ALLOWED_STANDARD_FONTS.has(path));

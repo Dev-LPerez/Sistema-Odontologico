@@ -13,7 +13,15 @@ import {
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiProduces,
+  ApiForbiddenResponse,
+  ApiNotFoundResponse,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../shared/presentation/guards/roles.guard';
 import {
@@ -184,6 +192,7 @@ export class ClinicalHistoryController {
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Exportar la historia clínica completa del paciente en formato PDF' })
+  @ApiProduces('application/pdf')
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Documento PDF generado exitosamente',
@@ -196,6 +205,10 @@ export class ClinicalHistoryController {
       },
     },
   })
+  @ApiForbiddenResponse({
+    description: 'Rol sin permisos para exportar historia clínica (requiere ADMIN)',
+  })
+  @ApiNotFoundResponse({ description: 'Paciente o historia clínica no encontrada' })
   async exportPdf(
     @CurrentUser() user: AuthenticatedUserPayload,
     @Param('patientId', ParseUUIDPipe) patientId: string,
@@ -206,8 +219,11 @@ export class ClinicalHistoryController {
       patientId,
     });
 
+    // TODO(B-20): Registrar evento de auditoría CLINICAL_HISTORY_PDF_EXPORTED en AuditLog (RF-B-140)
     res.setHeader('Content-Type', result.contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
 
     return new StreamableFile(result.buffer);
   }

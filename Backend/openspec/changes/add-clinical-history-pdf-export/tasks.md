@@ -86,7 +86,7 @@ Cada escenario de `specs/clinical-history-management/spec.md` DEBE estar cubiert
     - Pasar un objeto de atención que intente infiltrar `(att as Record<string, unknown>).privateNotes = 'SECRETO_INFILTRADO_EN_ADAPTADOR'` y comprobar con `extractTextFromUncompressedPdf(buffer)` que `'SECRETO_INFILTRADO_EN_ADAPTADOR'` jamás se renderiza en el PDF.
   - Hacer commit: `git add Backend/src/modules/clinical/infrastructure && git commit -m "fix(clinical): lock pdfmake local access policy, render SVG odontogram and test adapter against privateNotes leak"`
 
-- [ ] 6.5 **Corregir Bug 3 y Bug 4 en `clinical-history.e2e-spec.ts` y completar cabeceras y decoradores OpenAPI en `ClinicalHistoryController` (`RC-005`, `RC-070`):**
+- [x] 6.5 **Corregir Bug 3 y Bug 4 en `clinical-history.e2e-spec.ts` y completar cabeceras y decoradores OpenAPI en `ClinicalHistoryController` (`RC-005`, `RC-070`):**
   - En `Backend/src/modules/clinical/presentation/clinical-history.controller.ts` (+ `.spec.ts`):
     - Agregar `res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private')` y `res.setHeader('Pragma', 'no-cache')`.
     - Decorar `exportPdf` con `@ApiProduces('application/pdf')`, `@ApiForbiddenResponse({ description: 'Rol sin permisos para exportar historia clínica (requiere ADMIN)' })` y `@ApiNotFoundResponse({ description: 'Paciente o historia clínica no encontrada' })`.

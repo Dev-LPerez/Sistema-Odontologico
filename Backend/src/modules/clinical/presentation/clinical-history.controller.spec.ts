@@ -240,6 +240,11 @@ describe('ClinicalHistoryController Unit Tests', () => {
       'Content-Disposition',
       'attachment; filename="historia-clinica-patient-123.pdf"',
     );
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, private',
+    );
+    expect(mockRes.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(exportPdfQuery.execute).toHaveBeenCalledWith({
       clinicId: 'clinic-123',
       patientId: 'patient-123',
