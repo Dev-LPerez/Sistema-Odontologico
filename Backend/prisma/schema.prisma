@@ -41,8 +41,9 @@ model Clinic {
   treatmentPlanItems     TreatmentPlanItem[]
   odontograms            Odontogram[]
   odontogramSnapshots    OdontogramSnapshot[]
-  clinicalAttentions     ClinicalAttention[]
-  attentionMaterialsUsed AttentionMaterialUsed[]
+  clinicalAttentions        ClinicalAttention[]
+  attentionMaterialsUsed    AttentionMaterialUsed[]
+  clinicalAttentionVersions ClinicalAttentionVersion[]
 
   @@map("clinics")
 }
@@ -58,8 +59,9 @@ model User {
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
   clinic          Clinic           @relation(fields: [clinicId], references: [id], onDelete: Cascade)
-  refreshSessions RefreshSession[]
-  clinicalAttentions ClinicalAttention[]
+  refreshSessions          RefreshSession[]
+  clinicalAttentions       ClinicalAttention[]
+  amendedAttentionVersions ClinicalAttentionVersion[]
 
   @@index([clinicId, role])
   @@map("users")
@@ -294,11 +296,12 @@ model ClinicalAttention {
   createdAt                DateTime                @default(now()) @map("created_at")
   updatedAt                DateTime                @updatedAt @map("updated_at")
 
-  clinic          Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  patient         Patient                 @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  clinicalHistory ClinicalHistory         @relation(fields: [clinicalHistoryId], references: [id], onDelete: Restrict)
-  attendedByUser  User                    @relation(fields: [attendedByUserId], references: [id], onDelete: Restrict)
+  clinic          Clinic                     @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patient         Patient                    @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  clinicalHistory ClinicalHistory            @relation(fields: [clinicalHistoryId], references: [id], onDelete: Restrict)
+  attendedByUser  User                       @relation(fields: [attendedByUserId], references: [id], onDelete: Restrict)
   materialsUsed   AttentionMaterialUsed[]
+  versions        ClinicalAttentionVersion[]
 
   @@index([clinicId, patientId, attendedAt])
   @@index([clinicId, clinicalHistoryId])
@@ -326,5 +329,24 @@ model AttentionMaterialUsed {
   @@index([clinicId, attentionId])
   @@index([clinicId, materialId])
   @@map("attention_materials_used")
+}
+
+model ClinicalAttentionVersion {
+  id              String            @id @default(uuid())
+  clinicId        String            @map("clinic_id")
+  attentionId     String            @map("attention_id")
+  versionNumber   Int               @map("version_number")
+  previousData    Json              @map("previous_data")
+  changeReason    String            @map("change_reason")
+  amendedByUserId String            @map("amended_by_user_id")
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  clinic        Clinic            @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  attention     ClinicalAttention @relation(fields: [attentionId], references: [id], onDelete: Restrict)
+  amendedByUser User              @relation(fields: [amendedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([clinicId, attentionId, versionNumber], map: "clinical_attention_versions_clinic_attention_version_key")
+  @@index([clinicId, attentionId, versionNumber], map: "clinical_attention_versions_clinic_attention_version_idx")
+  @@map("clinical_attention_versions")
 }
 

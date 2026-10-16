@@ -160,6 +160,24 @@ describe('sanitizeSentryEvent', () => {
     expect(sanitized.extra.attention.attentionId).toBe('att-123');
   });
 
+  it('debe redactar los campos de versionado y enmienda en Sentry: previousData y changeReason (RNF-B-009, RC-023)', () => {
+    const event = {
+      extra: {
+        version: {
+          previousData: { evolutionNotes: 'Evolución previa' },
+          changeReason: 'Corrección de evolución',
+          versionId: 'ver-123',
+        },
+      },
+    };
+
+    const sanitized = sanitizeSentryEvent(event);
+
+    expect(sanitized.extra.version.previousData).toBe('[REDACTED]');
+    expect(sanitized.extra.version.changeReason).toBe('[REDACTED]');
+    expect(sanitized.extra.version.versionId).toBe('ver-123');
+  });
+
   it('debe manejar eventos nulos o sin campos adicionales sin fallar', () => {
     expect(sanitizeSentryEvent(null as unknown as Record<string, unknown>)).toBeNull();
     const minimalEvent = { message: 'Simple error' };

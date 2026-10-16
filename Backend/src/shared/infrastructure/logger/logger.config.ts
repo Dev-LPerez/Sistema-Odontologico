@@ -39,6 +39,8 @@ export const CLINICAL_REDACT_PATHS = [
   '*.prescription',
   '*.postOperativeIndications',
   '*.proceduresPerformed',
+  '*.previousData',
+  '*.changeReason',
   'diagnosis',
   'notes',
   'privateNotes',
@@ -68,6 +70,8 @@ export const CLINICAL_REDACT_PATHS = [
   'prescription',
   'postOperativeIndications',
   'proceduresPerformed',
+  'previousData',
+  'changeReason',
 ];
 
 export const createPinoHttpConfig = () => {

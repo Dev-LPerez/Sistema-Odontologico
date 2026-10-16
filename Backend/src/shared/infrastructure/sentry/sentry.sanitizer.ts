@@ -32,6 +32,8 @@ const SENSITIVE_KEYS = new Set([
   'prescription',
   'postoperativeindications',
   'proceduresperformed',
+  'previousdata',
+  'changereason',
 ]);
 
 function isSensitiveKey(key: string): boolean {

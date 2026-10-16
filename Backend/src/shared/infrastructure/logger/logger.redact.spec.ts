@@ -91,6 +91,17 @@ describe('Logger Clinical Redaction', () => {
     }
   });
 
+  it('debe redactar los campos de versionado y enmienda de atención clínica: previousData y changeReason (RNF-B-009, RC-023)', () => {
+    const versionFields = ['previousData', 'changeReason'];
+
+    for (const field of versionFields) {
+      const isRedacted = CLINICAL_REDACT_PATHS.some(
+        (path) => path === field || path.endsWith(`.${field}`),
+      );
+      expect(isRedacted).toBe(true);
+    }
+  });
+
   it('debe censurar datos clínicos y credenciales al serializar logs con Pino', () => {
     let loggedData = '';
     const destination = {
@@ -127,6 +138,8 @@ describe('Logger Clinical Redaction', () => {
         prescription: 'Ibuprofeno 400mg',
         postOperativeIndications: 'No comer cosas duras',
         proceduresPerformed: [{ code: 'RES-01' }],
+        previousData: { evolutionNotes: 'Previa' },
+        changeReason: 'Corrección de evolución',
       },
     });
 
@@ -147,6 +160,8 @@ describe('Logger Clinical Redaction', () => {
     expect(parsed.patient.prescription).toBe('[REDACTED]');
     expect(parsed.patient.postOperativeIndications).toBe('[REDACTED]');
     expect(parsed.patient.proceduresPerformed).toBe('[REDACTED]');
+    expect(parsed.patient.previousData).toBe('[REDACTED]');
+    expect(parsed.patient.changeReason).toBe('[REDACTED]');
   });
 
   describe('createPinoHttpConfig', () => {
