@@ -19,16 +19,16 @@ Cada escenario de las especificaciones delta de `harden-clinical-module` DEBE es
 
 ## 0. Archivar `add-clinical-history-pdf-export` (`B-12`)
 
-- [ ] 0.1 Ejecutar `/opsx-sync` y `/opsx-archive` para archivar `add-clinical-history-pdf-export` (`B-12`), verificando que `Backend/openspec/specs/clinical-history-management/spec.md` quede sincronizada, eliminar el directorio borrador `Backend/openspec/changes/add-appointments-scheduling` temporalmente hasta cerrar `harden-clinical-module`, y hacer commit: `git add -A && git commit -m "chore(clinical): archive B-12 add-clinical-history-pdf-export"`
+- [x] 0.1 Ejecutar `/opsx-sync` y `/opsx-archive` para archivar `add-clinical-history-pdf-export` (`B-12`), verificando que `Backend/openspec/specs/clinical-history-management/spec.md` quede sincronizada, eliminar el directorio borrador `Backend/openspec/changes/add-appointments-scheduling` temporalmente hasta cerrar `harden-clinical-module`, y hacer commit: `git add -A && git commit -m "chore(clinical): archive B-12 add-clinical-history-pdf-export"`
 
 ## 1. Guarda de seguridad para borrado de base de pruebas y centralización de `cleanDb()` (RC-018, RC-050)
 
-- [ ] 1.1 Crear `Backend/src/shared/infrastructure/prisma/test-database-cleaner.util.ts` (+ `test-database-cleaner.util.spec.ts`) exportando:
+- [x] 1.1 Crear `Backend/src/shared/infrastructure/prisma/test-database-cleaner.util.ts` (+ `test-database-cleaner.util.spec.ts`) exportando:
   - `assertSafeTestDatabase(databaseUrl?: string, nodeEnv?: string): void`: lanza un `Error` explícito si `nodeEnv === 'production'` o si el host de `databaseUrl` no es `localhost`, `127.0.0.1` o `postgres` (a menos que el nombre de la base termine en `_test` o `process.env.ALLOW_CONTRACT_DB_CLEANUP === 'true'`).
   - `cleanDatabaseForContractTests(prisma: PrismaService): Promise<void>`: invoca `assertSafeTestDatabase(process.env.DATABASE_URL, process.env.NODE_ENV)` y ejecuta los `deleteMany()` en el orden jerárquico correcto de claves foráneas.
-- [ ] 1.2 Exportar `assertSafeTestDatabase` y `cleanDatabaseForContractTests` en `Backend/src/shared/index.ts` y reemplazar la función local `cleanDb()` en las 7 suites de contrato (`identity-repositories.contract.spec.ts`, `patients-repository.contract.spec.ts`, `patients-queries.contract.spec.ts`, `catalogs-repositories.contract.spec.ts`, `clinical-history-repository.contract.spec.ts`, `odontogram-repositories.contract.spec.ts`, `clinical-attention-repository.contract.spec.ts`) para que todas usen `cleanDatabaseForContractTests(realPrisma)`.
-- [ ] 1.3 Actualizar `Backend/openspec/config.yaml` agregando la restricción crítica #8: *"Toda suite de contrato que limpie tablas DEBE usar cleanDatabaseForContractTests(prisma) con guarda de seguridad que bloquee bases remotas o de producción."*
-- [ ] 1.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src Backend/openspec/config.yaml && git commit -m "fix(shared): centralize contract test database cleanup with safety guard"`
+- [x] 1.2 Exportar `assertSafeTestDatabase` y `cleanDatabaseForContractTests` en `Backend/src/shared/index.ts` y reemplazar la función local `cleanDb()` en las 7 suites de contrato (`identity-repositories.contract.spec.ts`, `patients-repository.contract.spec.ts`, `patients-queries.contract.spec.ts`, `catalogs-repositories.contract.spec.ts`, `clinical-history-repository.contract.spec.ts`, `odontogram-repositories.contract.spec.ts`, `clinical-attention-repository.contract.spec.ts`) para que todas usen `cleanDatabaseForContractTests(realPrisma)`.
+- [x] 1.3 Actualizar `Backend/openspec/config.yaml` agregando la restricción crítica #8: *"Toda suite de contrato que limpie tablas DEBE usar cleanDatabaseForContractTests(prisma) con guarda de seguridad que bloquee bases remotas o de producción."*
+- [x] 1.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src Backend/openspec/config.yaml && git commit -m "fix(shared): centralize contract test database cleanup with safety guard"`
 
 ## 2. Doble barrera de ocultamiento de `privateNotes` por rol en Entidad, Consultas y DTOs (RF-B-027, RC-005)
 

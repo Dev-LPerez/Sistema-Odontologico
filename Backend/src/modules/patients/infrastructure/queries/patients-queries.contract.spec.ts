@@ -8,7 +8,7 @@ import { AcquisitionSource } from '../../domain/acquisition-source.enum';
 import { PatientQueriesPort } from '../../application/ports/patient.queries.port';
 import { InMemoryPatientQueriesAdapter } from './in-memory-patient.queries';
 import { PrismaPatientQueriesAdapter } from './prisma-patient.queries';
-import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { PrismaService, cleanDatabaseForContractTests } from '../../../../shared';
 import { PatientMapper } from '../mappers/patient.mapper';
 
 interface QueriesAdapterFactory {
@@ -35,20 +35,7 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
   });
 
   const cleanDb = async () => {
-    await realPrisma.clinicalAttentionVersion.deleteMany();
-    await realPrisma.attentionMaterialUsed.deleteMany();
-    await realPrisma.clinicalAttention.deleteMany();
-    await realPrisma.treatmentPlanItem.deleteMany();
-    await realPrisma.clinicalHistory.deleteMany();
-    await realPrisma.patientProcedurePrice.deleteMany();
-    await realPrisma.procedure.deleteMany();
-    await realPrisma.material.deleteMany();
-    await realPrisma.odontogramSnapshot.deleteMany();
-    await realPrisma.odontogram.deleteMany();
-    await realPrisma.patient.deleteMany();
-    await realPrisma.refreshSession.deleteMany();
-    await realPrisma.user.deleteMany();
-    await realPrisma.clinic.deleteMany();
+    await cleanDatabaseForContractTests(realPrisma);
   };
 
   const ensureClinics = async () => {

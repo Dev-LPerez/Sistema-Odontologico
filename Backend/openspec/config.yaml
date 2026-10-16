@@ -29,6 +29,7 @@ context: |
      traducirlas al DomainError de categoría CONFLICT (409) correspondiente para evitar errores 500 en
      condiciones de carrera.
   7. El arranque HTTP se centraliza en configureApp(app) y se reutiliza en main.ts y en todos los tests E2E.
+  8. Toda suite de contrato que limpie tablas DEBE usar cleanDatabaseForContractTests(prisma) con guarda de seguridad que bloquee bases remotas o de producción.
   Commits obligatorios con Conventional Commits (RC-074). Write all artifacts in Spanish.
 
 rules:

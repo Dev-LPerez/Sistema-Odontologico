@@ -1,4 +1,4 @@
-import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { PrismaService, cleanDatabaseForContractTests } from '../../../../shared';
 import { ClinicalHistoryRepositoryPort } from '../../domain/clinical-history.repository.port';
 import { InMemoryClinicalHistoryRepository } from './in-memory-clinical-history.repository';
 import { PrismaClinicalHistoryRepository } from './prisma-clinical-history.repository';
@@ -31,20 +31,7 @@ describe('ClinicalHistory Repository Contract Tests (RC-018, RC-050, RC-055)', (
   });
 
   const cleanDb = async () => {
-    await realPrisma.clinicalAttentionVersion.deleteMany();
-    await realPrisma.attentionMaterialUsed.deleteMany();
-    await realPrisma.clinicalAttention.deleteMany();
-    await realPrisma.treatmentPlanItem.deleteMany();
-    await realPrisma.clinicalHistory.deleteMany();
-    await realPrisma.patientProcedurePrice.deleteMany();
-    await realPrisma.procedure.deleteMany();
-    await realPrisma.material.deleteMany();
-    await realPrisma.odontogramSnapshot.deleteMany();
-    await realPrisma.odontogram.deleteMany();
-    await realPrisma.patient.deleteMany();
-    await realPrisma.refreshSession.deleteMany();
-    await realPrisma.user.deleteMany();
-    await realPrisma.clinic.deleteMany();
+    await cleanDatabaseForContractTests(realPrisma);
   };
 
   const ensurePrerequisites = async () => {

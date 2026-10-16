@@ -13,6 +13,7 @@ export * from './application/ports/event-bus.port';
 export * from './infrastructure/shared.module';
 export * from './infrastructure/prisma/prisma.service';
 export * from './infrastructure/prisma/prisma.module';
+export * from './infrastructure/prisma/test-database-cleaner.util';
 export * from './infrastructure/adapters/system-clock.adapter';
 export * from './infrastructure/adapters/uuid-generator.adapter';
 export * from './infrastructure/adapters/prisma-unit-of-work.adapter';

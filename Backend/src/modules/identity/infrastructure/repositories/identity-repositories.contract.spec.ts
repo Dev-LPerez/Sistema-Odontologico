@@ -12,7 +12,7 @@ import { InMemoryRefreshSessionRepository } from './in-memory-refresh-session.re
 import { PrismaClinicRepository } from './prisma-clinic.repository';
 import { PrismaUserRepository } from './prisma-user.repository';
 import { PrismaRefreshSessionRepository } from './prisma-refresh-session.repository';
-import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { PrismaService, cleanDatabaseForContractTests } from '../../../../shared';
 import { DuplicateUserEmailError } from '../../domain/identity.errors';
 
 interface RepositoryFactory {
@@ -38,20 +38,7 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
   });
 
   const cleanDb = async () => {
-    await realPrisma.clinicalAttentionVersion.deleteMany();
-    await realPrisma.attentionMaterialUsed.deleteMany();
-    await realPrisma.clinicalAttention.deleteMany();
-    await realPrisma.treatmentPlanItem.deleteMany();
-    await realPrisma.clinicalHistory.deleteMany();
-    await realPrisma.patientProcedurePrice.deleteMany();
-    await realPrisma.procedure.deleteMany();
-    await realPrisma.material.deleteMany();
-    await realPrisma.odontogramSnapshot.deleteMany();
-    await realPrisma.odontogram.deleteMany();
-    await realPrisma.patient.deleteMany();
-    await realPrisma.refreshSession.deleteMany();
-    await realPrisma.user.deleteMany();
-    await realPrisma.clinic.deleteMany();
+    await cleanDatabaseForContractTests(realPrisma);
   };
 
   const implementations: RepositoryFactory[] = [
