@@ -1469,6 +1469,208 @@
         ]
       }
     },
+    "/v1/clinical-attentions": {
+      "post": {
+        "operationId": "ClinicalAttentionsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClinicalAttentionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Atención clínica registrada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalAttentionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registrar una nueva atención clínica",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
+    "/v1/clinical-attentions/{id}": {
+      "patch": {
+        "operationId": "ClinicalAttentionsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClinicalAttentionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Atención clínica actualizada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalAttentionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Actualizar una atención clínica abierta",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      },
+      "get": {
+        "operationId": "ClinicalAttentionsController_getById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle de la atención clínica obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalAttentionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener el detalle de una atención clínica por ID",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
+    "/v1/clinical-attentions/{id}/materials": {
+      "post": {
+        "operationId": "ClinicalAttentionsController_addMaterial",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAttentionMaterialUsedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Material registrado y existencias descontadas exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalAttentionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registrar material propio utilizado en la atención clínica",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
+    "/v1/clinical-attentions/patient/{patientId}": {
+      "get": {
+        "operationId": "ClinicalAttentionsController_listByPatient",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de atenciones clínicas obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalAttentionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar las atenciones clínicas de un paciente",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -3381,6 +3583,313 @@
           "hasTemporalDentition",
           "snapshotData",
           "createdAt"
+        ]
+      },
+      "CreateClinicalAttentionDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "description": "ID del paciente",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "evolutionNotes": {
+            "type": "string",
+            "description": "Notas de evolución clínica obligatorias",
+            "example": "Se realiza apertura cavitaria y obturación con resina en pieza 16"
+          },
+          "prescription": {
+            "type": "string",
+            "description": "Fórmula médica o prescripción",
+            "example": "Ibuprofeno 400mg cada 8 horas por 3 días",
+            "nullable": true
+          },
+          "postOperativeIndications": {
+            "type": "string",
+            "description": "Indicaciones postoperatorias",
+            "example": "Evitar alimentos duros por 24 horas",
+            "nullable": true
+          },
+          "privateNotes": {
+            "type": "string",
+            "description": "Notas privadas exclusivas de la doctora (estrictamente ocultas para el rol AUXILIARY)",
+            "example": "Paciente con ansiedad dental moderada, cobrar saldo",
+            "nullable": true
+          },
+          "proceduresPerformed": {
+            "description": "Procedimientos clínicos realizados en la atención",
+            "example": [
+              {
+                "code": "RES-01",
+                "toothNumber": "16",
+                "surface": "OCCLUSAL"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "attendedAt": {
+            "type": "string",
+            "description": "Fecha y hora en que se realizó la atención (UTC)",
+            "example": "2026-10-16T15:00:00.000Z"
+          }
+        },
+        "required": [
+          "patientId",
+          "evolutionNotes"
+        ]
+      },
+      "AttentionMaterialUsedResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID del registro de material usado"
+          },
+          "clinicId": {
+            "type": "string",
+            "description": "ID del consultorio"
+          },
+          "attentionId": {
+            "type": "string",
+            "description": "ID de la atención clínica"
+          },
+          "materialId": {
+            "type": "string",
+            "description": "ID del material en el catálogo"
+          },
+          "brand": {
+            "type": "string",
+            "description": "Marca del material",
+            "example": "3M"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Referencia del material",
+            "example": "Filtek Z350 XT"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo de material",
+            "example": "Resina compuesta"
+          },
+          "color": {
+            "type": "string",
+            "description": "Color del material",
+            "example": "A2"
+          },
+          "toothNumber": {
+            "type": "string",
+            "description": "Diente FDI tratado",
+            "example": "16",
+            "nullable": true
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Cantidad consumida",
+            "example": 1
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas u observaciones del uso",
+            "example": "Restauración oclusal",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Fecha de registro del material usado (UTC)"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "attentionId",
+          "materialId",
+          "brand",
+          "reference",
+          "type",
+          "color",
+          "quantity",
+          "createdAt"
+        ]
+      },
+      "ClinicalAttentionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID de la atención clínica"
+          },
+          "clinicId": {
+            "type": "string",
+            "description": "ID del consultorio"
+          },
+          "patientId": {
+            "type": "string",
+            "description": "ID del paciente"
+          },
+          "clinicalHistoryId": {
+            "type": "string",
+            "description": "ID de la historia clínica asociada"
+          },
+          "attendedByUserId": {
+            "type": "string",
+            "description": "ID del usuario profesional que atendió la cita"
+          },
+          "status": {
+            "type": "string",
+            "description": "Estado de la atención clínica",
+            "enum": [
+              "OPEN",
+              "CLOSED"
+            ],
+            "example": "OPEN"
+          },
+          "proceduresPerformed": {
+            "description": "Procedimientos clínicos realizados",
+            "example": [
+              {
+                "code": "RES-01",
+                "toothNumber": "16",
+                "surface": "OCCLUSAL"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "evolutionNotes": {
+            "type": "string",
+            "description": "Notas de evolución clínica",
+            "example": "Se realiza apertura cavitaria y obturación con resina en pieza 16"
+          },
+          "prescription": {
+            "type": "string",
+            "description": "Prescripción o fórmula médica",
+            "example": "Ibuprofeno 400mg cada 8 horas por 3 días",
+            "nullable": true
+          },
+          "postOperativeIndications": {
+            "type": "string",
+            "description": "Indicaciones postoperatorias para el paciente",
+            "example": "Evitar alimentos duros durante las primeras horas",
+            "nullable": true
+          },
+          "privateNotes": {
+            "type": "string",
+            "description": "Notas privadas exclusivas de la doctora (null para rol AUXILIARY)",
+            "example": "Paciente con ansiedad dental moderada",
+            "nullable": true
+          },
+          "attendedAt": {
+            "type": "string",
+            "description": "Fecha y hora de la atención (UTC)"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Fecha de creación del registro (UTC)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Fecha de última actualización del registro (UTC)"
+          },
+          "materialsUsed": {
+            "description": "Materiales propios utilizados en la atención clínica",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttentionMaterialUsedResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "patientId",
+          "clinicalHistoryId",
+          "attendedByUserId",
+          "status",
+          "proceduresPerformed",
+          "evolutionNotes",
+          "attendedAt",
+          "createdAt",
+          "updatedAt",
+          "materialsUsed"
+        ]
+      },
+      "UpdateClinicalAttentionDto": {
+        "type": "object",
+        "properties": {
+          "evolutionNotes": {
+            "type": "string",
+            "description": "Notas de evolución clínica",
+            "example": "Se revisa obturación en pieza 16 y se realiza pulido final"
+          },
+          "prescription": {
+            "type": "string",
+            "description": "Fórmula médica o prescripción",
+            "example": "Paracetamol 500mg cada 6 horas en caso de dolor",
+            "nullable": true
+          },
+          "postOperativeIndications": {
+            "type": "string",
+            "description": "Indicaciones postoperatorias",
+            "example": "Higiene bucal cuidadosa con cepillo suave",
+            "nullable": true
+          },
+          "privateNotes": {
+            "type": "string",
+            "description": "Notas privadas exclusivas de la doctora",
+            "example": "Comportamiento excelente en consulta",
+            "nullable": true
+          },
+          "proceduresPerformed": {
+            "description": "Procedimientos clínicos realizados",
+            "example": [
+              {
+                "code": "PUL-01",
+                "toothNumber": "16"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "AddAttentionMaterialUsedDto": {
+        "type": "object",
+        "properties": {
+          "materialId": {
+            "type": "string",
+            "description": "ID del material propio registrado en el catálogo",
+            "example": "d3b07384-d113-494b-9c8e-aa6725345759"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Cantidad del material consumida en la atención (entero mayor a cero)",
+            "example": 1,
+            "minimum": 1
+          },
+          "toothNumber": {
+            "type": "string",
+            "description": "Número de diente FDI donde se aplicó el material (11-48, 51-85)",
+            "example": "16",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas u observaciones sobre el uso del material",
+            "example": "Restauración oclusal profunda con base cavitaria",
+            "nullable": true
+          }
+        },
+        "required": [
+          "materialId",
+          "quantity"
         ]
       }
     }
