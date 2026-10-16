@@ -2,11 +2,16 @@ import {
   ClinicalAttention as PrismaClinicalAttention,
   AttentionMaterialUsed as PrismaAttentionMaterialUsed,
   ClinicalAttentionStatus as PrismaClinicalAttentionStatus,
+  ClinicalAttentionVersion as PrismaClinicalAttentionVersion,
   Prisma,
 } from '@prisma/client';
 import { ClinicalAttention, ProcedurePerformed } from '../../domain/clinical-attention.entity';
 import { AttentionMaterialUsed } from '../../domain/attention-material-used.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
+import {
+  ClinicalAttentionVersion,
+  AttentionSnapshotData,
+} from '../../domain/clinical-attention-version.entity';
 
 export type PrismaClinicalAttentionWithMaterials = PrismaClinicalAttention & {
   materialsUsed?: PrismaAttentionMaterialUsed[];
@@ -93,5 +98,33 @@ export class ClinicalAttentionMapper {
     );
 
     return { header, materials };
+  }
+
+  static versionToDomain(raw: PrismaClinicalAttentionVersion): ClinicalAttentionVersion {
+    return ClinicalAttentionVersion.create({
+      id: raw.id,
+      clinicId: raw.clinicId,
+      attentionId: raw.attentionId,
+      versionNumber: raw.versionNumber,
+      previousData: raw.previousData as unknown as AttentionSnapshotData,
+      changeReason: raw.changeReason,
+      amendedByUserId: raw.amendedByUserId,
+      createdAt: raw.createdAt,
+    });
+  }
+
+  static versionToPrisma(
+    domain: ClinicalAttentionVersion,
+  ): Prisma.ClinicalAttentionVersionUncheckedCreateInput {
+    return {
+      id: domain.id,
+      clinicId: domain.clinicId,
+      attentionId: domain.attentionId,
+      versionNumber: domain.versionNumber,
+      previousData: domain.previousData as unknown as Prisma.InputJsonValue,
+      changeReason: domain.changeReason,
+      amendedByUserId: domain.amendedByUserId,
+      createdAt: domain.createdAt,
+    };
   }
 }

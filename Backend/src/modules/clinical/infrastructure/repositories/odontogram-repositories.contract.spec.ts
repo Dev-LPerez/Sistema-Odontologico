@@ -41,6 +41,7 @@ describe('Odontogram Repositories Contract Tests (RC-018, RC-050, RC-055)', () =
   });
 
   const cleanDb = async () => {
+    await realPrisma.clinicalAttentionVersion.deleteMany();
     await realPrisma.attentionMaterialUsed.deleteMany();
     await realPrisma.clinicalAttention.deleteMany();
     await realPrisma.treatmentPlanItem.deleteMany();

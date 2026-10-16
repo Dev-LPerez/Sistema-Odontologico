@@ -1,16 +1,25 @@
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import { ClinicalAttentionRepositoryPort } from '../../domain/clinical-attention.repository.port';
+import { ClinicalAttentionVersionRepositoryPort } from '../../domain/clinical-attention-version.repository.port';
 import { InMemoryClinicalAttentionRepository } from './in-memory-clinical-attention.repository';
+import { InMemoryClinicalAttentionVersionRepository } from './in-memory-clinical-attention-version.repository';
 import { PrismaClinicalAttentionRepository } from './prisma-clinical-attention.repository';
+import { PrismaClinicalAttentionVersionRepository } from './prisma-clinical-attention-version.repository';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
+import { ClinicalAttentionVersion } from '../../domain/clinical-attention-version.entity';
 import { AttentionMaterialUsed } from '../../domain/attention-material-used.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
+import {
+  DuplicateClinicalAttentionVersionError,
+  ClinicalAttentionClosedError,
+} from '../../domain/clinical.errors';
 import { Prisma } from '@prisma/client';
 
 interface RepositoryFactory {
   name: string;
   createRepo: () => {
     repo: ClinicalAttentionRepositoryPort;
+    versionRepo: ClinicalAttentionVersionRepositoryPort;
     cleanup?: () => Promise<void>;
   };
 }
@@ -29,6 +38,7 @@ describe('ClinicalAttention Repository Contract Tests (RC-018, RC-050, RC-055)',
   });
 
   const cleanDb = async () => {
+    await realPrisma.clinicalAttentionVersion.deleteMany();
     await realPrisma.attentionMaterialUsed.deleteMany();
     await realPrisma.clinicalAttention.deleteMany();
     await realPrisma.treatmentPlanItem.deleteMany();
@@ -121,12 +131,14 @@ describe('ClinicalAttention Repository Contract Tests (RC-018, RC-050, RC-055)',
       name: 'InMemoryClinicalAttentionRepository',
       createRepo: () => ({
         repo: new InMemoryClinicalAttentionRepository(),
+        versionRepo: new InMemoryClinicalAttentionVersionRepository(),
       }),
     },
     {
       name: 'PrismaClinicalAttentionRepository (Real PostgreSQL)',
       createRepo: () => ({
         repo: new PrismaClinicalAttentionRepository(realPrisma),
+        versionRepo: new PrismaClinicalAttentionVersionRepository(realPrisma),
         cleanup: async () => {
           await cleanDb();
         },
@@ -137,6 +149,7 @@ describe('ClinicalAttention Repository Contract Tests (RC-018, RC-050, RC-055)',
   implementations.forEach(({ name, createRepo }) => {
     describe(`Suite: ${name}`, () => {
       let repo: ClinicalAttentionRepositoryPort;
+      let versionRepo: ClinicalAttentionVersionRepositoryPort;
       let cleanupFn: (() => Promise<void>) | undefined;
 
       beforeEach(async () => {
@@ -146,6 +159,7 @@ describe('ClinicalAttention Repository Contract Tests (RC-018, RC-050, RC-055)',
         }
         const created = createRepo();
         repo = created.repo;
+        versionRepo = created.versionRepo;
         cleanupFn = created.cleanup;
       });
 
@@ -250,6 +264,166 @@ describe('ClinicalAttention Repository Contract Tests (RC-018, RC-050, RC-055)',
         expect(found!.materialsUsed[0].toothNumber).toBe('16');
         expect(found!.materialsUsed[0].quantity).toBe(2);
       });
+
+      it('debe cerrar una atención clínica completa pasando a CLOSED e impedir ediciones ordinarias posteriores', async () => {
+        const attention = ClinicalAttention.create({
+          id: 'att-contract-close',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          clinicalHistoryId: 'hist-contract-1',
+          attendedByUserId: 'usr-contract-1',
+          status: ClinicalAttentionStatus.OPEN,
+          proceduresPerformed: [
+            {
+              code: 'RES-01',
+              name: 'Resina',
+              toothNumber: '16',
+            },
+          ],
+          evolutionNotes: 'Procedimiento concluido con éxito',
+          attendedAt: fixedNow,
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+
+        await repo.save(attention);
+
+        const closeTime = new Date('2026-10-16T11:00:00.000Z');
+        attention.close(closeTime);
+        await repo.save(attention);
+
+        const reloaded = await repo.findById('clinic-contract-1', 'att-contract-close');
+        expect(reloaded).not.toBeNull();
+        expect(reloaded!.status).toBe(ClinicalAttentionStatus.CLOSED);
+        expect(reloaded!.updatedAt).toEqual(closeTime);
+
+        // Intento de edición ordinaria sobre atención cerrada debe lanzar ClinicalAttentionClosedError
+        expect(() =>
+          reloaded!.update({
+            evolutionNotes: 'Intento inválido de edición tras cierre',
+            updatedAt: new Date('2026-10-16T12:00:00.000Z'),
+          }),
+        ).toThrow(ClinicalAttentionClosedError);
+      });
+
+      it('debe enmendar una atención cerrada guardando la versión inmutable previa y ocultando privateNotes en el historial para AUXILIARY', async () => {
+        const attention = ClinicalAttention.create({
+          id: 'att-contract-amend',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          clinicalHistoryId: 'hist-contract-1',
+          attendedByUserId: 'usr-contract-1',
+          status: ClinicalAttentionStatus.OPEN,
+          proceduresPerformed: [{ code: 'RES-01', name: 'Resina previa' }],
+          evolutionNotes: 'Evolución original previa a la enmienda',
+          prescription: 'Amoxicilina 500mg',
+          privateNotes: 'Nota privada confidencial original',
+          attendedAt: fixedNow,
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+
+        attention.close(new Date('2026-10-16T10:30:00.000Z'));
+        await repo.save(attention);
+
+        // Guardar versión previa inmutable
+        const version1 = ClinicalAttentionVersion.create({
+          id: 'ver-contract-1',
+          clinicId: 'clinic-contract-1',
+          attentionId: 'att-contract-amend',
+          versionNumber: 1,
+          previousData: attention.toSnapshotData(),
+          changeReason: 'Aclaración de dosis y notas de evolución rectificadas',
+          amendedByUserId: 'usr-contract-1',
+          createdAt: new Date('2026-10-16T11:00:00.000Z'),
+        });
+        await versionRepo.save(version1);
+
+        // Enmendar atención
+        const amendTime = new Date('2026-10-16T11:00:00.000Z');
+        attention.amend({
+          changeReason: 'Aclaración de dosis y notas de evolución rectificadas',
+          evolutionNotes: 'Evolución enmendada con nuevos hallazgos',
+          prescription: 'Amoxicilina 875mg',
+          privateNotes: 'Nota privada enmendada',
+          updatedAt: amendTime,
+        });
+        await repo.save(attention);
+
+        // Verificar atención enmendada persistida
+        const reloaded = await repo.findById('clinic-contract-1', 'att-contract-amend');
+        expect(reloaded).not.toBeNull();
+        expect(reloaded!.evolutionNotes).toBe('Evolución enmendada con nuevos hallazgos');
+        expect(reloaded!.prescription).toBe('Amoxicilina 875mg');
+        expect(reloaded!.privateNotes).toBe('Nota privada enmendada');
+
+        // Consultar versiones históricas
+        const versions = await versionRepo.findAllByAttentionId(
+          'clinic-contract-1',
+          'att-contract-amend',
+        );
+        expect(versions).toHaveLength(1);
+        expect(versions[0].versionNumber).toBe(1);
+        expect(versions[0].changeReason).toBe(
+          'Aclaración de dosis y notas de evolución rectificadas',
+        );
+        expect(versions[0].previousData.evolutionNotes).toBe(
+          'Evolución original previa a la enmienda',
+        );
+
+        // Enmascarar privateNotes para AUXILIARY
+        const maskedAuxiliary = versions[0].maskPrivateNotesForViewer('AUXILIARY');
+        expect(maskedAuxiliary.previousData.privateNotes).toBeNull();
+
+        // Preservar privateNotes para ADMIN
+        const preservedAdmin = versions[0].maskPrivateNotesForViewer('ADMIN');
+        expect(preservedAdmin.previousData.privateNotes).toBe('Nota privada confidencial original');
+      });
+
+      it('debe rechazar con DuplicateClinicalAttentionVersionError si se intenta guardar una versión con el mismo versionNumber (P2002)', async () => {
+        const attention = ClinicalAttention.create({
+          id: 'att-contract-dup',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          clinicalHistoryId: 'hist-contract-1',
+          attendedByUserId: 'usr-contract-1',
+          status: ClinicalAttentionStatus.OPEN,
+          proceduresPerformed: [{ code: 'RES-01' }],
+          evolutionNotes: 'Evolución base',
+          attendedAt: fixedNow,
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+        attention.close(fixedNow);
+        await repo.save(attention);
+
+        const version1 = ClinicalAttentionVersion.create({
+          id: 'ver-contract-dup-1',
+          clinicId: 'clinic-contract-1',
+          attentionId: 'att-contract-dup',
+          versionNumber: 1,
+          previousData: attention.toSnapshotData(),
+          changeReason: 'Primer cambio',
+          amendedByUserId: 'usr-contract-1',
+          createdAt: fixedNow,
+        });
+        await versionRepo.save(version1);
+
+        const duplicateVersion = ClinicalAttentionVersion.create({
+          id: 'ver-contract-dup-2',
+          clinicId: 'clinic-contract-1',
+          attentionId: 'att-contract-dup',
+          versionNumber: 1,
+          previousData: attention.toSnapshotData(),
+          changeReason: 'Segundo cambio con versión colisionada',
+          amendedByUserId: 'usr-contract-1',
+          createdAt: fixedNow,
+        });
+
+        await expect(versionRepo.save(duplicateVersion)).rejects.toThrow(
+          DuplicateClinicalAttentionVersionError,
+        );
+      });
     });
   });
 
@@ -308,6 +482,54 @@ describe('ClinicalAttention Repository Contract Tests (RC-018, RC-050, RC-055)',
       );
 
       // Intento de borrar User debe fallar por Restrict
+      await expect(realPrisma.user.delete({ where: { id: 'usr-contract-1' } })).rejects.toThrow(
+        Prisma.PrismaClientKnownRequestError,
+      );
+
+      // Intento de borrar Clinic debe fallar por Restrict
+      await expect(
+        realPrisma.clinic.delete({ where: { id: 'clinic-contract-1' } }),
+      ).rejects.toThrow(Prisma.PrismaClientKnownRequestError);
+    });
+
+    it('debe impedir borrado de Clinic, ClinicalAttention y User si existe ClinicalAttentionVersion asociada (onDelete: Restrict)', async () => {
+      const repo = new PrismaClinicalAttentionRepository(realPrisma);
+      const versionRepo = new PrismaClinicalAttentionVersionRepository(realPrisma);
+
+      const attention = ClinicalAttention.create({
+        id: 'att-restrict-v1',
+        clinicId: 'clinic-contract-1',
+        patientId: 'pat-contract-1',
+        clinicalHistoryId: 'hist-contract-1',
+        attendedByUserId: 'usr-contract-1',
+        status: ClinicalAttentionStatus.OPEN,
+        proceduresPerformed: [{ code: 'RES-01' }],
+        evolutionNotes: 'Atención para probar Restrict de versiones',
+        attendedAt: fixedNow,
+        createdAt: fixedNow,
+        updatedAt: fixedNow,
+      });
+      attention.close(fixedNow);
+      await repo.save(attention);
+
+      const version = ClinicalAttentionVersion.create({
+        id: 'ver-restrict-1',
+        clinicId: 'clinic-contract-1',
+        attentionId: 'att-restrict-v1',
+        versionNumber: 1,
+        previousData: attention.toSnapshotData(),
+        changeReason: 'Razón de prueba para Restrict FK',
+        amendedByUserId: 'usr-contract-1',
+        createdAt: fixedNow,
+      });
+      await versionRepo.save(version);
+
+      // Intento de borrar ClinicalAttention debe fallar por Restrict en ClinicalAttentionVersion
+      await expect(
+        realPrisma.clinicalAttention.delete({ where: { id: 'att-restrict-v1' } }),
+      ).rejects.toThrow(Prisma.PrismaClientKnownRequestError);
+
+      // Intento de borrar User (amendedByUserId) debe fallar por Restrict
       await expect(realPrisma.user.delete({ where: { id: 'usr-contract-1' } })).rejects.toThrow(
         Prisma.PrismaClientKnownRequestError,
       );

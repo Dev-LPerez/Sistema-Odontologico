@@ -35,6 +35,7 @@ describe('Patients Queries Contract Tests (RC-018, RC-031)', () => {
   });
 
   const cleanDb = async () => {
+    await realPrisma.clinicalAttentionVersion.deleteMany();
     await realPrisma.attentionMaterialUsed.deleteMany();
     await realPrisma.clinicalAttention.deleteMany();
     await realPrisma.treatmentPlanItem.deleteMany();
