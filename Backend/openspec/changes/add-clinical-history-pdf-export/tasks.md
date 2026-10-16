@@ -35,9 +35,9 @@ Cada escenario de `specs/clinical-history-management/spec.md` DEBE estar cubiert
 - [x] 4.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test` y `pnpm --filter backend test:e2e` en verde, y hacer commit: `git add Backend/src Backend/test && git commit -m "feat(clinical): expose GET /v1/clinical-histories/patient/:patientId/pdf endpoint with E2E tests"`
 
 ## 5. Contrato OpenAPI y evidencia literal (`evidence.md`)
-- [ ] 5.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y verificar que el endpoint `/v1/clinical-histories/patient/{patientId}/pdf` esté documentado con respuesta `application/pdf`.
-- [ ] 5.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-clinical-history-pdf-export/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
-- [ ] 5.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record B-12 pdf export evidence"` dejando `git status` limpio.
+- [x] 5.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y verificar que el endpoint `/v1/clinical-histories/patient/{patientId}/pdf` esté documentado con respuesta `application/pdf`.
+- [x] 5.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-clinical-history-pdf-export/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
+- [x] 5.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record B-12 pdf export evidence"` dejando `git status` limpio.
 
 ## Workflow follow-up
 - Pasa `evidence.md` al Arquitecto para auditoría antes de ejecutar `/opsx-sync` y `/opsx-archive`.

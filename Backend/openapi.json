@@ -1306,6 +1306,43 @@
         ]
       }
     },
+    "/v1/clinical-histories/patient/{patientId}/pdf": {
+      "get": {
+        "operationId": "ClinicalHistoryController_exportPdf",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Documento PDF generado exitosamente",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Exportar la historia clínica completa del paciente en formato PDF",
+        "tags": [
+          "Clinical Histories"
+        ]
+      }
+    },
     "/v1/odontograms/patient/{patientId}": {
       "put": {
         "operationId": "OdontogramController_upsert",
