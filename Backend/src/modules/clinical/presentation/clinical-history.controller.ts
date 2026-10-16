@@ -35,6 +35,7 @@ import { UpdateClinicalHistoryUseCase } from '../application/use-cases/update-cl
 import { AddTreatmentPlanItemUseCase } from '../application/use-cases/add-treatment-plan-item.use-case';
 import { UpdateTreatmentPlanItemStatusUseCase } from '../application/use-cases/update-treatment-plan-item-status.use-case';
 import { GetClinicalHistoryByPatientQuery } from '../application/queries/get-clinical-history-by-patient.query';
+import { ListClinicalHistoryVersionsQuery } from '../application/queries/list-clinical-history-versions.query';
 import { ExportClinicalHistoryPdfQuery } from '../application/queries/export-clinical-history-pdf.query';
 import { CreateClinicalHistoryDto } from './dto/create-clinical-history.dto';
 import { UpdateClinicalHistoryDto } from './dto/update-clinical-history.dto';
@@ -42,6 +43,7 @@ import { AddTreatmentPlanItemDto } from './dto/add-treatment-plan-item.dto';
 import { UpdateTreatmentItemStatusDto } from './dto/update-treatment-item-status.dto';
 import {
   ClinicalHistoryResponseDto,
+  ClinicalHistoryVersionResponseDto,
   TreatmentPlanItemResponseDto,
 } from './dto/clinical-history-response.dto';
 
@@ -56,6 +58,7 @@ export class ClinicalHistoryController {
     private readonly addTreatmentPlanItemUseCase: AddTreatmentPlanItemUseCase,
     private readonly updateTreatmentPlanItemStatusUseCase: UpdateTreatmentPlanItemStatusUseCase,
     private readonly getClinicalHistoryByPatientQuery: GetClinicalHistoryByPatientQuery,
+    private readonly listClinicalHistoryVersionsQuery: ListClinicalHistoryVersionsQuery,
     private readonly exportClinicalHistoryPdfQuery: ExportClinicalHistoryPdfQuery,
   ) {}
 
@@ -111,9 +114,34 @@ export class ClinicalHistoryController {
       familyAntecedents: dto.familyAntecedents,
       clinicalExamination: dto.clinicalExamination,
       diagnoses: dto.diagnoses,
+      changeReason: dto.changeReason,
+      updatedByUserId: user.sub,
     });
 
     return ClinicalHistoryResponseDto.fromDomain(history);
+  }
+
+  @Get('patient/:patientId/versions')
+  @Roles(UserRole.ADMIN, UserRole.AUXILIARY)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Consultar el historial de versiones inmutables de la historia clínica',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Historial de versiones de la historia clínica obtenido exitosamente',
+    type: [ClinicalHistoryVersionResponseDto],
+  })
+  async listVersions(
+    @CurrentUser() user: AuthenticatedUserPayload,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+  ): Promise<ClinicalHistoryVersionResponseDto[]> {
+    const versions = await this.listClinicalHistoryVersionsQuery.execute({
+      clinicId: user.clinicId,
+      patientId,
+    });
+
+    return versions.map((v) => ClinicalHistoryVersionResponseDto.fromDomain(v));
   }
 
   @Get('patient/:patientId')

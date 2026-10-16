@@ -1,7 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TreatmentItemStatus } from '../../domain/treatment-item-status.enum';
 import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
 import { ClinicalHistory } from '../../domain/clinical-history.entity';
+import { ClinicalHistoryVersion } from '../../domain/clinical-history-version.entity';
 
 export class TreatmentPlanItemResponseDto {
   @ApiProperty({ example: 'd3b07384-d113-494b-9c8e-aa6725345759' })
@@ -130,6 +131,56 @@ export class ClinicalHistoryResponseDto {
       totalEstimatedCostCop: history.totalEstimatedCostCop,
       createdAt: history.createdAt.toISOString(),
       updatedAt: history.updatedAt.toISOString(),
+    };
+  }
+}
+
+export class ClinicalHistoryVersionResponseDto {
+  @ApiProperty({ description: 'ID de la versión histórica de la historia clínica' })
+  id!: string;
+
+  @ApiProperty({ description: 'ID del consultorio' })
+  clinicId!: string;
+
+  @ApiProperty({ description: 'ID de la historia clínica' })
+  clinicalHistoryId!: string;
+
+  @ApiProperty({ description: 'Número correlativo de versión (iniciando en 1)' })
+  versionNumber!: number;
+
+  @ApiProperty({
+    description: 'Instantánea inmutable del estado previo a la modificación',
+    type: Object,
+  })
+  previousData!: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Motivo de la modificación',
+    type: String,
+    nullable: true,
+  })
+  changeReason!: string | null;
+
+  @ApiPropertyOptional({
+    description: 'ID del usuario que realizó la modificación',
+    type: String,
+    nullable: true,
+  })
+  updatedByUserId!: string | null;
+
+  @ApiProperty({ description: 'Fecha y hora de creación de la versión (UTC)' })
+  createdAt!: string;
+
+  static fromDomain(version: ClinicalHistoryVersion): ClinicalHistoryVersionResponseDto {
+    return {
+      id: version.id,
+      clinicId: version.clinicId,
+      clinicalHistoryId: version.clinicalHistoryId,
+      versionNumber: version.versionNumber,
+      previousData: version.previousData,
+      changeReason: version.changeReason,
+      updatedByUserId: version.updatedByUserId,
+      createdAt: version.createdAt.toISOString(),
     };
   }
 }

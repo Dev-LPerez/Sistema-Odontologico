@@ -1,10 +1,12 @@
 import {
   ClinicalHistory as PrismaClinicalHistory,
+  ClinicalHistoryVersion as PrismaClinicalHistoryVersion,
   TreatmentPlanItem as PrismaTreatmentPlanItem,
   TreatmentItemStatus as PrismaTreatmentItemStatus,
   Prisma,
 } from '@prisma/client';
 import { ClinicalHistory } from '../../domain/clinical-history.entity';
+import { ClinicalHistoryVersion } from '../../domain/clinical-history-version.entity';
 import { MedicalAntecedents } from '../../domain/medical-antecedents.vo';
 import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
 import { TreatmentItemStatus } from '../../domain/treatment-item-status.enum';
@@ -107,5 +109,33 @@ export class ClinicalHistoryMapper {
     );
 
     return { header, items };
+  }
+
+  static versionToDomain(raw: PrismaClinicalHistoryVersion): ClinicalHistoryVersion {
+    return ClinicalHistoryVersion.create({
+      id: raw.id,
+      clinicId: raw.clinicId,
+      clinicalHistoryId: raw.clinicalHistoryId,
+      versionNumber: raw.versionNumber,
+      previousData: raw.previousData as Record<string, unknown>,
+      changeReason: raw.changeReason,
+      updatedByUserId: raw.updatedByUserId,
+      createdAt: raw.createdAt,
+    });
+  }
+
+  static versionToPrisma(
+    domain: ClinicalHistoryVersion,
+  ): Prisma.ClinicalHistoryVersionUncheckedCreateInput {
+    return {
+      id: domain.id,
+      clinicId: domain.clinicId,
+      clinicalHistoryId: domain.clinicalHistoryId,
+      versionNumber: domain.versionNumber,
+      previousData: domain.previousData as unknown as Prisma.InputJsonValue,
+      changeReason: domain.changeReason,
+      updatedByUserId: domain.updatedByUserId,
+      createdAt: domain.createdAt,
+    };
   }
 }

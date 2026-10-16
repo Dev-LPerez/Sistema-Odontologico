@@ -5,6 +5,8 @@ export * from './domain/treatment-plan-item.entity';
 export * from './domain/treatment-item-status.enum';
 export * from './domain/clinical.errors';
 export * from './domain/clinical-history.repository.port';
+export * from './domain/clinical-history-version.entity';
+export * from './domain/clinical-history-version.repository.port';
 
 export * from './domain/odontogram.entity';
 export * from './domain/odontogram-snapshot.entity';
@@ -36,6 +38,7 @@ export * from './application/use-cases/add-attention-material-used.use-case';
 export * from './application/use-cases/close-clinical-attention.use-case';
 export * from './application/use-cases/amend-closed-clinical-attention.use-case';
 export * from './application/queries/get-clinical-history-by-patient.query';
+export * from './application/queries/list-clinical-history-versions.query';
 export * from './application/queries/get-odontogram-by-patient.query';
 export * from './application/queries/list-odontogram-snapshots.query';
 export * from './application/queries/list-clinical-attentions-by-patient.query';

@@ -27,6 +27,28 @@ export interface UpdateClinicalHistoryProps {
   updatedAt: Date;
 }
 
+export interface ClinicalHistorySnapshotData {
+  chiefComplaint: string;
+  currentIllness: string;
+  personalAntecedents: Record<string, unknown>;
+  familyAntecedents: string | null;
+  clinicalExamination: string | null;
+  diagnoses: unknown[];
+  treatmentItems: Array<{
+    id: string;
+    procedureId: string;
+    procedureCode: string;
+    procedureName: string;
+    toothNumber: string | null;
+    status: string;
+    estimatedCostCop: number;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string;
+  }>;
+  updatedAt: string;
+}
+
 function validateNonEmptyString(value: unknown, fieldName: string): string {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new InvalidClinicalHistoryDataError(`El campo '${fieldName}' es obligatorio`);
@@ -186,5 +208,29 @@ export class ClinicalHistory extends AggregateRoot<string> {
     }
     item.updateStatus(status, updatedAt);
     this._updatedAt = updatedAt;
+  }
+
+  toSnapshotData(): ClinicalHistorySnapshotData {
+    return {
+      chiefComplaint: this._chiefComplaint,
+      currentIllness: this._currentIllness,
+      personalAntecedents: this._medicalAntecedents.toPersonalAntecedentsJson(),
+      familyAntecedents: this._medicalAntecedents.familyAntecedents,
+      clinicalExamination: this._clinicalExamination,
+      diagnoses: structuredClone(this._diagnoses),
+      treatmentItems: this._treatmentItems.map((item) => ({
+        id: item.id,
+        procedureId: item.procedureId,
+        procedureCode: item.procedureCode,
+        procedureName: item.procedureName,
+        toothNumber: item.toothNumber,
+        status: item.status,
+        estimatedCostCop: item.estimatedCostCop,
+        notes: item.notes,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
+      })),
+      updatedAt: this._updatedAt.toISOString(),
+    };
   }
 }

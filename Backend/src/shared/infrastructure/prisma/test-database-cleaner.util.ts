@@ -1,11 +1,5 @@
 import { PrismaService } from './prisma.service';
 
-type PrismaWithOptionalHistoryVersion = PrismaService & {
-  clinicalHistoryVersion?: {
-    deleteMany: () => Promise<unknown>;
-  };
-};
-
 function isAllowedHost(hostname: string): boolean {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'postgres';
 }
@@ -65,10 +59,7 @@ export async function cleanDatabaseForContractTests(prisma: PrismaService): Prom
   assertSafeTestDatabase(process.env.DATABASE_URL, process.env.NODE_ENV);
 
   // Orden jerárquico estricto: dependientes e hijas primero
-  const extendedPrisma = prisma as PrismaWithOptionalHistoryVersion;
-  if (typeof extendedPrisma.clinicalHistoryVersion?.deleteMany === 'function') {
-    await extendedPrisma.clinicalHistoryVersion.deleteMany();
-  }
+  await prisma.clinicalHistoryVersion.deleteMany();
   await prisma.clinicalAttentionVersion.deleteMany();
   await prisma.attentionMaterialUsed.deleteMany();
   await prisma.clinicalAttention.deleteMany();

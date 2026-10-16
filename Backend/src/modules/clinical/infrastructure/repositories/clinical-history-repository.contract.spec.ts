@@ -1,8 +1,12 @@
 import { PrismaService, cleanDatabaseForContractTests } from '../../../../shared';
 import { ClinicalHistoryRepositoryPort } from '../../domain/clinical-history.repository.port';
+import { ClinicalHistoryVersionRepositoryPort } from '../../domain/clinical-history-version.repository.port';
 import { InMemoryClinicalHistoryRepository } from './in-memory-clinical-history.repository';
+import { InMemoryClinicalHistoryVersionRepository } from './in-memory-clinical-history-version.repository';
 import { PrismaClinicalHistoryRepository } from './prisma-clinical-history.repository';
+import { PrismaClinicalHistoryVersionRepository } from './prisma-clinical-history-version.repository';
 import { ClinicalHistory } from '../../domain/clinical-history.entity';
+import { ClinicalHistoryVersion } from '../../domain/clinical-history-version.entity';
 import { MedicalAntecedents } from '../../domain/medical-antecedents.vo';
 import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
 import { TreatmentItemStatus } from '../../domain/treatment-item-status.enum';
@@ -13,6 +17,7 @@ interface RepositoryFactory {
   name: string;
   createRepo: () => {
     repo: ClinicalHistoryRepositoryPort;
+    versionRepo: ClinicalHistoryVersionRepositoryPort;
     cleanup?: () => Promise<void>;
   };
 }
@@ -97,9 +102,14 @@ describe('ClinicalHistory Repository Contract Tests (RC-018, RC-050, RC-055)', (
       name: 'InMemoryClinicalHistoryRepository',
       createRepo: () => {
         const repo = new InMemoryClinicalHistoryRepository();
+        const versionRepo = new InMemoryClinicalHistoryVersionRepository();
         return {
           repo,
-          cleanup: async () => repo.clear(),
+          versionRepo,
+          cleanup: async () => {
+            repo.clear();
+            versionRepo.clear();
+          },
         };
       },
     },
@@ -107,8 +117,10 @@ describe('ClinicalHistory Repository Contract Tests (RC-018, RC-050, RC-055)', (
       name: 'PrismaClinicalHistoryRepository (PostgreSQL Real)',
       createRepo: () => {
         const repo = new PrismaClinicalHistoryRepository(realPrisma);
+        const versionRepo = new PrismaClinicalHistoryVersionRepository(realPrisma);
         return {
           repo,
+          versionRepo,
           cleanup: async () => {
             await cleanDb();
             await ensurePrerequisites();
@@ -121,11 +133,13 @@ describe('ClinicalHistory Repository Contract Tests (RC-018, RC-050, RC-055)', (
   implementations.forEach(({ name, createRepo }) => {
     describe(`Suite Contract: ${name}`, () => {
       let repo: ClinicalHistoryRepositoryPort;
+      let versionRepo: ClinicalHistoryVersionRepositoryPort;
       let cleanup: (() => Promise<void>) | undefined;
 
       beforeEach(async () => {
         const context = createRepo();
         repo = context.repo;
+        versionRepo = context.versionRepo;
         cleanup = context.cleanup;
         if (cleanup) {
           await cleanup();
@@ -136,6 +150,56 @@ describe('ClinicalHistory Repository Contract Tests (RC-018, RC-050, RC-055)', (
         if (cleanup) {
           await cleanup();
         }
+      });
+
+      it('debe guardar atómicamente una versión inmutable en ClinicalHistoryVersion al actualizar la historia clínica y permitir listar sus versiones', async () => {
+        const history = ClinicalHistory.create({
+          id: 'hist-contract-ver-1',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          chiefComplaint: 'Dolor inicial',
+          currentIllness: 'Evolución de 2 días',
+          medicalAntecedents: MedicalAntecedents.create({
+            hypertension: false,
+            diabetes: false,
+            allergies: false,
+            medications: false,
+            bleedingDisorders: false,
+            pregnancy: false,
+          }),
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+
+        await repo.save(history);
+
+        const version1 = ClinicalHistoryVersion.create({
+          id: 'ver-contract-1',
+          clinicId: 'clinic-contract-1',
+          clinicalHistoryId: history.id,
+          versionNumber: 1,
+          previousData: history.toSnapshotData(),
+          changeReason: 'Control postoperatorio',
+          updatedByUserId: 'usr-admin-1',
+          createdAt: fixedNow,
+        });
+
+        await versionRepo.save(version1);
+
+        history.update({
+          chiefComplaint: 'Sin dolor tras tratamiento',
+          updatedAt: new Date('2026-10-15T12:00:00.000Z'),
+        });
+        await repo.save(history);
+
+        const versions = await versionRepo.findAllByHistoryId('clinic-contract-1', history.id);
+        expect(versions).toHaveLength(1);
+        expect(versions[0].versionNumber).toBe(1);
+        expect(versions[0].previousData.chiefComplaint).toBe('Dolor inicial');
+        expect(versions[0].changeReason).toBe('Control postoperatorio');
+
+        const reloaded = await repo.findById('clinic-contract-1', history.id);
+        expect(reloaded?.chiefComplaint).toBe('Sin dolor tras tratamiento');
       });
 
       it('debe crear, actualizar y consultar la historia clínica con antecedentes y diagnósticos aislando por clinicId', async () => {

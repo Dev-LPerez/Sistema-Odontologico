@@ -41,8 +41,9 @@ export class PrismaClinicalHistoryRepository implements ClinicalHistoryRepositor
   async save(clinicalHistory: ClinicalHistory): Promise<void> {
     const { header, items } = ClinicalHistoryMapper.toPrisma(clinicalHistory);
 
-    try {
-      await this.prisma.client.clinicalHistory.upsert({
+    const isInsideTransaction = this.prisma.client !== this.prisma;
+    const run = async (tx: Prisma.TransactionClient | PrismaService) => {
+      await tx.clinicalHistory.upsert({
         where: { id: header.id },
         create: header,
         update: {
@@ -57,7 +58,7 @@ export class PrismaClinicalHistoryRepository implements ClinicalHistoryRepositor
       });
 
       for (const item of items) {
-        await this.prisma.client.treatmentPlanItem.upsert({
+        await tx.treatmentPlanItem.upsert({
           where: { id: item.id },
           create: item,
           update: {
@@ -67,6 +68,14 @@ export class PrismaClinicalHistoryRepository implements ClinicalHistoryRepositor
             updatedAt: item.updatedAt,
           },
         });
+      }
+    };
+
+    try {
+      if (isInsideTransaction) {
+        await run(this.prisma.client);
+      } else {
+        await this.prisma.$transaction(async (tx) => run(tx));
       }
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

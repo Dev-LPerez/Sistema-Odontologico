@@ -3,6 +3,10 @@ import {
   CLINICAL_HISTORY_REPOSITORY_PORT,
   ClinicalHistoryRepositoryPort,
 } from '../../domain/clinical-history.repository.port';
+import {
+  UNIT_OF_WORK_PORT,
+  UnitOfWorkPort,
+} from '../../../../shared/application/ports/unit-of-work.port';
 import { ClinicalHistoryNotFoundError } from '../../domain/clinical.errors';
 import { CLOCK_PORT, ClockPort } from '../../../../shared/application/ports/clock.port';
 import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
@@ -20,25 +24,29 @@ export class UpdateTreatmentPlanItemStatusUseCase {
   constructor(
     @Inject(CLINICAL_HISTORY_REPOSITORY_PORT)
     private readonly historyRepository: ClinicalHistoryRepositoryPort,
+    @Inject(UNIT_OF_WORK_PORT)
+    private readonly unitOfWork: UnitOfWorkPort,
     @Inject(CLOCK_PORT)
     private readonly clock: ClockPort,
   ) {}
 
   async execute(command: UpdateTreatmentPlanItemStatusCommand): Promise<TreatmentPlanItem> {
-    const history = await this.historyRepository.findByPatientId(
-      command.clinicId,
-      command.patientId,
-    );
-    if (!history) {
-      throw new ClinicalHistoryNotFoundError(command.patientId);
-    }
+    return this.unitOfWork.execute(async () => {
+      const history = await this.historyRepository.findByPatientId(
+        command.clinicId,
+        command.patientId,
+      );
+      if (!history) {
+        throw new ClinicalHistoryNotFoundError(command.patientId);
+      }
 
-    const now = this.clock.now();
-    history.updateTreatmentPlanItemStatus(command.itemId, command.status, now);
+      const now = this.clock.now();
+      history.updateTreatmentPlanItemStatus(command.itemId, command.status, now);
 
-    await this.historyRepository.save(history);
+      await this.historyRepository.save(history);
 
-    const item = history.treatmentItems.find((i) => i.id === command.itemId);
-    return item!;
+      const item = history.treatmentItems.find((i) => i.id === command.itemId);
+      return item!;
+    });
   }
 }

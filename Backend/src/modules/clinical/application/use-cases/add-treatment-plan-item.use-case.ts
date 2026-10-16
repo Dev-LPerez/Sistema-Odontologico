@@ -16,6 +16,10 @@ import {
   ID_GENERATOR_PORT,
   IdGeneratorPort,
 } from '../../../../shared/application/ports/id-generator.port';
+import {
+  UNIT_OF_WORK_PORT,
+  UnitOfWorkPort,
+} from '../../../../shared/application/ports/unit-of-work.port';
 import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
 import { TreatmentItemStatus } from '../../domain/treatment-item-status.enum';
 
@@ -37,6 +41,8 @@ export class AddTreatmentPlanItemUseCase {
     private readonly procedureRepository: ProcedureRepositoryPort,
     @Inject(PATIENT_PROCEDURE_PRICE_REPOSITORY_PORT)
     private readonly patientPriceRepository: PatientProcedurePriceRepositoryPort,
+    @Inject(UNIT_OF_WORK_PORT)
+    private readonly unitOfWork: UnitOfWorkPort,
     @Inject(CLOCK_PORT)
     private readonly clock: ClockPort,
     @Inject(ID_GENERATOR_PORT)
@@ -44,57 +50,59 @@ export class AddTreatmentPlanItemUseCase {
   ) {}
 
   async execute(command: AddTreatmentPlanItemCommand): Promise<TreatmentPlanItem> {
-    const history = await this.historyRepository.findByPatientId(
-      command.clinicId,
-      command.patientId,
-    );
-    if (!history) {
-      throw new ClinicalHistoryNotFoundError(command.patientId);
-    }
-
-    const procedure = await this.procedureRepository.findById(
-      command.clinicId,
-      command.procedureId,
-    );
-    if (!procedure || procedure.clinicId !== command.clinicId) {
-      throw new ProcedureNotFoundError(command.procedureId);
-    }
-
-    let estimatedCost = command.estimatedCostCop;
-    if (typeof estimatedCost !== 'number') {
-      const patientPrice = await this.patientPriceRepository.findByPatientAndProcedure(
+    return this.unitOfWork.execute(async () => {
+      const history = await this.historyRepository.findByPatientId(
         command.clinicId,
         command.patientId,
+      );
+      if (!history) {
+        throw new ClinicalHistoryNotFoundError(command.patientId);
+      }
+
+      const procedure = await this.procedureRepository.findById(
+        command.clinicId,
         command.procedureId,
       );
-      if (patientPrice) {
-        estimatedCost = patientPrice.customPrice.amount;
-      } else {
-        estimatedCost = procedure.basePrice.amount;
+      if (!procedure || procedure.clinicId !== command.clinicId) {
+        throw new ProcedureNotFoundError(command.procedureId);
       }
-    }
 
-    const now = this.clock.now();
-    const id = this.idGenerator.generate();
+      let estimatedCost = command.estimatedCostCop;
+      if (typeof estimatedCost !== 'number') {
+        const patientPrice = await this.patientPriceRepository.findByPatientAndProcedure(
+          command.clinicId,
+          command.patientId,
+          command.procedureId,
+        );
+        if (patientPrice) {
+          estimatedCost = patientPrice.customPrice.amount;
+        } else {
+          estimatedCost = procedure.basePrice.amount;
+        }
+      }
 
-    const item = TreatmentPlanItem.create({
-      id,
-      clinicId: command.clinicId,
-      clinicalHistoryId: history.id,
-      procedureId: procedure.id,
-      procedureCode: procedure.code,
-      procedureName: procedure.name,
-      toothNumber: command.toothNumber,
-      status: TreatmentItemStatus.PENDING,
-      estimatedCostCop: estimatedCost,
-      notes: command.notes,
-      createdAt: now,
-      updatedAt: now,
+      const now = this.clock.now();
+      const id = this.idGenerator.generate();
+
+      const item = TreatmentPlanItem.create({
+        id,
+        clinicId: command.clinicId,
+        clinicalHistoryId: history.id,
+        procedureId: procedure.id,
+        procedureCode: procedure.code,
+        procedureName: procedure.name,
+        toothNumber: command.toothNumber,
+        status: TreatmentItemStatus.PENDING,
+        estimatedCostCop: estimatedCost,
+        notes: command.notes,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      history.addTreatmentPlanItem(item);
+      await this.historyRepository.save(history);
+
+      return item;
     });
-
-    history.addTreatmentPlanItem(item);
-    await this.historyRepository.save(history);
-
-    return item;
   }
 }

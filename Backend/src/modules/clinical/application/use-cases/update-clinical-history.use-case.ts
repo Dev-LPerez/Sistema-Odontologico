@@ -3,9 +3,22 @@ import {
   CLINICAL_HISTORY_REPOSITORY_PORT,
   ClinicalHistoryRepositoryPort,
 } from '../../domain/clinical-history.repository.port';
+import {
+  CLINICAL_HISTORY_VERSION_REPOSITORY_PORT,
+  ClinicalHistoryVersionRepositoryPort,
+} from '../../domain/clinical-history-version.repository.port';
+import {
+  UNIT_OF_WORK_PORT,
+  UnitOfWorkPort,
+} from '../../../../shared/application/ports/unit-of-work.port';
+import {
+  ID_GENERATOR_PORT,
+  IdGeneratorPort,
+} from '../../../../shared/application/ports/id-generator.port';
 import { ClinicalHistoryNotFoundError } from '../../domain/clinical.errors';
 import { CLOCK_PORT, ClockPort } from '../../../../shared/application/ports/clock.port';
 import { ClinicalHistory } from '../../domain/clinical-history.entity';
+import { ClinicalHistoryVersion } from '../../domain/clinical-history-version.entity';
 import { MedicalAntecedents, MedicalAntecedentsProps } from '../../domain/medical-antecedents.vo';
 
 export interface UpdateClinicalHistoryCommand {
@@ -27,6 +40,8 @@ export interface UpdateClinicalHistoryCommand {
   familyAntecedents?: string | null;
   clinicalExamination?: string | null;
   diagnoses?: unknown[];
+  changeReason?: string;
+  updatedByUserId?: string;
 }
 
 function mergeMedicalAntecedents(
@@ -68,38 +83,66 @@ export class UpdateClinicalHistoryUseCase {
   constructor(
     @Inject(CLINICAL_HISTORY_REPOSITORY_PORT)
     private readonly historyRepository: ClinicalHistoryRepositoryPort,
+    @Inject(CLINICAL_HISTORY_VERSION_REPOSITORY_PORT)
+    private readonly versionRepository: ClinicalHistoryVersionRepositoryPort,
+    @Inject(UNIT_OF_WORK_PORT)
+    private readonly unitOfWork: UnitOfWorkPort,
     @Inject(CLOCK_PORT)
     private readonly clock: ClockPort,
+    @Inject(ID_GENERATOR_PORT)
+    private readonly idGenerator: IdGeneratorPort,
   ) {}
 
   async execute(command: UpdateClinicalHistoryCommand): Promise<ClinicalHistory> {
-    const history = await this.historyRepository.findByPatientId(
-      command.clinicId,
-      command.patientId,
-    );
-    if (!history) {
-      throw new ClinicalHistoryNotFoundError(command.patientId);
-    }
-
-    let medicalAntecedents: MedicalAntecedents | undefined = undefined;
-    if (command.personalAntecedents !== undefined || command.familyAntecedents !== undefined) {
-      medicalAntecedents = mergeMedicalAntecedents(
-        history.medicalAntecedents,
-        command.personalAntecedents,
-        command.familyAntecedents,
+    return this.unitOfWork.execute(async () => {
+      const history = await this.historyRepository.findByPatientId(
+        command.clinicId,
+        command.patientId,
       );
-    }
+      if (!history) {
+        throw new ClinicalHistoryNotFoundError(command.patientId);
+      }
 
-    history.update({
-      chiefComplaint: command.chiefComplaint,
-      currentIllness: command.currentIllness,
-      medicalAntecedents,
-      clinicalExamination: command.clinicalExamination,
-      diagnoses: command.diagnoses,
-      updatedAt: this.clock.now(),
+      const existingVersions = await this.versionRepository.findAllByHistoryId(
+        command.clinicId,
+        history.id,
+      );
+      const nextVersionNumber = existingVersions.length + 1;
+      const now = this.clock.now();
+      const versionId = this.idGenerator.generate();
+
+      const version = ClinicalHistoryVersion.create({
+        id: versionId,
+        clinicId: command.clinicId,
+        clinicalHistoryId: history.id,
+        versionNumber: nextVersionNumber,
+        previousData: history.toSnapshotData(),
+        changeReason: command.changeReason,
+        updatedByUserId: command.updatedByUserId,
+        createdAt: now,
+      });
+
+      let medicalAntecedents: MedicalAntecedents | undefined = undefined;
+      if (command.personalAntecedents !== undefined || command.familyAntecedents !== undefined) {
+        medicalAntecedents = mergeMedicalAntecedents(
+          history.medicalAntecedents,
+          command.personalAntecedents,
+          command.familyAntecedents,
+        );
+      }
+
+      history.update({
+        chiefComplaint: command.chiefComplaint,
+        currentIllness: command.currentIllness,
+        medicalAntecedents,
+        clinicalExamination: command.clinicalExamination,
+        diagnoses: command.diagnoses,
+        updatedAt: now,
+      });
+
+      await this.versionRepository.save(version);
+      await this.historyRepository.save(history);
+      return history;
     });
-
-    await this.historyRepository.save(history);
-    return history;
   }
 }

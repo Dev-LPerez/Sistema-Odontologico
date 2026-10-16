@@ -123,3 +123,14 @@ export class DuplicateClinicalAttentionVersionError extends DomainError {
     super(`Ya existe la versión '${versionNumber}' para la atención clínica '${attentionId}'`);
   }
 }
+
+export class DuplicateClinicalHistoryVersionError extends DomainError {
+  readonly category: DomainErrorCategory = 'CONFLICT';
+  readonly code = 'DUPLICATE_CLINICAL_HISTORY_VERSION';
+
+  constructor(clinicalHistoryId: string, versionNumber: number) {
+    super(
+      `Ya existe la versión '${versionNumber}' para la historia clínica '${clinicalHistoryId}'`,
+    );
+  }
+}

@@ -51,11 +51,15 @@ describe('AddTreatmentPlanItemUseCase', () => {
     idGen = {
       generate: jest.fn().mockReturnValue('gen-item-123'),
     };
+    const unitOfWork = {
+      execute: jest.fn().mockImplementation((work: () => Promise<unknown>) => work()),
+    };
 
     useCase = new AddTreatmentPlanItemUseCase(
       historyRepo,
       procedureRepo,
       patientPriceRepo,
+      unitOfWork,
       clock,
       idGen,
     );

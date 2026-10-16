@@ -30,8 +30,11 @@ describe('UpdateTreatmentPlanItemStatusUseCase', () => {
       formatInBogota: jest.fn().mockReturnValue('2026-10-15T11:00:00-05:00'),
       isSameDayInBogota: jest.fn().mockReturnValue(true),
     };
+    const unitOfWork = {
+      execute: jest.fn().mockImplementation((work: () => Promise<unknown>) => work()),
+    };
 
-    useCase = new UpdateTreatmentPlanItemStatusUseCase(historyRepo, clock);
+    useCase = new UpdateTreatmentPlanItemStatusUseCase(historyRepo, unitOfWork, clock);
   });
 
   it('debe agregar ítems al plan de tratamiento resolviendo el costo y actualizar su estado a COMPLETED calculando totalEstimatedCostCop', async () => {

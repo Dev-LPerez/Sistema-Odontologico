@@ -4,10 +4,12 @@ import { UpdateClinicalHistoryUseCase } from '../application/use-cases/update-cl
 import { AddTreatmentPlanItemUseCase } from '../application/use-cases/add-treatment-plan-item.use-case';
 import { UpdateTreatmentPlanItemStatusUseCase } from '../application/use-cases/update-treatment-plan-item-status.use-case';
 import { GetClinicalHistoryByPatientQuery } from '../application/queries/get-clinical-history-by-patient.query';
+import { ListClinicalHistoryVersionsQuery } from '../application/queries/list-clinical-history-versions.query';
 import { ExportClinicalHistoryPdfQuery } from '../application/queries/export-clinical-history-pdf.query';
 import { StreamableFile } from '@nestjs/common';
 import type { Response } from 'express';
 import { ClinicalHistory } from '../domain/clinical-history.entity';
+import { ClinicalHistoryVersion } from '../domain/clinical-history-version.entity';
 import { MedicalAntecedents } from '../domain/medical-antecedents.vo';
 import { TreatmentPlanItem } from '../domain/treatment-plan-item.entity';
 import { TreatmentItemStatus } from '../domain/treatment-item-status.enum';
@@ -21,6 +23,7 @@ describe('ClinicalHistoryController Unit Tests', () => {
   let addPlanItemUseCase: jest.Mocked<AddTreatmentPlanItemUseCase>;
   let updatePlanStatusUseCase: jest.Mocked<UpdateTreatmentPlanItemStatusUseCase>;
   let getHistoryQuery: jest.Mocked<GetClinicalHistoryByPatientQuery>;
+  let listHistoryVersionsQuery: jest.Mocked<ListClinicalHistoryVersionsQuery>;
   let exportPdfQuery: jest.Mocked<ExportClinicalHistoryPdfQuery>;
 
   const mockUser: AuthenticatedUserPayload = {
@@ -80,6 +83,9 @@ describe('ClinicalHistoryController Unit Tests', () => {
     getHistoryQuery = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<GetClinicalHistoryByPatientQuery>;
+    listHistoryVersionsQuery = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<ListClinicalHistoryVersionsQuery>;
     exportPdfQuery = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<ExportClinicalHistoryPdfQuery>;
@@ -90,6 +96,7 @@ describe('ClinicalHistoryController Unit Tests', () => {
       addPlanItemUseCase,
       updatePlanStatusUseCase,
       getHistoryQuery,
+      listHistoryVersionsQuery,
       exportPdfQuery,
     );
   });
@@ -150,6 +157,8 @@ describe('ClinicalHistoryController Unit Tests', () => {
       familyAntecedents: undefined,
       clinicalExamination: undefined,
       diagnoses: undefined,
+      changeReason: undefined,
+      updatedByUserId: 'user-admin-1',
     });
   });
 
@@ -246,6 +255,40 @@ describe('ClinicalHistoryController Unit Tests', () => {
     );
     expect(mockRes.setHeader).toHaveBeenCalledWith('Pragma', 'no-cache');
     expect(exportPdfQuery.execute).toHaveBeenCalledWith({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+    });
+  });
+
+  it('debe listar versiones históricas inmutables mediante listVersions()', async () => {
+    const mockVersion = ClinicalHistoryVersion.create({
+      id: 'ver-123',
+      clinicId: 'clinic-123',
+      clinicalHistoryId: 'hist-123',
+      versionNumber: 1,
+      previousData: {
+        chiefComplaint: 'Dolor inicial',
+        currentIllness: 'Caries',
+        personalAntecedents: {},
+        familyAntecedents: null,
+        clinicalExamination: null,
+        diagnoses: [],
+        updatedAt: fixedDate.toISOString(),
+      },
+      changeReason: 'Actualización periódica',
+      updatedByUserId: 'user-admin-1',
+      createdAt: fixedDate,
+    });
+
+    listHistoryVersionsQuery.execute.mockResolvedValue([mockVersion]);
+
+    const result = await controller.listVersions(mockUser, 'patient-123');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].versionNumber).toBe(1);
+    expect(result[0].previousData.chiefComplaint).toBe('Dolor inicial');
+    expect(result[0].changeReason).toBe('Actualización periódica');
+    expect(listHistoryVersionsQuery.execute).toHaveBeenCalledWith({
       clinicId: 'clinic-123',
       patientId: 'patient-123',
     });

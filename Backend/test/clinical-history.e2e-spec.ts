@@ -16,6 +16,7 @@ import {
   Money,
 } from '../src/modules/catalogs';
 import { CLINICAL_HISTORY_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-history.repository.port';
+import { CLINICAL_HISTORY_VERSION_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-history-version.repository.port';
 import { TreatmentItemStatus } from '../src/modules/clinical/domain/treatment-item-status.enum';
 import { UNIT_OF_WORK_PORT } from '../src/shared/application/ports/unit-of-work.port';
 import { InMemoryClinicRepository } from '../src/modules/identity/infrastructure/repositories/in-memory-clinic.repository';
@@ -27,6 +28,7 @@ import { InMemoryProcedureRepository } from '../src/modules/catalogs/infrastruct
 import { InMemoryPatientProcedurePriceRepository } from '../src/modules/catalogs/infrastructure/repositories/in-memory-patient-procedure-price.repository';
 import { InMemoryMaterialRepository } from '../src/modules/catalogs/infrastructure/repositories/in-memory-material.repository';
 import { InMemoryClinicalHistoryRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-history.repository';
+import { InMemoryClinicalHistoryVersionRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-history-version.repository';
 import { InMemoryOdontogramRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-odontogram.repository';
 import { InMemoryClinicalAttentionRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-attention.repository';
 import { ODONTOGRAM_REPOSITORY_PORT } from '../src/modules/clinical/domain/odontogram.repository.port';
@@ -65,6 +67,7 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
   let patientPriceRepo: InMemoryPatientProcedurePriceRepository;
   let materialRepo: InMemoryMaterialRepository;
   let clinicalHistoryRepo: InMemoryClinicalHistoryRepository;
+  let clinicalHistoryVersionRepo: InMemoryClinicalHistoryVersionRepository;
   let odontogramRepo: InMemoryOdontogramRepository;
   let attentionRepo: InMemoryClinicalAttentionRepository;
   let passwordHasher: PasswordHasherPort;
@@ -91,6 +94,7 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
     patientPriceRepo = new InMemoryPatientProcedurePriceRepository();
     materialRepo = new InMemoryMaterialRepository();
     clinicalHistoryRepo = new InMemoryClinicalHistoryRepository();
+    clinicalHistoryVersionRepo = new InMemoryClinicalHistoryVersionRepository();
     odontogramRepo = new InMemoryOdontogramRepository();
     attentionRepo = new InMemoryClinicalAttentionRepository();
 
@@ -115,6 +119,8 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
       .useValue(materialRepo)
       .overrideProvider(CLINICAL_HISTORY_REPOSITORY_PORT)
       .useValue(clinicalHistoryRepo)
+      .overrideProvider(CLINICAL_HISTORY_VERSION_REPOSITORY_PORT)
+      .useValue(clinicalHistoryVersionRepo)
       .overrideProvider(ODONTOGRAM_REPOSITORY_PORT)
       .useValue(odontogramRepo)
       .overrideProvider(CLINICAL_ATTENTION_REPOSITORY_PORT)
@@ -292,6 +298,41 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
     expect(getRes.body.chiefComplaint).toBe('Control y revisión post-operatoria');
     expect(getRes.body.personalAntecedents.allergies).toBe(true);
     expect(getRes.body.personalAntecedents.allergiesDetails).toBe('Penicilina');
+  });
+
+  it('debe conservar una versión inmutable al actualizar la historia clínica y permitir a ADMIN y AUXILIARY consultar el historial de versiones (200)', async () => {
+    // 1. ADMIN actualiza la historia clínica con changeReason (200)
+    const updateRes = await request(app.getHttpServer())
+      .patch(`/v1/clinical-histories/patient/${testPatientId}`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        chiefComplaint: 'Revisión semestral y control de evolución',
+        changeReason: 'Control de rutina',
+      });
+
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.chiefComplaint).toBe('Revisión semestral y control de evolución');
+
+    // 2. AUXILIARY consulta el historial de versiones (200)
+    const auxVersionsRes = await request(app.getHttpServer())
+      .get(`/v1/clinical-histories/patient/${testPatientId}/versions`)
+      .set('Authorization', `Bearer ${auxiliaryAccessToken}`);
+
+    expect(auxVersionsRes.status).toBe(200);
+    expect(Array.isArray(auxVersionsRes.body)).toBe(true);
+    expect(auxVersionsRes.body.length).toBeGreaterThanOrEqual(1);
+
+    const latestVersion = auxVersionsRes.body[auxVersionsRes.body.length - 1];
+    expect(latestVersion.changeReason).toBe('Control de rutina');
+    expect(latestVersion.previousData.chiefComplaint).toBe('Control y revisión post-operatoria');
+
+    // 3. ADMIN consulta el historial de versiones (200)
+    const adminVersionsRes = await request(app.getHttpServer())
+      .get(`/v1/clinical-histories/patient/${testPatientId}/versions`)
+      .set('Authorization', `Bearer ${adminAccessToken}`);
+
+    expect(adminVersionsRes.status).toBe(200);
+    expect(adminVersionsRes.body).toHaveLength(auxVersionsRes.body.length);
   });
 
   it('debe rechazar con 409 DUPLICATE_CLINICAL_HISTORY cuando se intenta abrir una segunda historia clínica para el mismo paciente', async () => {

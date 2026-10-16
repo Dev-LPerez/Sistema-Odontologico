@@ -4,11 +4,13 @@ import { IdentityModule } from '../identity';
 import { PatientsModule } from '../patients';
 import { CatalogsModule } from '../catalogs';
 import { CLINICAL_HISTORY_REPOSITORY_PORT } from './domain/clinical-history.repository.port';
+import { CLINICAL_HISTORY_VERSION_REPOSITORY_PORT } from './domain/clinical-history-version.repository.port';
 import { ODONTOGRAM_REPOSITORY_PORT } from './domain/odontogram.repository.port';
 import { ODONTOGRAM_SNAPSHOT_REPOSITORY_PORT } from './domain/odontogram-snapshot.repository.port';
 import { CLINICAL_ATTENTION_REPOSITORY_PORT } from './domain/clinical-attention.repository.port';
 import { CLINICAL_ATTENTION_VERSION_REPOSITORY_PORT } from './domain/clinical-attention-version.repository.port';
 import { PrismaClinicalHistoryRepository } from './infrastructure/repositories/prisma-clinical-history.repository';
+import { PrismaClinicalHistoryVersionRepository } from './infrastructure/repositories/prisma-clinical-history-version.repository';
 import { PrismaOdontogramRepository } from './infrastructure/repositories/prisma-odontogram.repository';
 import { PrismaOdontogramSnapshotRepository } from './infrastructure/repositories/prisma-odontogram-snapshot.repository';
 import { PrismaClinicalAttentionRepository } from './infrastructure/repositories/prisma-clinical-attention.repository';
@@ -25,6 +27,7 @@ import { AddAttentionMaterialUsedUseCase } from './application/use-cases/add-att
 import { CloseClinicalAttentionUseCase } from './application/use-cases/close-clinical-attention.use-case';
 import { AmendClosedClinicalAttentionUseCase } from './application/use-cases/amend-closed-clinical-attention.use-case';
 import { GetClinicalHistoryByPatientQuery } from './application/queries/get-clinical-history-by-patient.query';
+import { ListClinicalHistoryVersionsQuery } from './application/queries/list-clinical-history-versions.query';
 import { GetOdontogramByPatientQuery } from './application/queries/get-odontogram-by-patient.query';
 import { ListOdontogramSnapshotsQuery } from './application/queries/list-odontogram-snapshots.query';
 import { ListClinicalAttentionsByPatientQuery } from './application/queries/list-clinical-attentions-by-patient.query';
@@ -45,6 +48,10 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     {
       provide: CLINICAL_HISTORY_REPOSITORY_PORT,
       useClass: PrismaClinicalHistoryRepository,
+    },
+    {
+      provide: CLINICAL_HISTORY_VERSION_REPOSITORY_PORT,
+      useClass: PrismaClinicalHistoryVersionRepository,
     },
     {
       provide: ODONTOGRAM_REPOSITORY_PORT,
@@ -78,6 +85,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     CloseClinicalAttentionUseCase,
     AmendClosedClinicalAttentionUseCase,
     GetClinicalHistoryByPatientQuery,
+    ListClinicalHistoryVersionsQuery,
     GetOdontogramByPatientQuery,
     ListOdontogramSnapshotsQuery,
     ListClinicalAttentionsByPatientQuery,
@@ -88,6 +96,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
   ],
   exports: [
     CLINICAL_HISTORY_REPOSITORY_PORT,
+    CLINICAL_HISTORY_VERSION_REPOSITORY_PORT,
     ODONTOGRAM_REPOSITORY_PORT,
     ODONTOGRAM_SNAPSHOT_REPOSITORY_PORT,
     CLINICAL_ATTENTION_REPOSITORY_PORT,
@@ -105,6 +114,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     CloseClinicalAttentionUseCase,
     AmendClosedClinicalAttentionUseCase,
     GetClinicalHistoryByPatientQuery,
+    ListClinicalHistoryVersionsQuery,
     GetOdontogramByPatientQuery,
     ListOdontogramSnapshotsQuery,
     ListClinicalAttentionsByPatientQuery,

@@ -56,4 +56,12 @@ export class UpdateClinicalHistoryDto {
   @IsOptional()
   @IsArray()
   diagnoses?: unknown[];
+
+  @ApiPropertyOptional({
+    description: 'Motivo del cambio en la historia clínica',
+    example: 'Ajuste de antecedentes tras nueva consulta',
+  })
+  @IsOptional()
+  @IsString()
+  changeReason?: string;
 }

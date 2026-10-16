@@ -44,6 +44,7 @@ model Clinic {
   clinicalAttentions        ClinicalAttention[]
   attentionMaterialsUsed    AttentionMaterialUsed[]
   clinicalAttentionVersions ClinicalAttentionVersion[]
+  clinicalHistoryVersions   ClinicalHistoryVersion[]
 
   @@map("clinics")
 }
@@ -212,9 +213,9 @@ model ClinicalHistory {
   patient             Patient             @relation(fields: [patientId], references: [id], onDelete: Restrict)
   treatmentItems      TreatmentPlanItem[]
   attentions          ClinicalAttention[]
+  versions            ClinicalHistoryVersion[]
 
   @@unique([clinicId, patientId])
-  @@index([clinicId, patientId])
   @@map("clinical_histories")
 }
 
@@ -253,7 +254,6 @@ model Odontogram {
   snapshots            OdontogramSnapshot[]
 
   @@unique([clinicId, patientId])
-  @@index([clinicId, patientId])
   @@map("odontograms")
 }
 
@@ -346,7 +346,24 @@ model ClinicalAttentionVersion {
   amendedByUser User              @relation(fields: [amendedByUserId], references: [id], onDelete: Restrict)
 
   @@unique([clinicId, attentionId, versionNumber], map: "clinical_attention_versions_clinic_attention_version_key")
-  @@index([clinicId, attentionId, versionNumber], map: "clinical_attention_versions_clinic_attention_version_idx")
   @@map("clinical_attention_versions")
+}
+
+model ClinicalHistoryVersion {
+  id                String          @id @default(uuid())
+  clinicId          String          @map("clinic_id")
+  clinicalHistoryId String          @map("clinical_history_id")
+  versionNumber     Int             @map("version_number")
+  previousData      Json            @map("previous_data")
+  changeReason      String?         @map("change_reason")
+  updatedByUserId   String?         @map("updated_by_user_id")
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  clinic            Clinic          @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  clinicalHistory   ClinicalHistory @relation(fields: [clinicalHistoryId], references: [id], onDelete: Restrict)
+
+  @@unique([clinicId, clinicalHistoryId, versionNumber], map: "clinical_history_versions_clinic_history_version_key")
+  @@index([clinicId, clinicalHistoryId])
+  @@map("clinical_history_versions")
 }
 
