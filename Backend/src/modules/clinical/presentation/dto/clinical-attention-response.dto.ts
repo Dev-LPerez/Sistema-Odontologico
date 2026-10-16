@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
+import { ClinicalAttentionVersion } from '../../domain/clinical-attention-version.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
 
 export class AttentionMaterialUsedResponseDto {
@@ -158,6 +159,92 @@ export class ClinicalAttentionResponseDto {
       return matDto;
     });
 
+    return dto;
+  }
+}
+
+export class ClinicalAttentionSnapshotResponseDto {
+  @ApiProperty({
+    description: 'Procedimientos clínicos realizados en la versión previa',
+    type: [Object],
+  })
+  proceduresPerformed!: unknown[];
+
+  @ApiProperty({ description: 'Notas de evolución clínica previas' })
+  evolutionNotes!: string;
+
+  @ApiPropertyOptional({
+    description: 'Prescripción médica previa',
+    type: String,
+    nullable: true,
+  })
+  prescription!: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Indicaciones postoperatorias previas',
+    type: String,
+    nullable: true,
+  })
+  postOperativeIndications!: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Notas privadas previas (null para rol AUXILIARY)',
+    type: String,
+    nullable: true,
+  })
+  privateNotes!: string | null;
+
+  @ApiProperty({ description: 'Fecha y hora de la atención (UTC)' })
+  attendedAt!: string;
+
+  @ApiProperty({ description: 'Fecha de actualización de la versión previa (UTC)' })
+  updatedAt!: string;
+
+  @ApiProperty({
+    description: 'Materiales propios utilizados en la versión previa',
+    type: [Object],
+  })
+  materialsUsed!: unknown[];
+}
+
+export class ClinicalAttentionVersionResponseDto {
+  @ApiProperty({ description: 'ID de la versión histórica de la atención' })
+  id!: string;
+
+  @ApiProperty({ description: 'ID del consultorio' })
+  clinicId!: string;
+
+  @ApiProperty({ description: 'ID de la atención clínica' })
+  attentionId!: string;
+
+  @ApiProperty({ description: 'Número correlativo de versión (iniciando en 1)' })
+  versionNumber!: number;
+
+  @ApiProperty({
+    description: 'Instantánea inmutable del estado previo a la enmienda',
+    type: ClinicalAttentionSnapshotResponseDto,
+  })
+  previousData!: ClinicalAttentionSnapshotResponseDto;
+
+  @ApiProperty({ description: 'Motivo justificado de la enmienda clínica' })
+  changeReason!: string;
+
+  @ApiProperty({ description: 'ID del usuario que realizó la enmienda' })
+  amendedByUserId!: string;
+
+  @ApiProperty({ description: 'Fecha y hora de la enmienda (UTC)' })
+  createdAt!: string;
+
+  static fromDomain(version: ClinicalAttentionVersion): ClinicalAttentionVersionResponseDto {
+    const dto = new ClinicalAttentionVersionResponseDto();
+    dto.id = version.id;
+    dto.clinicId = version.clinicId;
+    dto.attentionId = version.attentionId;
+    dto.versionNumber = version.versionNumber;
+    dto.previousData = version.previousData as ClinicalAttentionSnapshotResponseDto;
+    dto.changeReason = version.changeReason;
+    dto.amendedByUserId = version.amendedByUserId;
+    dto.createdAt = version.createdAt.toISOString();
     return dto;
   }
 }

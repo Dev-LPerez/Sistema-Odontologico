@@ -16,6 +16,7 @@ import {
 } from '../src/modules/catalogs';
 import { CLINICAL_HISTORY_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-history.repository.port';
 import { CLINICAL_ATTENTION_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-attention.repository.port';
+import { CLINICAL_ATTENTION_VERSION_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-attention-version.repository.port';
 import { ClinicalHistory } from '../src/modules/clinical/domain/clinical-history.entity';
 import { MedicalAntecedents } from '../src/modules/clinical/domain/medical-antecedents.vo';
 import { UNIT_OF_WORK_PORT } from '../src/shared/application/ports/unit-of-work.port';
@@ -29,6 +30,7 @@ import { InMemoryPatientProcedurePriceRepository } from '../src/modules/catalogs
 import { InMemoryMaterialRepository } from '../src/modules/catalogs/infrastructure/repositories/in-memory-material.repository';
 import { InMemoryClinicalHistoryRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-history.repository';
 import { InMemoryClinicalAttentionRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-attention.repository';
+import { InMemoryClinicalAttentionVersionRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-attention-version.repository';
 import {
   PasswordHasherPort,
   PASSWORD_HASHER_PORT,
@@ -55,6 +57,7 @@ describe('Clinical Attentions and Materials Management (e2e) (RF-B-024, RF-B-025
   let materialRepo: InMemoryMaterialRepository;
   let clinicalHistoryRepo: InMemoryClinicalHistoryRepository;
   let clinicalAttentionRepo: InMemoryClinicalAttentionRepository;
+  let clinicalAttentionVersionRepo: InMemoryClinicalAttentionVersionRepository;
   let passwordHasher: PasswordHasherPort;
 
   const testClinicId = 'a1111111-1111-4111-8111-111111111111';
@@ -84,6 +87,7 @@ describe('Clinical Attentions and Materials Management (e2e) (RF-B-024, RF-B-025
     materialRepo = new InMemoryMaterialRepository();
     clinicalHistoryRepo = new InMemoryClinicalHistoryRepository();
     clinicalAttentionRepo = new InMemoryClinicalAttentionRepository();
+    clinicalAttentionVersionRepo = new InMemoryClinicalAttentionVersionRepository();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -108,6 +112,8 @@ describe('Clinical Attentions and Materials Management (e2e) (RF-B-024, RF-B-025
       .useValue(clinicalHistoryRepo)
       .overrideProvider(CLINICAL_ATTENTION_REPOSITORY_PORT)
       .useValue(clinicalAttentionRepo)
+      .overrideProvider(CLINICAL_ATTENTION_VERSION_REPOSITORY_PORT)
+      .useValue(clinicalAttentionVersionRepo)
       .overrideProvider(UNIT_OF_WORK_PORT)
       .useValue({
         execute: async <T>(work: () => Promise<T>): Promise<T> => work(),
@@ -450,5 +456,169 @@ describe('Clinical Attentions and Materials Management (e2e) (RF-B-024, RF-B-025
     const attentionInDb = await clinicalAttentionRepo.findById(testClinicId, createdAttentionId);
     expect(attentionInDb!.materialsUsed).toHaveLength(1);
     expect(attentionInDb!.materialsUsed[0].materialId).toBe(testMaterial1Id);
+  });
+
+  it('debe permitir a ADMIN cerrar una atención completa y rechazar con 422 CLINICAL_ATTENTION_CLOSED cualquier edición ordinaria posterior (200/422)', async () => {
+    // ADMIN cierra la atención completa
+    const closeRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${createdAttentionId}/close`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(closeRes.body.id).toBe(createdAttentionId);
+    expect(closeRes.body.status).toBe('CLOSED');
+
+    // Intento de edición ordinaria sobre atención cerrada debe ser rechazado con 422 CLINICAL_ATTENTION_CLOSED
+    const patchRes = await request(app.getHttpServer())
+      .patch(`/v1/clinical-attentions/${createdAttentionId}`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        evolutionNotes: 'Intento de edición ordinaria posterior al cierre',
+      })
+      .expect(422);
+
+    expect(patchRes.body.statusCode).toBe(422);
+    expect(patchRes.body.errorCode).toBe('CLINICAL_ATTENTION_CLOSED');
+
+    // Intento de agregar materiales sobre atención cerrada debe ser rechazado con 422 CLINICAL_ATTENTION_CLOSED
+    const addMatRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${createdAttentionId}/materials`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        materialId: testMaterial1Id,
+        quantity: 1,
+      })
+      .expect(422);
+
+    expect(addMatRes.body.statusCode).toBe(422);
+    expect(addMatRes.body.errorCode).toBe('CLINICAL_ATTENTION_CLOSED');
+  });
+
+  let incompleteAttentionId: string;
+
+  it('debe rechazar con 422 INCOMPLETE_CLINICAL_ATTENTION cuando se intenta cerrar una atención sin procedimientos realizados', async () => {
+    // ADMIN crea una atención sin procedimientos
+    const createIncompleteRes = await request(app.getHttpServer())
+      .post('/v1/clinical-attentions')
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        patientId: testPatientId,
+        evolutionNotes: 'Atención preliminar sin procedimientos ejecutados',
+        proceduresPerformed: [],
+      })
+      .expect(201);
+
+    incompleteAttentionId = createIncompleteRes.body.id;
+
+    // Intento de cerrar la atención sin procedimientos debe fallar con 422 INCOMPLETE_CLINICAL_ATTENTION
+    const closeRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${incompleteAttentionId}/close`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(422);
+
+    expect(closeRes.body.statusCode).toBe(422);
+    expect(closeRes.body.errorCode).toBe('INCOMPLETE_CLINICAL_ATTENTION');
+  });
+
+  it('debe permitir a ADMIN enmendar una atención cerrada conservando la versión previa y ocultando privateNotes históricas para AUXILIARY (200)', async () => {
+    // ADMIN enmienda la atención cerrada creada y cerrada en pruebas anteriores
+    const amendRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${createdAttentionId}/amend`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        changeReason: 'Aclaración de dosis y diagnóstico post-cierre',
+        evolutionNotes: 'Evolución enmendada con control de cicatrización satisfactorio',
+        prescription: 'Amoxicilina 875mg cada 12 horas por 7 días',
+        privateNotes: 'Nota privada enmendada y confidencial',
+      })
+      .expect(200);
+
+    expect(amendRes.body.id).toBe(createdAttentionId);
+    expect(amendRes.body.status).toBe('CLOSED');
+    expect(amendRes.body.evolutionNotes).toBe(
+      'Evolución enmendada con control de cicatrización satisfactorio',
+    );
+    expect(amendRes.body.prescription).toBe('Amoxicilina 875mg cada 12 horas por 7 días');
+    expect(amendRes.body.privateNotes).toBe('Nota privada enmendada y confidencial');
+
+    // ADMIN consulta las versiones históricas -> ve la nota privada intacta en previousData
+    const adminVersionsRes = await request(app.getHttpServer())
+      .get(`/v1/clinical-attentions/${createdAttentionId}/versions`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(adminVersionsRes.body).toHaveLength(1);
+    const verAdmin = adminVersionsRes.body[0];
+    expect(verAdmin.versionNumber).toBe(1);
+    expect(verAdmin.changeReason).toBe('Aclaración de dosis y diagnóstico post-cierre');
+    expect(verAdmin.previousData.evolutionNotes).toBe(
+      'Se realiza apertura cavitaria, obturación con resina y pulido final',
+    );
+    expect(verAdmin.previousData.privateNotes).toBe('Paciente ansioso, cobrar saldo pendiente');
+
+    // AUXILIARY consulta las versiones históricas -> recibe previousData.privateNotes en null
+    const auxVersionsRes = await request(app.getHttpServer())
+      .get(`/v1/clinical-attentions/${createdAttentionId}/versions`)
+      .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+      .expect(200);
+
+    expect(auxVersionsRes.body).toHaveLength(1);
+    const verAux = auxVersionsRes.body[0];
+    expect(verAux.versionNumber).toBe(1);
+    expect(verAux.changeReason).toBe('Aclaración de dosis y diagnóstico post-cierre');
+    expect(verAux.previousData.evolutionNotes).toBe(
+      'Se realiza apertura cavitaria, obturación con resina y pulido final',
+    );
+    expect(verAux.previousData.privateNotes).toBeNull();
+  });
+
+  it('debe rechazar con 400 cuando changeReason está vacío o con 422 CLINICAL_ATTENTION_NOT_CLOSED cuando la atención sigue abierta', async () => {
+    // 1. changeReason vacío en atención cerrada -> 400 Bad Request
+    const emptyReasonRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${createdAttentionId}/amend`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        changeReason: '',
+        evolutionNotes: 'Intento con motivo vacío',
+      })
+      .expect(400);
+
+    expect(emptyReasonRes.body.statusCode).toBe(400);
+
+    // 2. enmienda sobre atención abierta (incompleteAttentionId sigue OPEN) -> 422 CLINICAL_ATTENTION_NOT_CLOSED
+    const openAttentionAmendRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${incompleteAttentionId}/amend`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        changeReason: 'Motivo justificado válido',
+        evolutionNotes: 'Intento de enmienda sobre atención que sigue OPEN',
+      })
+      .expect(422);
+
+    expect(openAttentionAmendRes.body.statusCode).toBe(422);
+    expect(openAttentionAmendRes.body.errorCode).toBe('CLINICAL_ATTENTION_NOT_CLOSED');
+  });
+
+  it('debe rechazar con 403 FORBIDDEN_ROLE cuando AUXILIARY intenta cerrar o enmendar una atención clínica', async () => {
+    // AUXILIARY intenta cerrar atención -> 403 FORBIDDEN_ROLE
+    const closeForbiddenRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${createdAttentionId}/close`)
+      .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+      .expect(403);
+
+    expect(closeForbiddenRes.body.statusCode).toBe(403);
+    expect(closeForbiddenRes.body.errorCode).toBe('FORBIDDEN_ROLE');
+
+    // AUXILIARY intenta enmendar atención -> 403 FORBIDDEN_ROLE
+    const amendForbiddenRes = await request(app.getHttpServer())
+      .post(`/v1/clinical-attentions/${createdAttentionId}/amend`)
+      .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+      .send({
+        changeReason: 'Intento no autorizado de enmienda',
+      })
+      .expect(403);
+
+    expect(amendForbiddenRes.body.statusCode).toBe(403);
+    expect(amendForbiddenRes.body.errorCode).toBe('FORBIDDEN_ROLE');
   });
 });

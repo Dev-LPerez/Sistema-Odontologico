@@ -2,9 +2,13 @@ import { ClinicalAttentionsController } from './clinical-attentions.controller';
 import { CreateClinicalAttentionUseCase } from '../application/use-cases/create-clinical-attention.use-case';
 import { UpdateClinicalAttentionUseCase } from '../application/use-cases/update-clinical-attention.use-case';
 import { AddAttentionMaterialUsedUseCase } from '../application/use-cases/add-attention-material-used.use-case';
+import { CloseClinicalAttentionUseCase } from '../application/use-cases/close-clinical-attention.use-case';
+import { AmendClosedClinicalAttentionUseCase } from '../application/use-cases/amend-closed-clinical-attention.use-case';
 import { ListClinicalAttentionsByPatientQuery } from '../application/queries/list-clinical-attentions-by-patient.query';
 import { GetClinicalAttentionByIdQuery } from '../application/queries/get-clinical-attention-by-id.query';
+import { ListClinicalAttentionVersionsQuery } from '../application/queries/list-clinical-attention-versions.query';
 import { ClinicalAttention } from '../domain/clinical-attention.entity';
+import { ClinicalAttentionVersion } from '../domain/clinical-attention-version.entity';
 import { AttentionMaterialUsed } from '../domain/attention-material-used.entity';
 import { ClinicalAttentionStatus } from '../domain/clinical-attention-status.enum';
 import { UserRole } from '../../identity';
@@ -12,14 +16,18 @@ import { AuthenticatedUserPayload } from '../../../shared/presentation/decorator
 import { CreateClinicalAttentionDto } from './dto/create-clinical-attention.dto';
 import { UpdateClinicalAttentionDto } from './dto/update-clinical-attention.dto';
 import { AddAttentionMaterialUsedDto } from './dto/add-attention-material-used.dto';
+import { AmendClinicalAttentionDto } from './dto/amend-clinical-attention.dto';
 
 describe('ClinicalAttentionsController Unit Tests', () => {
   let controller: ClinicalAttentionsController;
   let createUseCase: jest.Mocked<CreateClinicalAttentionUseCase>;
   let updateUseCase: jest.Mocked<UpdateClinicalAttentionUseCase>;
   let addMaterialUseCase: jest.Mocked<AddAttentionMaterialUsedUseCase>;
+  let closeUseCase: jest.Mocked<CloseClinicalAttentionUseCase>;
+  let amendUseCase: jest.Mocked<AmendClosedClinicalAttentionUseCase>;
   let listQuery: jest.Mocked<ListClinicalAttentionsByPatientQuery>;
   let getByIdQuery: jest.Mocked<GetClinicalAttentionByIdQuery>;
+  let listVersionsQuery: jest.Mocked<ListClinicalAttentionVersionsQuery>;
 
   const mockAdminUser: AuthenticatedUserPayload = {
     sub: 'user-admin-1',
@@ -80,19 +88,31 @@ describe('ClinicalAttentionsController Unit Tests', () => {
     addMaterialUseCase = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<AddAttentionMaterialUsedUseCase>;
+    closeUseCase = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<CloseClinicalAttentionUseCase>;
+    amendUseCase = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<AmendClosedClinicalAttentionUseCase>;
     listQuery = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<ListClinicalAttentionsByPatientQuery>;
     getByIdQuery = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<GetClinicalAttentionByIdQuery>;
+    listVersionsQuery = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<ListClinicalAttentionVersionsQuery>;
 
     controller = new ClinicalAttentionsController(
       createUseCase,
       updateUseCase,
       addMaterialUseCase,
+      closeUseCase,
+      amendUseCase,
       listQuery,
       getByIdQuery,
+      listVersionsQuery,
     );
   });
 
@@ -201,5 +221,94 @@ describe('ClinicalAttentionsController Unit Tests', () => {
       viewerRole: UserRole.ADMIN,
     });
     expect(response.id).toBe('attn-123');
+  });
+
+  it('debe cerrar una atención clínica llamando a close()', async () => {
+    const closedAttention = ClinicalAttention.create({
+      id: 'attn-123',
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      clinicalHistoryId: 'hist-123',
+      attendedByUserId: 'user-admin-1',
+      status: ClinicalAttentionStatus.CLOSED,
+      proceduresPerformed: [{ code: 'RES-01' }],
+      evolutionNotes: 'Evolución completa',
+      attendedAt: fixedDate,
+      createdAt: fixedDate,
+      updatedAt: fixedDate,
+    });
+    closeUseCase.execute.mockResolvedValue(closedAttention);
+
+    const response = await controller.close(mockAdminUser, 'attn-123');
+
+    expect(closeUseCase.execute).toHaveBeenCalledWith({
+      clinicId: 'clinic-123',
+      id: 'attn-123',
+    });
+    expect(response.id).toBe('attn-123');
+    expect(response.status).toBe(ClinicalAttentionStatus.CLOSED);
+  });
+
+  it('debe enmendar una atención clínica cerrada llamando a amend()', async () => {
+    const amendedAttention = ClinicalAttention.create({
+      id: 'attn-123',
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      clinicalHistoryId: 'hist-123',
+      attendedByUserId: 'user-admin-1',
+      status: ClinicalAttentionStatus.CLOSED,
+      proceduresPerformed: [{ code: 'RES-01' }],
+      evolutionNotes: 'Evolución enmendada',
+      attendedAt: fixedDate,
+      createdAt: fixedDate,
+      updatedAt: fixedDate,
+    });
+    amendUseCase.execute.mockResolvedValue(amendedAttention);
+
+    const dto: AmendClinicalAttentionDto = {
+      changeReason: 'Aclaración de procedimiento',
+      evolutionNotes: 'Evolución enmendada',
+    };
+
+    const response = await controller.amend(mockAdminUser, 'attn-123', dto);
+
+    expect(amendUseCase.execute).toHaveBeenCalledWith({
+      clinicId: 'clinic-123',
+      id: 'attn-123',
+      amendedByUserId: 'user-admin-1',
+      changeReason: 'Aclaración de procedimiento',
+      evolutionNotes: 'Evolución enmendada',
+      prescription: undefined,
+      postOperativeIndications: undefined,
+      privateNotes: undefined,
+      proceduresPerformed: undefined,
+    });
+    expect(response.id).toBe('attn-123');
+    expect(response.evolutionNotes).toBe('Evolución enmendada');
+  });
+
+  it('debe listar las versiones históricas llamando a listVersions()', async () => {
+    const sampleVersion = ClinicalAttentionVersion.create({
+      id: 'ver-123',
+      clinicId: 'clinic-123',
+      attentionId: 'attn-123',
+      versionNumber: 1,
+      previousData: sampleAttention.toSnapshotData(),
+      changeReason: 'Razón de prueba',
+      amendedByUserId: 'user-admin-1',
+      createdAt: fixedDate,
+    });
+    listVersionsQuery.execute.mockResolvedValue([sampleVersion]);
+
+    const response = await controller.listVersions(mockAuxiliaryUser, 'attn-123');
+
+    expect(listVersionsQuery.execute).toHaveBeenCalledWith({
+      clinicId: 'clinic-123',
+      attentionId: 'attn-123',
+      viewerRole: UserRole.AUXILIARY,
+    });
+    expect(response).toHaveLength(1);
+    expect(response[0].id).toBe('ver-123');
+    expect(response[0].versionNumber).toBe(1);
   });
 });
