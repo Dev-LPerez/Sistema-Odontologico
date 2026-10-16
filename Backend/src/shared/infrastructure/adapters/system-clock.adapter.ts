@@ -10,6 +10,17 @@ export class SystemClockAdapter implements ClockPort {
     day: '2-digit',
   });
 
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    hourCycle: 'h23',
+  });
+
   now(): Date {
     return new Date();
   }
@@ -20,6 +31,10 @@ export class SystemClockAdapter implements ClockPort {
 
   formatInBogota(date: Date): string {
     return this.formatter.format(date);
+  }
+
+  formatDateTimeInBogota(date: Date): string {
+    return this.dateTimeFormatter.format(date).replace(', ', ' ');
   }
 
   isSameDayInBogota(date1: Date, date2: Date): boolean {

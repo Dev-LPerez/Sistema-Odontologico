@@ -202,10 +202,30 @@ describe('ExportClinicalHistoryPdfQuery', () => {
     pdfGenerator = {
       generate: jest.fn().mockResolvedValue(Buffer.from('%PDF-1.4 mock content')),
     };
+    const realBogotaFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const realBogotaDateTimeFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      hourCycle: 'h23',
+    });
+
     clock = {
       now: jest.fn().mockReturnValue(fixedNow),
       todayInBogota: jest.fn().mockReturnValue('2026-10-16'),
-      formatInBogota: jest.fn().mockImplementation((d: Date) => d.toISOString().slice(0, 10)),
+      formatInBogota: jest.fn().mockImplementation((d: Date) => realBogotaFormatter.format(d)),
+      formatDateTimeInBogota: jest
+        .fn()
+        .mockImplementation((d: Date) => realBogotaDateTimeFormatter.format(d).replace(', ', ' ')),
       isSameDayInBogota: jest.fn().mockReturnValue(true),
     };
 
@@ -238,6 +258,10 @@ describe('ExportClinicalHistoryPdfQuery', () => {
     // Verificamos que se pasaron los datos del consultorio y paciente
     expect(data.clinic.name).toBe('Consultorio Dra. Angelee Pacheco');
     expect(data.patient.fullName).toBe('Juan Pérez');
+    // Demostración de Bug 1 solucionado:
+    // formatInBogota hubiera producido '1990-05-14' debido al offset -05:00 sobre 1990-05-15T00:00:00.000Z
+    expect(clock.formatInBogota(mockPatient.birthDate)).toBe('1990-05-14');
+    expect(data.patient.birthDateFormatted).toBe('1990-05-15');
     expect(data.patient.age).toBe(36);
 
     // Verificamos historia clínica y antecedentes

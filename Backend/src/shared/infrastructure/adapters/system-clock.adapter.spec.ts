@@ -48,4 +48,18 @@ describe('SystemClockAdapter', () => {
     const today = clock.todayInBogota();
     expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
+
+  it('debe formatear fecha y hora en formato YYYY-MM-DD HH:mm en America/Bogota', () => {
+    // 2026-10-14 03:30 UTC -> 2026-10-13 22:30 en Bogotá
+    const night = new Date('2026-10-14T03:30:00.000Z');
+    expect(clock.formatDateTimeInBogota(night)).toBe('2026-10-13 22:30');
+
+    // 2026-10-14 17:35 UTC -> 2026-10-14 12:35 en Bogotá
+    const afternoon = new Date('2026-10-14T17:35:00.000Z');
+    expect(clock.formatDateTimeInBogota(afternoon)).toBe('2026-10-14 12:35');
+
+    // 2026-10-14 05:00 UTC -> 2026-10-14 00:00 en Bogotá
+    const midnight = new Date('2026-10-14T05:00:00.000Z');
+    expect(clock.formatDateTimeInBogota(midnight)).toBe('2026-10-14 00:00');
+  });
 });

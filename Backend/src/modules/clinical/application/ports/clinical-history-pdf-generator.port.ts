@@ -39,7 +39,6 @@ export interface ClinicalHistoryPdfTreatmentItemData {
   procedureCode: string;
   procedureName?: string | null;
   toothNumber?: string | null;
-  surface?: string | null;
   status: string;
   estimatedCostCop: number;
 }
