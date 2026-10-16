@@ -1,8 +1,8 @@
 import { ListMaterialsQuery } from './list-materials.query';
-import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 import { Material } from '../../domain/material.entity';
+import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 
-class InMemoryMaterialRepository implements MaterialRepositoryPort {
+class InMemoryMaterialRepositoryMock implements MaterialRepositoryPort {
   materials: Material[] = [];
 
   async findById(clinicId: string, id: string): Promise<Material | null> {
@@ -33,14 +33,18 @@ class InMemoryMaterialRepository implements MaterialRepositoryPort {
   async save(material: Material): Promise<void> {
     this.materials.push(material);
   }
+
+  async consumeStockAtomically(): Promise<Material> {
+    throw new Error('Not implemented');
+  }
 }
 
 describe('ListMaterialsQuery', () => {
   let query: ListMaterialsQuery;
-  let repo: InMemoryMaterialRepository;
+  let repo: InMemoryMaterialRepositoryMock;
 
   beforeEach(async () => {
-    repo = new InMemoryMaterialRepository();
+    repo = new InMemoryMaterialRepositoryMock();
     query = new ListMaterialsQuery(repo);
 
     await repo.save(

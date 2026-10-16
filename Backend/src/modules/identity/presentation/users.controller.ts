@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -99,7 +100,7 @@ export class UsersController {
   @ApiForbiddenResponse({ description: 'Requiere rol ADMIN' })
   async updateUser(
     @CurrentClinic() clinicId: string,
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return this.updateUserUseCase.execute({
@@ -129,7 +130,7 @@ export class UsersController {
   async changeStatus(
     @CurrentClinic() clinicId: string,
     @CurrentUser() actor: AuthenticatedUserPayload,
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Body() dto: ChangeUserStatusDto,
   ): Promise<UserResponseDto> {
     return this.changeUserStatusUseCase.execute({

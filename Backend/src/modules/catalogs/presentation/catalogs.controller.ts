@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/presentation/guards/jwt-auth.guard';
@@ -100,7 +101,7 @@ export class CatalogsController {
   })
   async updateProcedure(
     @CurrentUser() user: AuthenticatedUserPayload,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProcedureDto,
   ): Promise<ProcedureResponseDto> {
     const procedure = await this.updateProcedureUseCase.execute({
@@ -216,7 +217,7 @@ export class CatalogsController {
   })
   async updateMaterial(
     @CurrentUser() user: AuthenticatedUserPayload,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMaterialDto,
   ): Promise<MaterialResponseDto> {
     const material = await this.updateMaterialUseCase.execute({
@@ -265,7 +266,7 @@ export class CatalogsController {
   })
   async consumeMaterialStock(
     @CurrentUser() user: AuthenticatedUserPayload,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ConsumeMaterialStockDto,
   ): Promise<MaterialResponseDto> {
     const material = await this.consumeMaterialStockUseCase.execute({

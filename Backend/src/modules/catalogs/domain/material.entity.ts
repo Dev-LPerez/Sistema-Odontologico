@@ -129,7 +129,7 @@ export class Material extends AggregateRoot<string> {
     return this._updatedAt;
   }
 
-  consumeStock(quantity: number, now: Date): void {
+  static validateConsumeQuantity(quantity: number): void {
     if (
       typeof quantity !== 'number' ||
       !Number.isFinite(quantity) ||
@@ -140,6 +140,10 @@ export class Material extends AggregateRoot<string> {
         'La cantidad a descontar debe ser un número entero mayor a cero',
       );
     }
+  }
+
+  consumeStock(quantity: number, now: Date): void {
+    Material.validateConsumeQuantity(quantity);
 
     if (!this._isActive) {
       throw new InvalidCatalogDataError(

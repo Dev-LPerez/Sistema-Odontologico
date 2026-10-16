@@ -12,4 +12,10 @@ export interface MaterialRepositoryPort {
   ): Promise<Material | null>;
   findAllByClinicId(clinicId: string, includeInactive?: boolean): Promise<Material[]>;
   save(material: Material): Promise<void>;
+  consumeStockAtomically(
+    clinicId: string,
+    id: string,
+    quantity: number,
+    updatedAt: Date,
+  ): Promise<Material>;
 }

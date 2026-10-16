@@ -27,9 +27,9 @@ describe('Users and Clinic Management (e2e) (RF-B-003, RF-B-141, RC-005)', () =>
   let refreshSessionRepo: InMemoryRefreshSessionRepository;
   let passwordHasher: PasswordHasherPort;
 
-  const testClinicId = 'clinic-uuid-mgmt-001';
-  const adminId = 'user-uuid-admin-mgmt-001';
-  const auxiliaryId = 'user-uuid-aux-mgmt-002';
+  const testClinicId = 'a1111111-1111-4111-8111-111111111111';
+  const adminId = 'b2222222-2222-4222-8222-222222222222';
+  const auxiliaryId = 'c3333333-3333-4333-8333-333333333333';
   const rawPassword = 'Password123!';
 
   let adminAccessToken: string;

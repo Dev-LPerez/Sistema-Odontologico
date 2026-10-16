@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { PatientProcedurePrice } from '../../domain/patient-procedure-price.entity';
 
 export class SetPatientProcedurePriceDto {
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440001' })
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   patientId!: string;
 
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440002' })
-  @IsString()
+  @IsUUID()
   @IsNotEmpty()
   procedureId!: string;
 

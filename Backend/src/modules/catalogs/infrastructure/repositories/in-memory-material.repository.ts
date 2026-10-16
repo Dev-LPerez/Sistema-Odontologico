@@ -1,6 +1,6 @@
 import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 import { Material } from '../../domain/material.entity';
-import { DuplicateMaterialCatalogError } from '../../domain/catalogs.errors';
+import { DuplicateMaterialCatalogError, MaterialNotFoundError } from '../../domain/catalogs.errors';
 
 export class InMemoryMaterialRepository implements MaterialRepositoryPort {
   private materials: Material[] = [];
@@ -65,6 +65,21 @@ export class InMemoryMaterialRepository implements MaterialRepositoryPort {
     } else {
       this.materials.push(this.clone(material));
     }
+  }
+
+  async consumeStockAtomically(
+    clinicId: string,
+    id: string,
+    quantity: number,
+    updatedAt: Date,
+  ): Promise<Material> {
+    Material.validateConsumeQuantity(quantity);
+    const existing = this.materials.find((m) => m.clinicId === clinicId && m.id === id);
+    if (!existing) {
+      throw new MaterialNotFoundError(id);
+    }
+    existing.consumeStock(quantity, updatedAt);
+    return this.clone(existing);
   }
 
   clear(): void {

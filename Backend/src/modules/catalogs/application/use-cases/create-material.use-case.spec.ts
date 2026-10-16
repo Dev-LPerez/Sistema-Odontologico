@@ -1,11 +1,11 @@
 import { CreateMaterialUseCase } from './create-material.use-case';
-import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 import { Material } from '../../domain/material.entity';
+import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
 import { IdGeneratorPort } from '../../../../shared/application/ports/id-generator.port';
 import { DuplicateMaterialCatalogError } from '../../domain/catalogs.errors';
 
-class InMemoryMaterialRepository implements MaterialRepositoryPort {
+class InMemoryMaterialRepositoryMock implements MaterialRepositoryPort {
   materials: Material[] = [];
 
   async findById(clinicId: string, id: string): Promise<Material | null> {
@@ -37,34 +37,38 @@ class InMemoryMaterialRepository implements MaterialRepositoryPort {
   }
 
   async save(material: Material): Promise<void> {
+    const existing = await this.findByNaturalKey(
+      material.clinicId,
+      material.brand,
+      material.reference,
+      material.color,
+    );
+    if (existing && existing.id !== material.id) {
+      throw new DuplicateMaterialCatalogError(material.brand, material.reference, material.color);
+    }
     const idx = this.materials.findIndex(
       (m) => m.clinicId === material.clinicId && m.id === material.id,
     );
     if (idx >= 0) {
       this.materials[idx] = material;
     } else {
-      const existing = await this.findByNaturalKey(
-        material.clinicId,
-        material.brand,
-        material.reference,
-        material.color,
-      );
-      if (existing) {
-        throw new DuplicateMaterialCatalogError(material.brand, material.reference, material.color);
-      }
       this.materials.push(material);
     }
+  }
+
+  async consumeStockAtomically(): Promise<Material> {
+    throw new Error('Not implemented');
   }
 }
 
 describe('CreateMaterialUseCase', () => {
   let useCase: CreateMaterialUseCase;
-  let repo: InMemoryMaterialRepository;
+  let repo: InMemoryMaterialRepositoryMock;
   let clock: ClockPort;
   let idGen: IdGeneratorPort;
 
   beforeEach(() => {
-    repo = new InMemoryMaterialRepository();
+    repo = new InMemoryMaterialRepositoryMock();
     clock = {
       now: jest.fn().mockReturnValue(new Date('2026-10-15T10:00:00.000Z')),
       todayInBogota: jest.fn().mockReturnValue('2026-10-15'),

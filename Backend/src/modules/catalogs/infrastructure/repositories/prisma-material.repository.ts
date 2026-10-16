@@ -4,7 +4,12 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 import { Material } from '../../domain/material.entity';
 import { MaterialMapper } from '../mappers/material.mapper';
-import { DuplicateMaterialCatalogError } from '../../domain/catalogs.errors';
+import {
+  DuplicateMaterialCatalogError,
+  InsufficientMaterialStockError,
+  InvalidCatalogDataError,
+  MaterialNotFoundError,
+} from '../../domain/catalogs.errors';
 
 @Injectable()
 export class PrismaMaterialRepository implements MaterialRepositoryPort {
@@ -68,5 +73,46 @@ export class PrismaMaterialRepository implements MaterialRepositoryPort {
       }
       throw error;
     }
+  }
+
+  async consumeStockAtomically(
+    clinicId: string,
+    id: string,
+    quantity: number,
+    updatedAt: Date,
+  ): Promise<Material> {
+    Material.validateConsumeQuantity(quantity);
+
+    const result = await this.prisma.client.material.updateMany({
+      where: {
+        id,
+        clinicId,
+        isActive: true,
+        currentStock: { gte: quantity },
+      },
+      data: {
+        currentStock: { decrement: quantity },
+        updatedAt,
+      },
+    });
+
+    if (result.count === 0) {
+      const existing = await this.findById(clinicId, id);
+      if (!existing) {
+        throw new MaterialNotFoundError(id);
+      }
+      if (!existing.isActive) {
+        throw new InvalidCatalogDataError(
+          'No se puede descontar existencias de un material inactivo',
+        );
+      }
+      throw new InsufficientMaterialStockError(existing.currentStock, quantity);
+    }
+
+    const updated = await this.findById(clinicId, id);
+    if (!updated) {
+      throw new MaterialNotFoundError(id);
+    }
+    return updated;
   }
 }

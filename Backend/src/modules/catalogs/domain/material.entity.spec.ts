@@ -55,6 +55,10 @@ describe('Material Entity', () => {
 
     expect(() => material.consumeStock(0, consumeDate)).toThrow(InvalidCatalogDataError);
     expect(() => material.consumeStock(-1, consumeDate)).toThrow(InvalidCatalogDataError);
+    expect(() => Material.validateConsumeQuantity(0)).toThrow(InvalidCatalogDataError);
+    expect(() => Material.validateConsumeQuantity(-5)).toThrow(InvalidCatalogDataError);
+    expect(() => Material.validateConsumeQuantity(1.5)).toThrow(InvalidCatalogDataError);
+    expect(() => Material.validateConsumeQuantity(NaN)).toThrow(InvalidCatalogDataError);
   });
 
   it('debe lanzar InvalidCatalogDataError cuando se intenta descontar de un material inactivo', () => {

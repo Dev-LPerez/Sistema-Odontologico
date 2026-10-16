@@ -5,7 +5,6 @@ import {
 } from '../../domain/material.repository.port';
 import { Material } from '../../domain/material.entity';
 import { CLOCK_PORT, ClockPort } from '../../../../shared/application/ports/clock.port';
-import { MaterialNotFoundError } from '../../domain/catalogs.errors';
 
 export interface ConsumeMaterialStockCommand {
   clinicId: string;
@@ -23,14 +22,11 @@ export class ConsumeMaterialStockUseCase {
   ) {}
 
   async execute(command: ConsumeMaterialStockCommand): Promise<Material> {
-    const material = await this.materialRepository.findById(command.clinicId, command.materialId);
-    if (!material) {
-      throw new MaterialNotFoundError(command.materialId);
-    }
-
-    material.consumeStock(command.quantity, this.clock.now());
-
-    await this.materialRepository.save(material);
-    return material;
+    return this.materialRepository.consumeStockAtomically(
+      command.clinicId,
+      command.materialId,
+      command.quantity,
+      this.clock.now(),
+    );
   }
 }

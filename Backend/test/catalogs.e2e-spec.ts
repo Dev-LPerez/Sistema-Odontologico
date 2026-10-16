@@ -48,16 +48,16 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
   let materialRepo: InMemoryMaterialRepository;
   let passwordHasher: PasswordHasherPort;
 
-  const testClinicId = 'clinic-uuid-cat-001';
-  const adminId = 'user-uuid-admin-cat-001';
-  const auxiliaryId = 'user-uuid-aux-cat-002';
+  const testClinicId = 'a1111111-1111-4111-8111-111111111111';
+  const adminId = 'b2222222-2222-4222-8222-222222222222';
+  const auxiliaryId = 'c3333333-3333-4333-8333-333333333333';
   const rawPassword = 'Password123!';
 
   let adminAccessToken: string;
   let auxiliaryAccessToken: string;
   let createdProcedureId: string;
   let createdMaterialId: string;
-  const testPatientId = 'patient-uuid-cat-001';
+  const testPatientId = 'd4444444-4444-4444-8444-444444444444';
 
   beforeAll(async () => {
     clinicRepo = new InMemoryClinicRepository();
@@ -289,7 +289,7 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
 
       // 5. PATCH /materials/:id
       const p5 = await request(app.getHttpServer())
-        .patch('/v1/catalogs/materials/mat-mock-aux')
+        .patch('/v1/catalogs/materials/e5555555-5555-4555-8555-555555555555')
         .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
         .send({ currentStock: 50 })
         .expect(403);
@@ -297,7 +297,7 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
 
       // 6. POST /materials/:id/consume
       const p6 = await request(app.getHttpServer())
-        .post('/v1/catalogs/materials/mat-mock-aux/consume')
+        .post('/v1/catalogs/materials/e5555555-5555-4555-8555-555555555555/consume')
         .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
         .send({ quantity: 1 })
         .expect(403);
@@ -418,6 +418,31 @@ describe('Catalogs Management (e2e) (RF-B-050, RF-B-051, RF-B-052, RF-B-053, RC-
 
       expect(res.body.errorCode).toBe('INSUFFICIENT_MATERIAL_STOCK');
       expect(res.body.message).toContain('insuficiente');
+    });
+  });
+
+  describe('Scenario 8: Validación de UUID en parámetros de rutas de catálogos (RC-018)', () => {
+    it('debe rechazar con 400 cuando el id de procedimiento o material no es un UUID válido', async () => {
+      // 1. PATCH /v1/catalogs/procedures/:id
+      await request(app.getHttpServer())
+        .patch('/v1/catalogs/procedures/not-a-valid-uuid')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ name: 'Procedimiento Inválido' })
+        .expect(400);
+
+      // 2. PATCH /v1/catalogs/materials/:id
+      await request(app.getHttpServer())
+        .patch('/v1/catalogs/materials/not-a-valid-uuid')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ brand: 'Marca Inválida' })
+        .expect(400);
+
+      // 3. POST /v1/catalogs/materials/:id/consume
+      await request(app.getHttpServer())
+        .post('/v1/catalogs/materials/not-a-valid-uuid/consume')
+        .set('Authorization', `Bearer ${adminAccessToken}`)
+        .send({ quantity: 1 })
+        .expect(400);
     });
   });
 });

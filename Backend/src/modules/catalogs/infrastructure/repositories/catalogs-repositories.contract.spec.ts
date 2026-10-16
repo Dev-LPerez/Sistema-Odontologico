@@ -15,6 +15,7 @@ import { Money } from '../../domain/money.vo';
 import {
   DuplicateProcedureCodeError,
   DuplicateMaterialCatalogError,
+  InsufficientMaterialStockError,
 } from '../../domain/catalogs.errors';
 import { Prisma } from '@prisma/client';
 
@@ -619,6 +620,52 @@ describe('Catalogs Repositories Contract Tests (RC-018, RC-050, RC-055)', () => 
           expect(found).not.toBeNull();
           expect(found?.currentStock).toBe(2);
           expect(found?.isLowStock).toBe(true);
+        });
+
+        it('debe descontar existencias atómicamente ante consumos concurrentes sin perder actualizaciones e impidiendo saldos negativos', async () => {
+          const material = Material.create({
+            id: 'mat-concurrent-test',
+            clinicId: 'clinic-cat-1',
+            brand: '3M Concurrent',
+            reference: 'Filtek Z350 XT',
+            type: 'RESIN',
+            color: 'A2',
+            currentStock: 5,
+            minStock: 1,
+            isActive: true,
+            createdAt: fixedNow,
+            updatedAt: fixedNow,
+          });
+
+          await materialRepo.save(material);
+
+          const results = await Promise.allSettled([
+            materialRepo.consumeStockAtomically(
+              'clinic-cat-1',
+              'mat-concurrent-test',
+              3,
+              new Date('2026-10-15T12:00:00.000Z'),
+            ),
+            materialRepo.consumeStockAtomically(
+              'clinic-cat-1',
+              'mat-concurrent-test',
+              3,
+              new Date('2026-10-15T12:00:01.000Z'),
+            ),
+          ]);
+
+          const fulfilled = results.filter((r) => r.status === 'fulfilled');
+          const rejected = results.filter((r) => r.status === 'rejected');
+
+          expect(fulfilled).toHaveLength(1);
+          expect(rejected).toHaveLength(1);
+
+          const rejectionReason = (rejected[0] as PromiseRejectedResult).reason;
+          expect(rejectionReason).toBeInstanceOf(InsufficientMaterialStockError);
+
+          const persisted = await materialRepo.findById('clinic-cat-1', 'mat-concurrent-test');
+          expect(persisted).not.toBeNull();
+          expect(persisted?.currentStock).toBe(2);
         });
       });
     });

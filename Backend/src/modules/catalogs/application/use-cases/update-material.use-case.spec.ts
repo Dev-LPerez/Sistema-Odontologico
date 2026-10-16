@@ -1,10 +1,10 @@
 import { UpdateMaterialUseCase } from './update-material.use-case';
-import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 import { Material } from '../../domain/material.entity';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
 import { MaterialNotFoundError } from '../../domain/catalogs.errors';
+import { MaterialRepositoryPort } from '../../domain/material.repository.port';
 
-class InMemoryMaterialRepository implements MaterialRepositoryPort {
+class InMemoryMaterialRepositoryMock implements MaterialRepositoryPort {
   materials: Material[] = [];
 
   async findById(clinicId: string, id: string): Promise<Material | null> {
@@ -42,15 +42,19 @@ class InMemoryMaterialRepository implements MaterialRepositoryPort {
       this.materials.push(material);
     }
   }
+
+  async consumeStockAtomically(): Promise<Material> {
+    throw new Error('Not implemented');
+  }
 }
 
 describe('UpdateMaterialUseCase', () => {
   let useCase: UpdateMaterialUseCase;
-  let repo: InMemoryMaterialRepository;
+  let repo: InMemoryMaterialRepositoryMock;
   let clock: ClockPort;
 
   beforeEach(async () => {
-    repo = new InMemoryMaterialRepository();
+    repo = new InMemoryMaterialRepositoryMock();
     clock = {
       now: jest.fn().mockReturnValue(new Date('2026-10-15T12:00:00.000Z')),
       todayInBogota: jest.fn().mockReturnValue('2026-10-15'),
