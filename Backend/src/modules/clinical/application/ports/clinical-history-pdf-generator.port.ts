@@ -19,17 +19,20 @@ export interface ClinicalHistoryPdfPatientData {
   emergencyContact?: {
     name: string;
     phone: string;
-    relationship: string;
   } | null;
 }
 
 export interface ClinicalHistoryPdfMedicalAntecedentsData {
-  pathological?: string | null;
-  surgical?: string | null;
-  pharmacological?: string | null;
-  allergic?: string | null;
-  toxic?: string | null;
-  familyHistory?: string | null;
+  hypertension: boolean;
+  diabetes: boolean;
+  allergies: boolean;
+  allergiesDetails?: string | null;
+  medications: boolean;
+  medicationsDetails?: string | null;
+  bleedingDisorders: boolean;
+  pregnancy: boolean;
+  otherNotes?: string | null;
+  familyAntecedents?: string | null;
 }
 
 export interface ClinicalHistoryPdfTreatmentItemData {
@@ -53,9 +56,9 @@ export interface ClinicalHistoryPdfHistoryData {
 }
 
 export interface ClinicalHistoryPdfToothFindingData {
-  findingName: string;
+  findingCode: string;
   surface?: string | null;
-  state: string;
+  status: string;
   notes?: string | null;
 }
 
