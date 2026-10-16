@@ -9,7 +9,10 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  StreamableFile,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../shared/presentation/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../shared/presentation/guards/roles.guard';
@@ -24,6 +27,7 @@ import { UpdateClinicalHistoryUseCase } from '../application/use-cases/update-cl
 import { AddTreatmentPlanItemUseCase } from '../application/use-cases/add-treatment-plan-item.use-case';
 import { UpdateTreatmentPlanItemStatusUseCase } from '../application/use-cases/update-treatment-plan-item-status.use-case';
 import { GetClinicalHistoryByPatientQuery } from '../application/queries/get-clinical-history-by-patient.query';
+import { ExportClinicalHistoryPdfQuery } from '../application/queries/export-clinical-history-pdf.query';
 import { CreateClinicalHistoryDto } from './dto/create-clinical-history.dto';
 import { UpdateClinicalHistoryDto } from './dto/update-clinical-history.dto';
 import { AddTreatmentPlanItemDto } from './dto/add-treatment-plan-item.dto';
@@ -44,6 +48,7 @@ export class ClinicalHistoryController {
     private readonly addTreatmentPlanItemUseCase: AddTreatmentPlanItemUseCase,
     private readonly updateTreatmentPlanItemStatusUseCase: UpdateTreatmentPlanItemStatusUseCase,
     private readonly getClinicalHistoryByPatientQuery: GetClinicalHistoryByPatientQuery,
+    private readonly exportClinicalHistoryPdfQuery: ExportClinicalHistoryPdfQuery,
   ) {}
 
   @Post()
@@ -173,5 +178,37 @@ export class ClinicalHistoryController {
     });
 
     return TreatmentPlanItemResponseDto.fromDomain(item);
+  }
+
+  @Get('patient/:patientId/pdf')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Exportar la historia clínica completa del paciente en formato PDF' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Documento PDF generado exitosamente',
+    content: {
+      'application/pdf': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async exportPdf(
+    @CurrentUser() user: AuthenticatedUserPayload,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const result = await this.exportClinicalHistoryPdfQuery.execute({
+      clinicId: user.clinicId,
+      patientId,
+    });
+
+    res.setHeader('Content-Type', result.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+
+    return new StreamableFile(result.buffer);
   }
 }

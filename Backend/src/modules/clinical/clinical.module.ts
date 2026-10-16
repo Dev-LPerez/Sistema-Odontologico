@@ -30,6 +30,9 @@ import { ListOdontogramSnapshotsQuery } from './application/queries/list-odontog
 import { ListClinicalAttentionsByPatientQuery } from './application/queries/list-clinical-attentions-by-patient.query';
 import { GetClinicalAttentionByIdQuery } from './application/queries/get-clinical-attention-by-id.query';
 import { ListClinicalAttentionVersionsQuery } from './application/queries/list-clinical-attention-versions.query';
+import { ExportClinicalHistoryPdfQuery } from './application/queries/export-clinical-history-pdf.query';
+import { CLINICAL_HISTORY_PDF_GENERATOR_PORT } from './application/ports/clinical-history-pdf-generator.port';
+import { PdfmakeClinicalHistoryPdfGeneratorAdapter } from './infrastructure/adapters/pdfmake-clinical-history-pdf-generator.adapter';
 import { ClinicalHistoryController } from './presentation/clinical-history.controller';
 import { OdontogramController } from './presentation/odontogram.controller';
 import { ClinicalAttentionsController } from './presentation/clinical-attentions.controller';
@@ -58,6 +61,10 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
       provide: CLINICAL_ATTENTION_VERSION_REPOSITORY_PORT,
       useClass: PrismaClinicalAttentionVersionRepository,
     },
+    {
+      provide: CLINICAL_HISTORY_PDF_GENERATOR_PORT,
+      useClass: PdfmakeClinicalHistoryPdfGeneratorAdapter,
+    },
     CreateClinicalHistoryUseCase,
     UpdateClinicalHistoryUseCase,
     AddTreatmentPlanItemUseCase,
@@ -75,6 +82,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     ListClinicalAttentionsByPatientQuery,
     GetClinicalAttentionByIdQuery,
     ListClinicalAttentionVersionsQuery,
+    ExportClinicalHistoryPdfQuery,
   ],
   exports: [
     CLINICAL_HISTORY_REPOSITORY_PORT,
@@ -82,6 +90,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     ODONTOGRAM_SNAPSHOT_REPOSITORY_PORT,
     CLINICAL_ATTENTION_REPOSITORY_PORT,
     CLINICAL_ATTENTION_VERSION_REPOSITORY_PORT,
+    CLINICAL_HISTORY_PDF_GENERATOR_PORT,
     CreateClinicalHistoryUseCase,
     UpdateClinicalHistoryUseCase,
     AddTreatmentPlanItemUseCase,
@@ -99,6 +108,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     ListClinicalAttentionsByPatientQuery,
     GetClinicalAttentionByIdQuery,
     ListClinicalAttentionVersionsQuery,
+    ExportClinicalHistoryPdfQuery,
   ],
 })
 export class ClinicalModule {}

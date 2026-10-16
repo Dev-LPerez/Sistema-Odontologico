@@ -40,5 +40,7 @@ export * from './application/queries/list-odontogram-snapshots.query';
 export * from './application/queries/list-clinical-attentions-by-patient.query';
 export * from './application/queries/get-clinical-attention-by-id.query';
 export * from './application/queries/list-clinical-attention-versions.query';
+export * from './application/ports/clinical-history-pdf-generator.port';
+export * from './application/queries/export-clinical-history-pdf.query';
 
 export * from './clinical.module';

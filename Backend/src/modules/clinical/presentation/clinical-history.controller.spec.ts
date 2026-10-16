@@ -4,6 +4,9 @@ import { UpdateClinicalHistoryUseCase } from '../application/use-cases/update-cl
 import { AddTreatmentPlanItemUseCase } from '../application/use-cases/add-treatment-plan-item.use-case';
 import { UpdateTreatmentPlanItemStatusUseCase } from '../application/use-cases/update-treatment-plan-item-status.use-case';
 import { GetClinicalHistoryByPatientQuery } from '../application/queries/get-clinical-history-by-patient.query';
+import { ExportClinicalHistoryPdfQuery } from '../application/queries/export-clinical-history-pdf.query';
+import { StreamableFile } from '@nestjs/common';
+import type { Response } from 'express';
 import { ClinicalHistory } from '../domain/clinical-history.entity';
 import { MedicalAntecedents } from '../domain/medical-antecedents.vo';
 import { TreatmentPlanItem } from '../domain/treatment-plan-item.entity';
@@ -18,6 +21,7 @@ describe('ClinicalHistoryController Unit Tests', () => {
   let addPlanItemUseCase: jest.Mocked<AddTreatmentPlanItemUseCase>;
   let updatePlanStatusUseCase: jest.Mocked<UpdateTreatmentPlanItemStatusUseCase>;
   let getHistoryQuery: jest.Mocked<GetClinicalHistoryByPatientQuery>;
+  let exportPdfQuery: jest.Mocked<ExportClinicalHistoryPdfQuery>;
 
   const mockUser: AuthenticatedUserPayload = {
     sub: 'user-admin-1',
@@ -76,6 +80,9 @@ describe('ClinicalHistoryController Unit Tests', () => {
     getHistoryQuery = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<GetClinicalHistoryByPatientQuery>;
+    exportPdfQuery = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<ExportClinicalHistoryPdfQuery>;
 
     controller = new ClinicalHistoryController(
       createUseCase,
@@ -83,6 +90,7 @@ describe('ClinicalHistoryController Unit Tests', () => {
       addPlanItemUseCase,
       updatePlanStatusUseCase,
       getHistoryQuery,
+      exportPdfQuery,
     );
   });
 
@@ -209,6 +217,32 @@ describe('ClinicalHistoryController Unit Tests', () => {
       patientId: 'patient-123',
       itemId: 'item-123',
       status: TreatmentItemStatus.COMPLETED,
+    });
+  });
+
+  it('debe exportar la historia clínica en PDF mediante exportPdf()', async () => {
+    const mockPdfResult = {
+      buffer: Buffer.from('%PDF-1.4 test'),
+      filename: 'historia-clinica-patient-123.pdf',
+      contentType: 'application/pdf' as const,
+    };
+    exportPdfQuery.execute.mockResolvedValue(mockPdfResult);
+
+    const mockRes = {
+      setHeader: jest.fn(),
+    } as unknown as Response;
+
+    const result = await controller.exportPdf(mockUser, 'patient-123', mockRes);
+
+    expect(result).toBeInstanceOf(StreamableFile);
+    expect(mockRes.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+    expect(mockRes.setHeader).toHaveBeenCalledWith(
+      'Content-Disposition',
+      'attachment; filename="historia-clinica-patient-123.pdf"',
+    );
+    expect(exportPdfQuery.execute).toHaveBeenCalledWith({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
     });
   });
 });

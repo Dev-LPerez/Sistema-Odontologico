@@ -27,6 +27,18 @@ import { InMemoryProcedureRepository } from '../src/modules/catalogs/infrastruct
 import { InMemoryPatientProcedurePriceRepository } from '../src/modules/catalogs/infrastructure/repositories/in-memory-patient-procedure-price.repository';
 import { InMemoryMaterialRepository } from '../src/modules/catalogs/infrastructure/repositories/in-memory-material.repository';
 import { InMemoryClinicalHistoryRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-history.repository';
+import { InMemoryOdontogramRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-odontogram.repository';
+import { InMemoryClinicalAttentionRepository } from '../src/modules/clinical/infrastructure/repositories/in-memory-clinical-attention.repository';
+import { ODONTOGRAM_REPOSITORY_PORT } from '../src/modules/clinical/domain/odontogram.repository.port';
+import { CLINICAL_ATTENTION_REPOSITORY_PORT } from '../src/modules/clinical/domain/clinical-attention.repository.port';
+import { Odontogram } from '../src/modules/clinical/domain/odontogram.entity';
+import { ToothFinding } from '../src/modules/clinical/domain/tooth-finding.vo';
+import { ToothNumber } from '../src/modules/clinical/domain/tooth-number.vo';
+import { ToothSurface } from '../src/modules/clinical/domain/tooth-surface.enum';
+import { FindingCatalogCode } from '../src/modules/clinical/domain/finding-catalog.enum';
+import { FindingStatus } from '../src/modules/clinical/domain/finding-status.enum';
+import { ClinicalAttention } from '../src/modules/clinical/domain/clinical-attention.entity';
+import { ClinicalAttentionStatus } from '../src/modules/clinical/domain/clinical-attention-status.enum';
 import {
   PasswordHasherPort,
   PASSWORD_HASHER_PORT,
@@ -52,6 +64,8 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
   let patientPriceRepo: InMemoryPatientProcedurePriceRepository;
   let materialRepo: InMemoryMaterialRepository;
   let clinicalHistoryRepo: InMemoryClinicalHistoryRepository;
+  let odontogramRepo: InMemoryOdontogramRepository;
+  let attentionRepo: InMemoryClinicalAttentionRepository;
   let passwordHasher: PasswordHasherPort;
 
   const testClinicId = 'a1111111-1111-4111-8111-111111111111';
@@ -76,6 +90,8 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
     patientPriceRepo = new InMemoryPatientProcedurePriceRepository();
     materialRepo = new InMemoryMaterialRepository();
     clinicalHistoryRepo = new InMemoryClinicalHistoryRepository();
+    odontogramRepo = new InMemoryOdontogramRepository();
+    attentionRepo = new InMemoryClinicalAttentionRepository();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -98,6 +114,10 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
       .useValue(materialRepo)
       .overrideProvider(CLINICAL_HISTORY_REPOSITORY_PORT)
       .useValue(clinicalHistoryRepo)
+      .overrideProvider(ODONTOGRAM_REPOSITORY_PORT)
+      .useValue(odontogramRepo)
+      .overrideProvider(CLINICAL_ATTENTION_REPOSITORY_PORT)
+      .useValue(attentionRepo)
       .overrideProvider(UNIT_OF_WORK_PORT)
       .useValue({
         execute: async <T>(work: () => Promise<T>): Promise<T> => work(),
@@ -429,5 +449,93 @@ describe('Clinical History Management (e2e) (RF-B-020, RF-B-021, RF-B-022, RF-B-
     expect(getRes.body.treatmentItems).toHaveLength(1);
     expect(getRes.body.treatmentItems[0].status).toBe(TreatmentItemStatus.COMPLETED);
     expect(getRes.body.totalEstimatedCostCop).toBe(120000);
+  });
+
+  it('debe permitir a ADMIN exportar la historia clínica completa en PDF recibiendo application/pdf válido sin incluir privateNotes (200)', async () => {
+    const now = new Date('2026-10-15T11:00:00.000Z');
+
+    // Registrar un hallazgo de odontograma para enriquecer el PDF
+    const toothFinding = ToothFinding.create({
+      toothNumber: ToothNumber.of('16'),
+      surface: ToothSurface.OCCLUSAL,
+      findingCode: FindingCatalogCode.CARIES,
+      status: FindingStatus.EXISTING,
+      notes: 'Caries oclusal profunda',
+      createdAt: now,
+    });
+    const odontogram = Odontogram.create({
+      id: '00000000-0000-4000-8000-000000000099',
+      patientId: testPatientId,
+      clinicId: testClinicId,
+      hasTemporalDentition: false,
+      findings: [toothFinding],
+      createdAt: now,
+      updatedAt: now,
+    });
+    await odontogramRepo.save(odontogram);
+
+    // Obtener la historia clínica creada para testPatientId
+    const history = await clinicalHistoryRepo.findByPatientId(testPatientId, testClinicId);
+    const historyId = history?.id ?? '00000000-0000-4000-8000-000000000001';
+
+    // Registrar una atención clínica con notas privadas confidenciales
+    const attention = ClinicalAttention.create({
+      id: '00000000-0000-4000-8000-000000000088',
+      patientId: testPatientId,
+      clinicId: testClinicId,
+      clinicalHistoryId: historyId,
+      attendedByUserId: adminId,
+      evolutionNotes: 'Evolución favorable del paciente tras la restauración en resina.',
+      privateNotes: 'Nota super confidencial que NO debe salir en el PDF',
+      status: ClinicalAttentionStatus.CLOSED,
+      attendedAt: now,
+      proceduresPerformed: [],
+      materialsUsed: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+    await attentionRepo.save(attention);
+
+    // Descargar el PDF como ADMIN
+    const res = await request(app.getHttpServer())
+      .get(`/v1/clinical-histories/patient/${testPatientId}/pdf`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .buffer(true)
+      .parse((response, callback) => {
+        const data: Buffer[] = [];
+        response.on('data', (chunk: Buffer) => data.push(chunk));
+        response.on('end', () => callback(null, Buffer.concat(data)));
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['content-disposition']).toBe(
+      `attachment; filename="historia-clinica-${testPatientId}.pdf"`,
+    );
+    expect(Buffer.isBuffer(res.body)).toBe(true);
+    expect((res.body as Buffer).length).toBeGreaterThan(500);
+
+    const pdfContent = (res.body as Buffer).toString('latin1');
+    expect(pdfContent).toMatch(/^%PDF-/);
+    // Garantizar que la nota privada confidencial jamás se filtre en el PDF (RC-023)
+    expect(pdfContent).not.toContain('Nota super confidencial');
+  });
+
+  it('debe rechazar con 404 CLINICAL_HISTORY_NOT_FOUND cuando se intenta exportar el PDF de un paciente sin historia clínica', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/v1/clinical-histories/patient/${testPatient2Id}/pdf`)
+      .set('Authorization', `Bearer ${adminAccessToken}`);
+
+    expect(res.status).toBe(404);
+    expect(res.body.errorCode).toBe('CLINICAL_HISTORY_NOT_FOUND');
+  });
+
+  it('debe rechazar con 403 FORBIDDEN_ROLE cuando AUXILIARY intenta exportar la historia clínica en PDF', async () => {
+    const res = await request(app.getHttpServer())
+      .get(`/v1/clinical-histories/patient/${testPatientId}/pdf`)
+      .set('Authorization', `Bearer ${auxiliaryAccessToken}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body.errorCode).toBe('FORBIDDEN_ROLE');
   });
 });
