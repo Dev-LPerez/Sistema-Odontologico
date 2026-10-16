@@ -1,9 +1,10 @@
 import { OdontogramRepositoryPort } from '../../domain/odontogram.repository.port';
 import { Odontogram } from '../../domain/odontogram.entity';
-import { DuplicateOdontogramError } from '../../domain/clinical.errors';
+import { DuplicateOdontogramError, OdontogramConflictError } from '../../domain/clinical.errors';
 
 export class InMemoryOdontogramRepository implements OdontogramRepositoryPort {
   private readonly odontograms = new Map<string, Odontogram>();
+  private readonly savedUpdatedAtMap = new Map<string, number>();
 
   async findByPatientId(clinicId: string, patientId: string): Promise<Odontogram | null> {
     for (const odon of this.odontograms.values()) {
@@ -14,7 +15,7 @@ export class InMemoryOdontogramRepository implements OdontogramRepositoryPort {
     return null;
   }
 
-  async save(odontogram: Odontogram): Promise<void> {
+  async save(odontogram: Odontogram, expectedUpdatedAt?: Date): Promise<void> {
     for (const existing of this.odontograms.values()) {
       if (
         existing.clinicId === odontogram.clinicId &&
@@ -25,10 +26,19 @@ export class InMemoryOdontogramRepository implements OdontogramRepositoryPort {
       }
     }
 
+    if (expectedUpdatedAt !== undefined) {
+      const persisted = this.savedUpdatedAtMap.get(odontogram.id);
+      if (persisted === undefined || persisted !== expectedUpdatedAt.getTime()) {
+        throw new OdontogramConflictError();
+      }
+    }
+
     this.odontograms.set(odontogram.id, odontogram);
+    this.savedUpdatedAtMap.set(odontogram.id, odontogram.updatedAt.getTime());
   }
 
   clear(): void {
     this.odontograms.clear();
+    this.savedUpdatedAtMap.clear();
   }
 }

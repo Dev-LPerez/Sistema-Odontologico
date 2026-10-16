@@ -19,6 +19,7 @@ import { ToothNumber } from '../../domain/tooth-number.vo';
 import { ToothSurface } from '../../domain/tooth-surface.enum';
 import { FindingCatalogCode } from '../../domain/finding-catalog.enum';
 import { FindingStatus } from '../../domain/finding-status.enum';
+import { OdontogramConflictError } from '../../domain/clinical.errors';
 
 export interface FindingCommandItem {
   toothNumber: number | string;
@@ -33,6 +34,7 @@ export interface UpsertPatientOdontogramCommand {
   patientId: string;
   hasTemporalDentition?: boolean;
   findings: FindingCommandItem[];
+  expectedUpdatedAt?: string | Date;
 }
 
 @Injectable()
@@ -70,10 +72,27 @@ export class UpsertPatientOdontogramUseCase {
       command.patientId,
     );
 
+    const expectedDate = command.expectedUpdatedAt
+      ? typeof command.expectedUpdatedAt === 'string'
+        ? new Date(command.expectedUpdatedAt)
+        : command.expectedUpdatedAt
+      : undefined;
+
     if (existing) {
-      existing.updateFindings(domainFindings, command.hasTemporalDentition, this.clock.now());
-      await this.odontogramRepository.save(existing);
+      existing.updateFindings(
+        domainFindings,
+        command.hasTemporalDentition,
+        this.clock.now(),
+        expectedDate,
+      );
+      await this.odontogramRepository.save(existing, expectedDate);
       return existing;
+    }
+
+    if (expectedDate !== undefined) {
+      throw new OdontogramConflictError(
+        'No se puede aplicar concurrencia optimista sobre un odontograma que no existe',
+      );
     }
 
     const now = this.clock.now();

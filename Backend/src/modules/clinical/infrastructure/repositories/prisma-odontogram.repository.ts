@@ -4,7 +4,7 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 import { OdontogramRepositoryPort } from '../../domain/odontogram.repository.port';
 import { Odontogram } from '../../domain/odontogram.entity';
 import { OdontogramMapper } from '../mappers/odontogram.mapper';
-import { DuplicateOdontogramError } from '../../domain/clinical.errors';
+import { DuplicateOdontogramError, OdontogramConflictError } from '../../domain/clinical.errors';
 
 @Injectable()
 export class PrismaOdontogramRepository implements OdontogramRepositoryPort {
@@ -21,10 +21,30 @@ export class PrismaOdontogramRepository implements OdontogramRepositoryPort {
     return record ? OdontogramMapper.toDomain(record) : null;
   }
 
-  async save(odontogram: Odontogram): Promise<void> {
+  async save(odontogram: Odontogram, expectedUpdatedAt?: Date): Promise<void> {
     const data = OdontogramMapper.toPrisma(odontogram);
 
     try {
+      if (expectedUpdatedAt !== undefined) {
+        const result = await this.prisma.client.odontogram.updateMany({
+          where: {
+            id: data.id,
+            clinicId: data.clinicId,
+            updatedAt: expectedUpdatedAt,
+          },
+          data: {
+            hasTemporalDentition: data.hasTemporalDentition,
+            teethState: data.teethState,
+            updatedAt: data.updatedAt,
+          },
+        });
+
+        if (result.count === 0) {
+          throw new OdontogramConflictError();
+        }
+        return;
+      }
+
       await this.prisma.client.odontogram.upsert({
         where: { id: data.id },
         create: data,

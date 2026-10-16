@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -65,6 +66,15 @@ export class UpsertOdontogramDto {
   @IsOptional()
   @IsBoolean()
   hasTemporalDentition?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Marca de tiempo esperada de la última actualización para control de concurrencia optimista (ISO-8601)',
+    example: '2026-10-15T10:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  expectedUpdatedAt?: string;
 
   @ApiProperty({
     type: [ToothFindingItemDto],

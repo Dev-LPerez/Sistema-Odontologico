@@ -370,4 +370,53 @@ describe('Odontogram Management (e2e) (RF-B-040, RF-B-041, RF-B-042, RF-B-043, R
     expect(targetSnapshot.snapshotData.teeth['16'][0].findingCode).toBe('CARIES');
     expect(targetSnapshot.snapshotData.teeth['16'][0].status).toBe('EXISTING');
   });
+
+  it('debe rechazar con 409 ODONTOGRAM_CONFLICT cuando expectedUpdatedAt no coincide con la última versión guardada del odontograma', async () => {
+    // 1. Obtener la versión actual del odontograma
+    const currentRes = await request(app.getHttpServer())
+      .get(`/v1/odontograms/patient/${testPatientId}`)
+      .set('Authorization', `Bearer ${adminAccessToken}`);
+
+    expect(currentRes.status).toBe(200);
+    const actualUpdatedAt = currentRes.body.updatedAt;
+
+    // 2. Intentar actualizar con un timestamp obsoleto que no coincide
+    const conflictRes = await request(app.getHttpServer())
+      .put(`/v1/odontograms/patient/${testPatientId}`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        hasTemporalDentition: false,
+        findings: [
+          {
+            toothNumber: 16,
+            surface: ToothSurface.OCCLUSAL,
+            findingCode: FindingCatalogCode.CARIES,
+            status: FindingStatus.EXISTING,
+          },
+        ],
+        expectedUpdatedAt: '2020-01-01T00:00:00.000Z',
+      });
+
+    expect(conflictRes.status).toBe(409);
+    expect(conflictRes.body.errorCode).toBe('ODONTOGRAM_CONFLICT');
+
+    // 3. Actualizar con el timestamp exacto actual tiene éxito
+    const successRes = await request(app.getHttpServer())
+      .put(`/v1/odontograms/patient/${testPatientId}`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .send({
+        hasTemporalDentition: false,
+        findings: [
+          {
+            toothNumber: 16,
+            surface: ToothSurface.OCCLUSAL,
+            findingCode: FindingCatalogCode.CARIES,
+            status: FindingStatus.EXISTING,
+          },
+        ],
+        expectedUpdatedAt: actualUpdatedAt,
+      });
+
+    expect(successRes.status).toBe(200);
+  });
 });

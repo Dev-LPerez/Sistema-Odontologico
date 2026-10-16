@@ -12,7 +12,7 @@ import { ToothNumber } from '../../domain/tooth-number.vo';
 import { ToothSurface } from '../../domain/tooth-surface.enum';
 import { FindingCatalogCode } from '../../domain/finding-catalog.enum';
 import { FindingStatus } from '../../domain/finding-status.enum';
-import { DuplicateOdontogramError } from '../../domain/clinical.errors';
+import { DuplicateOdontogramError, OdontogramConflictError } from '../../domain/clinical.errors';
 import { Prisma } from '@prisma/client';
 
 interface RepositoryFactory {
@@ -316,6 +316,37 @@ describe('Odontogram Repositories Contract Tests (RC-018, RC-050, RC-055)', () =
         });
 
         await expect(odontogramRepo.save(odonDuplicate)).rejects.toThrow(DuplicateOdontogramError);
+      });
+
+      it('debe lanzar OdontogramConflictError (409) cuando expectedUpdatedAt no coincide con el updatedAt actual del odontograma', async () => {
+        const odon = Odontogram.create({
+          id: 'odon-concurrency-1',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          hasTemporalDentition: false,
+          findings: [],
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+        await odontogramRepo.save(odon);
+
+        // Intento con expectedUpdatedAt obsoleto (diferente a fixedNow)
+        const outdatedDate = new Date('2020-01-01T00:00:00.000Z');
+        await expect(odontogramRepo.save(odon, outdatedDate)).rejects.toThrow(
+          OdontogramConflictError,
+        );
+
+        // Intento con expectedUpdatedAt coincidente
+        const nextUpdatedAt = new Date('2026-10-15T12:00:00.000Z');
+        odon.updateFindings([], false, nextUpdatedAt);
+        await odontogramRepo.save(odon, fixedNow);
+
+        const refreshed = await odontogramRepo.findByPatientId(
+          'clinic-contract-1',
+          'pat-contract-1',
+        );
+        expect(refreshed).not.toBeNull();
+        expect(refreshed!.updatedAt).toEqual(nextUpdatedAt);
       });
     });
   });

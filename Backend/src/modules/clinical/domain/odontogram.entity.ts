@@ -1,6 +1,6 @@
 import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { ToothFinding, PlainToothFinding } from './tooth-finding.vo';
-import { InvalidOdontogramDataError } from './clinical.errors';
+import { InvalidOdontogramDataError, OdontogramConflictError } from './clinical.errors';
 
 export interface OdontogramProps {
   id: string;
@@ -87,7 +87,17 @@ export class Odontogram extends AggregateRoot<string> {
     newFindings: ToothFinding[],
     hasTemporalDentition: boolean | undefined,
     updatedAt: Date,
+    expectedUpdatedAt?: Date,
   ): void {
+    if (expectedUpdatedAt !== undefined) {
+      if (
+        isNaN(expectedUpdatedAt.getTime()) ||
+        this._updatedAt.getTime() !== expectedUpdatedAt.getTime()
+      ) {
+        throw new OdontogramConflictError();
+      }
+    }
+
     const nextHasTemporal =
       hasTemporalDentition !== undefined ? hasTemporalDentition : this._hasTemporalDentition;
 

@@ -61,6 +61,7 @@ export class OdontogramController {
       patientId,
       hasTemporalDentition: dto.hasTemporalDentition,
       findings: dto.findings,
+      expectedUpdatedAt: dto.expectedUpdatedAt,
     });
 
     return OdontogramResponseDto.fromDomain(result);

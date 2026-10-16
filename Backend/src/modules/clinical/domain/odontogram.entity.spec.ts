@@ -4,7 +4,7 @@ import { ToothNumber } from './tooth-number.vo';
 import { ToothSurface } from './tooth-surface.enum';
 import { FindingCatalogCode } from './finding-catalog.enum';
 import { FindingStatus } from './finding-status.enum';
-import { InvalidOdontogramDataError } from './clinical.errors';
+import { InvalidOdontogramDataError, OdontogramConflictError } from './clinical.errors';
 
 describe('Odontogram Aggregate Root', () => {
   const fixedCreatedAt = new Date('2026-10-15T10:00:00.000Z');
@@ -265,5 +265,28 @@ describe('Odontogram Aggregate Root', () => {
     expect(structured.teeth['16']).toHaveLength(1);
     expect(structured.teeth['16'][0].findingCode).toBe('CARIES');
     expect(structured.teeth['16'][0].surface).toBe('OCCLUSAL');
+  });
+
+  it('debe lanzar OdontogramConflictError si expectedUpdatedAt no coincide con updatedAt actual', () => {
+    const odontogram = Odontogram.create({
+      id: 'odon-1',
+      clinicId: 'clinic-123',
+      patientId: 'patient-456',
+      hasTemporalDentition: false,
+      findings: [],
+      createdAt: fixedCreatedAt,
+      updatedAt: fixedUpdatedAt,
+    });
+
+    const outdatedDate = new Date('2026-10-14T08:00:00.000Z');
+    const newUpdatedAt = new Date('2026-10-15T12:00:00.000Z');
+
+    expect(() => odontogram.updateFindings([], false, newUpdatedAt, outdatedDate)).toThrow(
+      OdontogramConflictError,
+    );
+
+    // Debe permitir la actualización si expectedUpdatedAt coincide
+    expect(() => odontogram.updateFindings([], false, newUpdatedAt, fixedUpdatedAt)).not.toThrow();
+    expect(odontogram.updatedAt).toEqual(newUpdatedAt);
   });
 });

@@ -67,6 +67,17 @@ export class DuplicateOdontogramError extends DomainError {
   }
 }
 
+export class OdontogramConflictError extends DomainError {
+  readonly category: DomainErrorCategory = 'CONFLICT';
+  readonly code = 'ODONTOGRAM_CONFLICT';
+
+  constructor(
+    message = 'El odontograma ha sido modificado por otra sesión. Recargue los datos antes de continuar.',
+  ) {
+    super(message);
+  }
+}
+
 export class InvalidClinicalAttentionDataError extends DomainError {
   readonly category: DomainErrorCategory = 'VALIDATION';
   readonly code = 'INVALID_CLINICAL_ATTENTION_DATA';

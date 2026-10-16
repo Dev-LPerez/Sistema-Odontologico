@@ -6,7 +6,8 @@ import { IdGeneratorPort } from '../../../../shared/application/ports/id-generat
 import { ToothSurface } from '../../domain/tooth-surface.enum';
 import { FindingCatalogCode } from '../../domain/finding-catalog.enum';
 import { FindingStatus } from '../../domain/finding-status.enum';
-import { InvalidOdontogramDataError } from '../../domain/clinical.errors';
+import { Odontogram } from '../../domain/odontogram.entity';
+import { InvalidOdontogramDataError, OdontogramConflictError } from '../../domain/clinical.errors';
 
 describe('UpsertPatientOdontogramUseCase', () => {
   let useCase: UpsertPatientOdontogramUseCase;
@@ -139,5 +140,50 @@ describe('UpsertPatientOdontogramUseCase', () => {
         ],
       }),
     ).rejects.toThrow(InvalidOdontogramDataError);
+  });
+
+  it('debe lanzar OdontogramConflictError (409) cuando expectedUpdatedAt no coincide con el updatedAt actual del odontograma', async () => {
+    patientRepo.findById.mockResolvedValue({
+      id: 'patient-123',
+      clinicId: 'clinic-123',
+    } as unknown as Patient);
+
+    const existingOdontogram = Odontogram.create({
+      id: 'odon-existing',
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      hasTemporalDentition: false,
+      findings: [],
+      createdAt: new Date('2026-10-15T09:00:00.000Z'),
+      updatedAt: new Date('2026-10-15T10:00:00.000Z'),
+    });
+    odontogramRepo.findByPatientId.mockResolvedValue(existingOdontogram);
+
+    // Intento con expectedUpdatedAt obsoleto
+    await expect(
+      useCase.execute({
+        clinicId: 'clinic-123',
+        patientId: 'patient-123',
+        hasTemporalDentition: false,
+        findings: [],
+        expectedUpdatedAt: '2026-10-15T09:00:00.000Z',
+      }),
+    ).rejects.toThrow(OdontogramConflictError);
+
+    // Intento con expectedUpdatedAt coincidente debe funcionar
+    clock.now.mockReturnValue(new Date('2026-10-15T11:00:00.000Z'));
+    const updated = await useCase.execute({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      hasTemporalDentition: false,
+      findings: [],
+      expectedUpdatedAt: '2026-10-15T10:00:00.000Z',
+    });
+
+    expect(updated).toBeDefined();
+    expect(odontogramRepo.save).toHaveBeenCalledWith(
+      existingOdontogram,
+      new Date('2026-10-15T10:00:00.000Z'),
+    );
   });
 });
