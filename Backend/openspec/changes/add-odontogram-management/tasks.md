@@ -13,10 +13,10 @@ Cada escenario de `specs/odontogram-management/spec.md` DEBE estar cubierto por 
 
 ## 1. Esquema Prisma, migración (`onDelete: Restrict`) y redacción en Logs/Sentry (RC-023, RC-050, RC-055)
 
-- [ ] 1.1 Agregar en `Backend/prisma/schema.prisma` los modelos `Odontogram` y `OdontogramSnapshot` vinculados a `Clinic` y `Patient` (y `OdontogramSnapshot` vinculado a `Odontogram`) usando explícitamente `onDelete: Restrict` en todas las relaciones Foreign Key, con `@@unique([clinicId, patientId])` en `Odontogram`.
-- [ ] 1.2 Crear la migración `Backend/prisma/migrations/20261015020000_add_odontogram_tables/migration.sql`, aplicarla sobre PostgreSQL local con `npx prisma migrate deploy` y ejecutar `pnpm --filter backend prisma:generate`.
-- [ ] 1.3 Ampliar `CLINICAL_REDACT_PATHS` en `Backend/src/shared/infrastructure/logger/logger.config.ts` y `SENSITIVE_KEYS` en `Backend/src/shared/infrastructure/sentry/sentry.sanitizer.ts` (más sus pruebas unitarias) para censurar `teethState`, `snapshotData` y `findings` (`RNF-B-009`, `RC-023`).
-- [ ] 1.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/prisma Backend/src/shared/infrastructure && git commit -m "feat(clinical): add Odontogram and OdontogramSnapshot schema and redact JSONB fields"`
+- [x] 1.1 Agregar en `Backend/prisma/schema.prisma` los modelos `Odontogram` y `OdontogramSnapshot` vinculados a `Clinic` y `Patient` (y `OdontogramSnapshot` vinculado a `Odontogram`) usando explícitamente `onDelete: Restrict` en todas las relaciones Foreign Key, con `@@unique([clinicId, patientId])` en `Odontogram`.
+- [x] 1.2 Crear la migración `Backend/prisma/migrations/20261015020000_add_odontogram_tables/migration.sql`, aplicarla sobre PostgreSQL local con `npx prisma migrate deploy` y ejecutar `pnpm --filter backend prisma:generate`.
+- [x] 1.3 Ampliar `CLINICAL_REDACT_PATHS` en `Backend/src/shared/infrastructure/logger/logger.config.ts` y `SENSITIVE_KEYS` en `Backend/src/shared/infrastructure/sentry/sentry.sanitizer.ts` (más sus pruebas unitarias) para censurar `teethState`, `snapshotData` y `findings` (`RNF-B-009`, `RC-023`).
+- [x] 1.4 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/prisma Backend/src/shared/infrastructure && git commit -m "feat(clinical): add Odontogram and OdontogramSnapshot schema and redact JSONB fields"`
 
 ## 2. Capa domain de odontograma en `modules/clinical` con TDD (RC-002, RC-012)
 

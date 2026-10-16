@@ -64,6 +64,17 @@ describe('Logger Clinical Redaction', () => {
     }
   });
 
+  it('debe redactar los campos de odontograma: teethState y snapshotData (RNF-B-009, RC-023)', () => {
+    const odontogramFields = ['teethState', 'snapshotData'];
+
+    for (const field of odontogramFields) {
+      const isRedacted = CLINICAL_REDACT_PATHS.some(
+        (path) => path === field || path.endsWith(`.${field}`),
+      );
+      expect(isRedacted).toBe(true);
+    }
+  });
+
   it('debe censurar datos clínicos y credenciales al serializar logs con Pino', () => {
     let loggedData = '';
     const destination = {
@@ -94,6 +105,8 @@ describe('Logger Clinical Redaction', () => {
         antecedents: 'Alérgica a la penicilina',
         findings: 'Gingivitis marginal',
         odontogram: { tooth16: 'decayed' },
+        teethState: { '16': { findings: ['CARIES'] } },
+        snapshotData: { reason: 'INITIAL' },
       },
     });
 
@@ -108,6 +121,8 @@ describe('Logger Clinical Redaction', () => {
     expect(parsed.patient.antecedents).toBe('[REDACTED]');
     expect(parsed.patient.findings).toBe('[REDACTED]');
     expect(parsed.patient.odontogram).toBe('[REDACTED]');
+    expect(parsed.patient.teethState).toBe('[REDACTED]');
+    expect(parsed.patient.snapshotData).toBe('[REDACTED]');
   });
 
   describe('createPinoHttpConfig', () => {

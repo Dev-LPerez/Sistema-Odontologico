@@ -120,6 +120,24 @@ describe('sanitizeSentryEvent', () => {
     expect(sanitized.extra.clinicalHistory.historyId).toBe('hist-123');
   });
 
+  it('debe redactar los campos de odontograma en Sentry: teethState y snapshotData (RNF-B-009, RC-023)', () => {
+    const event = {
+      extra: {
+        odontogramDetails: {
+          teethState: { '16': { findings: ['AMALGAM'] } },
+          snapshotData: { reason: 'EVOLUTION' },
+          odontogramId: 'odon-123',
+        },
+      },
+    };
+
+    const sanitized = sanitizeSentryEvent(event);
+
+    expect(sanitized.extra.odontogramDetails.teethState).toBe('[REDACTED]');
+    expect(sanitized.extra.odontogramDetails.snapshotData).toBe('[REDACTED]');
+    expect(sanitized.extra.odontogramDetails.odontogramId).toBe('odon-123');
+  });
+
   it('debe manejar eventos nulos o sin campos adicionales sin fallar', () => {
     expect(sanitizeSentryEvent(null as unknown as Record<string, unknown>)).toBeNull();
     const minimalEvent = { message: 'Simple error' };

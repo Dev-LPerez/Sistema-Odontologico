@@ -33,6 +33,8 @@ export const CLINICAL_REDACT_PATHS = [
   '*.diagnoses',
   '*.allergiesDetails',
   '*.medicationsDetails',
+  '*.teethState',
+  '*.snapshotData',
   'diagnosis',
   'notes',
   'privateNotes',
@@ -56,6 +58,8 @@ export const CLINICAL_REDACT_PATHS = [
   'diagnoses',
   'allergiesDetails',
   'medicationsDetails',
+  'teethState',
+  'snapshotData',
 ];
 
 export const createPinoHttpConfig = () => {

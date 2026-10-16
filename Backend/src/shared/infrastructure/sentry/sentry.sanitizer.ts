@@ -26,6 +26,8 @@ const SENSITIVE_KEYS = new Set([
   'diagnoses',
   'allergiesdetails',
   'medicationsdetails',
+  'teethstate',
+  'snapshotdata',
 ]);
 
 function isSensitiveKey(key: string): boolean {

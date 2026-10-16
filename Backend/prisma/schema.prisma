@@ -39,6 +39,8 @@ model Clinic {
   materials              Material[]
   clinicalHistories      ClinicalHistory[]
   treatmentPlanItems     TreatmentPlanItem[]
+  odontograms            Odontogram[]
+  odontogramSnapshots    OdontogramSnapshot[]
 
   @@map("clinics")
 }
@@ -115,7 +117,9 @@ model Patient {
 
   clinic            Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
   procedurePrices   PatientProcedurePrice[]
-  clinicalHistories ClinicalHistory[]
+  clinicalHistories   ClinicalHistory[]
+  odontograms         Odontogram[]
+  odontogramSnapshots OdontogramSnapshot[]
 
   @@unique([clinicId, documentType, documentNumber])
   @@index([clinicId, isActive])
@@ -226,3 +230,40 @@ model TreatmentPlanItem {
   @@index([clinicId, clinicalHistoryId])
   @@map("treatment_plan_items")
 }
+
+model Odontogram {
+  id                   String               @id @default(uuid())
+  clinicId             String               @map("clinic_id")
+  patientId            String               @map("patient_id")
+  hasTemporalDentition Boolean              @default(false) @map("has_temporal_dentition")
+  teethState           Json                 @map("teeth_state")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+
+  clinic               Clinic               @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patient              Patient              @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  snapshots            OdontogramSnapshot[]
+
+  @@unique([clinicId, patientId])
+  @@index([clinicId, patientId])
+  @@map("odontograms")
+}
+
+model OdontogramSnapshot {
+  id                   String     @id @default(uuid())
+  clinicId             String     @map("clinic_id")
+  patientId            String     @map("patient_id")
+  odontogramId         String     @map("odontogram_id")
+  hasTemporalDentition Boolean    @map("has_temporal_dentition")
+  snapshotData         Json       @map("snapshot_data")
+  notes                String?
+  createdAt            DateTime   @default(now()) @map("created_at")
+
+  clinic               Clinic     @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patient              Patient    @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  odontogram           Odontogram @relation(fields: [odontogramId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, patientId, createdAt])
+  @@map("odontogram_snapshots")
+}
+
