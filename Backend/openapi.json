@@ -1671,6 +1671,127 @@
         ]
       }
     },
+    "/v1/clinical-attentions/{id}/close": {
+      "post": {
+        "operationId": "ClinicalAttentionsController_close",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Atención clínica cerrada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalAttentionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cerrar formalmente una atención clínica completa",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
+    "/v1/clinical-attentions/{id}/amend": {
+      "post": {
+        "operationId": "ClinicalAttentionsController_amend",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AmendClinicalAttentionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Atención clínica enmendada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicalAttentionResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enmendar una atención clínica cerrada registrando el motivo y preservando el historial",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
+    "/v1/clinical-attentions/{id}/versions": {
+      "get": {
+        "operationId": "ClinicalAttentionsController_listVersions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listado de versiones históricas obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalAttentionVersionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar las versiones históricas de enmiendas de una atención clínica",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -3890,6 +4011,159 @@
         "required": [
           "materialId",
           "quantity"
+        ]
+      },
+      "AmendClinicalAttentionDto": {
+        "type": "object",
+        "properties": {
+          "changeReason": {
+            "type": "string",
+            "description": "Motivo justificado de la enmienda clínica (obligatorio)",
+            "example": "Aclaración de dosis y notas de evolución rectificadas"
+          },
+          "evolutionNotes": {
+            "type": "string",
+            "description": "Notas de evolución clínica rectificadas",
+            "example": "Se revisa obturación en pieza 16 y se aclara indicación terapéutica"
+          },
+          "prescription": {
+            "type": "string",
+            "description": "Fórmula médica o prescripción rectificada",
+            "example": "Amoxicilina 875mg cada 12 horas por 7 días",
+            "nullable": true
+          },
+          "postOperativeIndications": {
+            "type": "string",
+            "description": "Indicaciones postoperatorias rectificadas",
+            "example": "Reposo relativo y no realizar buches bruscos",
+            "nullable": true
+          },
+          "privateNotes": {
+            "type": "string",
+            "description": "Notas privadas exclusivas de la doctora rectificadas",
+            "example": "Seguimiento especial requerido en próxima cita",
+            "nullable": true
+          },
+          "proceduresPerformed": {
+            "description": "Procedimientos clínicos realizados rectificados",
+            "example": [
+              {
+                "code": "RES-01",
+                "toothNumber": "16"
+              }
+            ],
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "changeReason"
+        ]
+      },
+      "ClinicalAttentionSnapshotResponseDto": {
+        "type": "object",
+        "properties": {
+          "proceduresPerformed": {
+            "description": "Procedimientos clínicos realizados en la versión previa",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "evolutionNotes": {
+            "type": "string",
+            "description": "Notas de evolución clínica previas"
+          },
+          "prescription": {
+            "type": "string",
+            "description": "Prescripción médica previa",
+            "nullable": true
+          },
+          "postOperativeIndications": {
+            "type": "string",
+            "description": "Indicaciones postoperatorias previas",
+            "nullable": true
+          },
+          "privateNotes": {
+            "type": "string",
+            "description": "Notas privadas previas (null para rol AUXILIARY)",
+            "nullable": true
+          },
+          "attendedAt": {
+            "type": "string",
+            "description": "Fecha y hora de la atención (UTC)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Fecha de actualización de la versión previa (UTC)"
+          },
+          "materialsUsed": {
+            "description": "Materiales propios utilizados en la versión previa",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "proceduresPerformed",
+          "evolutionNotes",
+          "attendedAt",
+          "updatedAt",
+          "materialsUsed"
+        ]
+      },
+      "ClinicalAttentionVersionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID de la versión histórica de la atención"
+          },
+          "clinicId": {
+            "type": "string",
+            "description": "ID del consultorio"
+          },
+          "attentionId": {
+            "type": "string",
+            "description": "ID de la atención clínica"
+          },
+          "versionNumber": {
+            "type": "number",
+            "description": "Número correlativo de versión (iniciando en 1)"
+          },
+          "previousData": {
+            "description": "Instantánea inmutable del estado previo a la enmienda",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClinicalAttentionSnapshotResponseDto"
+              }
+            ]
+          },
+          "changeReason": {
+            "type": "string",
+            "description": "Motivo justificado de la enmienda clínica"
+          },
+          "amendedByUserId": {
+            "type": "string",
+            "description": "ID del usuario que realizó la enmienda"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Fecha y hora de la enmienda (UTC)"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "attentionId",
+          "versionNumber",
+          "previousData",
+          "changeReason",
+          "amendedByUserId",
+          "createdAt"
         ]
       }
     }
