@@ -26,9 +26,9 @@ Cada escenario de `specs/odontogram-management/spec.md` DEBE estar cubierto por 
 
 ## 3. Capa application de odontograma en `modules/clinical` con TDD (RC-002, RC-015, RC-016, RC-017)
 
-- [ ] 3.1 Escribir las pruebas unitarias en rojo en `Backend/src/modules/clinical/application/` para `upsert-patient-odontogram.use-case.spec.ts`, `create-odontogram-snapshot.use-case.spec.ts`, `get-odontogram-by-patient.query.spec.ts` y `list-odontogram-snapshots.query.spec.ts` usando los nombres exactos de la Matriz de Trazabilidad, dobles en memoria, `ClockPort` fijo e `IdGeneratorPort` determinista.
-- [ ] 3.2 Implementar `upsert-patient-odontogram.use-case.ts`, `create-odontogram-snapshot.use-case.ts`, `get-odontogram-by-patient.query.ts` y `list-odontogram-snapshots.query.ts` (un único método `execute` por clase, importando de `../../../patients` vía `index.ts` público).
-- [ ] 3.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/clinical/application && git commit -m "feat(clinical): implement odontogram upsert, snapshot creation and queries"`
+- [x] 3.1 Escribir las pruebas unitarias en rojo en `Backend/src/modules/clinical/application/` para `upsert-patient-odontogram.use-case.spec.ts`, `create-odontogram-snapshot.use-case.spec.ts`, `get-odontogram-by-patient.query.spec.ts` y `list-odontogram-snapshots.query.spec.ts` usando los nombres exactos de la Matriz de Trazabilidad, dobles en memoria, `ClockPort` fijo e `IdGeneratorPort` determinista.
+- [x] 3.2 Implementar `upsert-patient-odontogram.use-case.ts`, `create-odontogram-snapshot.use-case.ts`, `get-odontogram-by-patient.query.ts` y `list-odontogram-snapshots.query.ts` (un único método `execute` por clase, importando de `../../../patients` vía `index.ts` público).
+- [x] 3.3 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check` y `pnpm --filter backend test` en verde, y hacer commit: `git add Backend/src/modules/clinical/application && git commit -m "feat(clinical): implement odontogram upsert, snapshot creation and queries"`
 
 ## 4. Capa infrastructure y suite de contrato contra PostgreSQL real (RC-018, RC-050, RC-055)
 
