@@ -1330,6 +1330,12 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": "Rol sin permisos para exportar historia clínica (requiere ADMIN)"
+          },
+          "404": {
+            "description": "Paciente o historia clínica no encontrada"
           }
         },
         "security": [
@@ -1824,6 +1830,53 @@
           }
         ],
         "summary": "Listar las versiones históricas de enmiendas de una atención clínica",
+        "tags": [
+          "Clinical Attentions"
+        ]
+      }
+    },
+    "/v1/clinical-attentions/patient/{patientId}/tooth/{toothNumber}/materials": {
+      "get": {
+        "operationId": "ClinicalAttentionsController_getToothMaterialHistory",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "toothNumber",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de materiales dentales obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ToothMaterialHistoryResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar el historial cronológico de materiales dentales aplicados en un diente específico",
         "tags": [
           "Clinical Attentions"
         ]
@@ -4201,6 +4254,73 @@
           "changeReason",
           "amendedByUserId",
           "createdAt"
+        ]
+      },
+      "ToothMaterialHistoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "attentionId": {
+            "type": "string",
+            "description": "ID de la atención clínica",
+            "example": "d4444444-4444-4444-8444-444444444444"
+          },
+          "attendedAt": {
+            "type": "string",
+            "description": "Fecha y hora de la atención en formato ISO 8601",
+            "example": "2026-10-16T10:00:00.000Z"
+          },
+          "materialId": {
+            "type": "string",
+            "description": "ID del material utilizado",
+            "example": "m-resina-3m"
+          },
+          "brand": {
+            "type": "string",
+            "description": "Marca del material utilizado",
+            "example": "3M"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Referencia comercial del material",
+            "example": "Filtek Z350 XT"
+          },
+          "type": {
+            "type": "string",
+            "description": "Tipo o clasificación del material",
+            "example": "Resina compuesta"
+          },
+          "color": {
+            "type": "string",
+            "description": "Color o tono del material",
+            "example": "A2"
+          },
+          "toothNumber": {
+            "type": "string",
+            "description": "Número del diente tratado según nomenclatura FDI",
+            "example": "16"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Cantidad de unidades consumidas",
+            "example": 1
+          },
+          "notes": {
+            "type": "object",
+            "description": "Notas adicionales del uso del material",
+            "example": "Restauración en cara oclusal con aislamiento absoluto",
+            "nullable": true
+          }
+        },
+        "required": [
+          "attentionId",
+          "attendedAt",
+          "materialId",
+          "brand",
+          "reference",
+          "type",
+          "color",
+          "toothNumber",
+          "quantity"
         ]
       }
     }

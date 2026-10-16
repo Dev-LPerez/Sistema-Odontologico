@@ -125,6 +125,9 @@ export class ClinicalHistoryPdfDocumentMapper {
       };
     }
 
+    const formatDateTime = (d: Date) =>
+      clock.formatDateTimeInBogota ? clock.formatDateTimeInBogota(d) : clock.formatInBogota(d);
+
     return {
       clinic: {
         name: clinic.name,
@@ -175,12 +178,12 @@ export class ClinicalHistoryPdfDocumentMapper {
           estimatedCostCop: item.estimatedCostCop,
         })),
         totalEstimatedCostCop: history.totalEstimatedCostCop,
-        createdAtFormatted: clock.formatDateTimeInBogota(history.createdAt),
+        createdAtFormatted: formatDateTime(history.createdAt),
       },
       odontogram: odontogramData,
       attentions: sortedAttentions.map((att) => ({
         id: att.id,
-        attendedAtFormatted: clock.formatDateTimeInBogota(att.attendedAt),
+        attendedAtFormatted: formatDateTime(att.attendedAt),
         evolutionNotes: att.evolutionNotes,
         prescription: att.prescription,
         postOperativeIndications: att.postOperativeIndications,
@@ -201,7 +204,7 @@ export class ClinicalHistoryPdfDocumentMapper {
           notes: m.notes,
         })),
       })),
-      generatedAtFormatted: clock.formatDateTimeInBogota(clock.now()),
+      generatedAtFormatted: formatDateTime(clock.now()),
     };
   }
 }

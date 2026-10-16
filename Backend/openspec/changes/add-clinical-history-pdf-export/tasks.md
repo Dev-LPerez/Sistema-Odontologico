@@ -100,7 +100,7 @@ Cada escenario de `specs/clinical-history-management/spec.md` DEBE estar cubiert
       3. **Control negativo real sobre el texto decodificado:** `expect(decodedText).not.toContain('Nota super confidencial')`.
   - Hacer commit: `git add Backend/src/modules/clinical/presentation Backend/test/clinical-history.e2e-spec.ts && git commit -m "fix(clinical): add Cache-Control no-store, OpenAPI decorators and decode PDF text in E2E test"`
 
-- [ ] 6.6 **Verificar cobertura >= 90 % en todas las subcarpetas (incluyendo `% Branch`), regenerar `Backend/openapi.json` y actualizar `evidence.md`:**
+- [x] 6.6 **Verificar cobertura >= 90 % en todas las subcarpetas (incluyendo `% Branch`), regenerar `Backend/openapi.json` y actualizar `evidence.md`:**
   - Ejecutar `pnpm --filter backend openapi:generate` y verificar que `/v1/clinical-histories/patient/{patientId}/pdf` (con `403`, `404` y `application/pdf`) y `/v1/clinical-attentions/patient/{patientId}/tooth/{toothNumber}/materials` estén documentados en `Backend/openapi.json`.
   - Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, comprobando que `src/modules/clinical/application/queries`, `src/modules/clinical/application/mappers`, `src/modules/clinical/application/use-cases` y `src/modules/clinical/domain` tengan todos `% Branch >= 90%`.
   - Actualizar `Backend/openspec/changes/add-clinical-history-pdf-export/evidence.md` con la salida **literal e íntegra** de los 5 comandos y métricas exactas que coincidan 100 % con la tabla ASCII de Jest.

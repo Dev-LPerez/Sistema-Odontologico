@@ -396,5 +396,86 @@ describe('ClinicalHistoryPdfDocumentMapper', () => {
       expect(TREATMENT_ITEM_STATUS_LABELS['IN_PROGRESS']).toBe('En curso');
       expect(TREATMENT_ITEM_STATUS_LABELS['COMPLETED']).toBe('Realizado');
     });
+
+    it('debe cubrir branches de fallback cuando los códigos de catálogo no están en los diccionarios o surface es null', () => {
+      // Mock de odontograma con superficie nula y códigos no reconocidos
+      const customOdontogram = {
+        hasTemporalDentition: false,
+        toStructuredJson: () => ({
+          teeth: {
+            '11': [
+              {
+                findingCode: 'UNKNOWN_FINDING',
+                surface: null,
+                status: 'UNKNOWN_STATUS',
+                notes: 'Test fallback surface null',
+              },
+              {
+                findingCode: 'UNKNOWN_FINDING_2',
+                surface: 'UNKNOWN_SURFACE',
+                status: 'UNKNOWN_STATUS_2',
+                notes: 'Test fallback unknown surface',
+              },
+            ],
+          },
+        }),
+      } as unknown as Odontogram;
+
+      const customHistory = {
+        chiefComplaint: 'Consulta',
+        currentIllness: 'Ninguna',
+        medicalAntecedents: {
+          hypertension: false,
+          diabetes: false,
+          allergies: false,
+          medications: false,
+          bleedingDisorders: false,
+          pregnancy: false,
+        },
+        clinicalExamination: null,
+        diagnoses: [],
+        treatmentItems: [
+          {
+            procedureCode: 'PROC-99',
+            procedureName: 'Procedimiento Custom',
+            toothNumber: '11',
+            status: 'CUSTOM_TREATMENT_STATUS',
+            estimatedCostCop: 50000,
+          },
+        ],
+        totalEstimatedCostCop: 50000,
+        createdAt: fixedNow,
+      } as unknown as ClinicalHistory;
+
+      // Clock sin formatDateTimeInBogota para activar el fallback a formatInBogota
+      const clockWithoutDateTime: ClockPort = {
+        now: () => fixedNow,
+        todayInBogota: () => '2026-10-16',
+        formatInBogota: (d: Date) => d.toISOString().slice(0, 10),
+        isSameDayInBogota: () => true,
+      };
+
+      const data = ClinicalHistoryPdfDocumentMapper.toDocumentData({
+        clinic: mockClinic,
+        patient: mockPatient,
+        history: customHistory,
+        odontogram: customOdontogram,
+        attentions: [mockAttention1],
+        clock: clockWithoutDateTime,
+      });
+
+      const tooth11Findings = data.odontogram!.teeth['11'];
+      expect(tooth11Findings[0].findingCode).toBe('UNKNOWN_FINDING');
+      expect(tooth11Findings[0].surface).toBeNull();
+      expect(tooth11Findings[0].status).toBe('UNKNOWN_STATUS');
+
+      expect(tooth11Findings[1].findingCode).toBe('UNKNOWN_FINDING_2');
+      expect(tooth11Findings[1].surface).toBe('UNKNOWN_SURFACE');
+      expect(tooth11Findings[1].status).toBe('UNKNOWN_STATUS_2');
+
+      expect(data.history.treatmentItems[0].status).toBe('CUSTOM_TREATMENT_STATUS');
+      expect(data.history.createdAtFormatted).toBe('2026-10-16');
+      expect(data.attentions[0].attendedAtFormatted).toBe('2026-10-10');
+    });
   });
 });
