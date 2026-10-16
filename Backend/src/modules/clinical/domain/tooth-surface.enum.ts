@@ -1,0 +1,8 @@
+export enum ToothSurface {
+  OCCLUSAL = 'OCCLUSAL',
+  VESTIBULAR = 'VESTIBULAR',
+  LINGUAL = 'LINGUAL',
+  MESIAL = 'MESIAL',
+  DISTAL = 'DISTAL',
+  WHOLE_TOOTH = 'WHOLE_TOOTH',
+}

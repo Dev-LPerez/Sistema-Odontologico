@@ -37,3 +37,32 @@ export class TreatmentPlanItemNotFoundError extends DomainError {
     super(`Ítem de plan de tratamiento con ID '${itemId}' no encontrado`);
   }
 }
+
+export class InvalidOdontogramDataError extends DomainError {
+  readonly category: DomainErrorCategory = 'VALIDATION';
+  readonly code = 'INVALID_ODONTOGRAM_DATA';
+
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class OdontogramNotFoundError extends DomainError {
+  readonly category: DomainErrorCategory = 'NOT_FOUND';
+  readonly code = 'ODONTOGRAM_NOT_FOUND';
+
+  constructor(identifier: string) {
+    super(`Odontograma con identificador '${identifier}' no encontrado`);
+  }
+}
+
+export class DuplicateOdontogramError extends DomainError {
+  readonly category: DomainErrorCategory = 'CONFLICT';
+  readonly code = 'DUPLICATE_ODONTOGRAM';
+
+  constructor(patientId: string) {
+    super(
+      `Ya existe un odontograma registrado para el paciente '${patientId}' en este consultorio`,
+    );
+  }
+}
