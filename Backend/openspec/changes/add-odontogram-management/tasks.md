@@ -44,9 +44,9 @@ Cada escenario de `specs/odontogram-management/spec.md` DEBE estar cubierto por 
 
 ## 6. Contrato OpenAPI y evidencia literal (`evidence.md`)
 
-- [ ] 6.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y verificar que los endpoints `/v1/odontograms/...` estén documentados sin tipos `"object"` ambiguos en campos anulables.
-- [ ] 6.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-odontogram-management/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
-- [ ] 6.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record B-09 odontogram evidence"` dejando `git status` limpio.
+- [x] 6.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y verificar que los endpoints `/v1/odontograms/...` estén documentados sin tipos `"object"` ambiguos en campos anulables.
+- [x] 6.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-odontogram-management/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
+- [x] 6.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record B-09 odontogram evidence"` dejando `git status` limpio.
 
 ## Workflow follow-up
 

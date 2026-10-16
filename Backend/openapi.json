@@ -1306,6 +1306,169 @@
         ]
       }
     },
+    "/v1/odontograms/patient/{patientId}": {
+      "put": {
+        "operationId": "OdontogramController_upsert",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertOdontogramDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Odontograma actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdontogramResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registrar o actualizar el odontograma estructurado del paciente",
+        "tags": [
+          "Odontograms"
+        ]
+      },
+      "get": {
+        "operationId": "OdontogramController_getByPatient",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Odontograma obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdontogramResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar el odontograma estructurado del paciente",
+        "tags": [
+          "Odontograms"
+        ]
+      }
+    },
+    "/v1/odontograms/patient/{patientId}/snapshots": {
+      "post": {
+        "operationId": "OdontogramController_createSnapshot",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOdontogramSnapshotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Instantánea capturada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OdontogramSnapshotResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Capturar una instantánea inmutable del odontograma actual",
+        "tags": [
+          "Odontograms"
+        ]
+      },
+      "get": {
+        "operationId": "OdontogramController_listSnapshots",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de instantáneas obtenida exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OdontogramSnapshotResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar las instantáneas históricas del odontograma del paciente",
+        "tags": [
+          "Odontograms"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -2961,6 +3124,259 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "ToothFindingItemDto": {
+        "type": "object",
+        "properties": {
+          "toothNumber": {
+            "type": "number",
+            "description": "Número de diente FDI (11..48 o 51..85)",
+            "example": 16
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "OCCLUSAL",
+              "VESTIBULAR",
+              "LINGUAL",
+              "MESIAL",
+              "DISTAL",
+              "WHOLE_TOOTH"
+            ],
+            "description": "Superficie dental afectada",
+            "example": "OCCLUSAL"
+          },
+          "findingCode": {
+            "type": "string",
+            "enum": [
+              "CARIES",
+              "RESIN_RESTORATION",
+              "AMALGAM_RESTORATION",
+              "ABSENT",
+              "EXTRACTION_INDICATED",
+              "CALCULUS",
+              "PERIODONTAL_POCKET",
+              "CROWN",
+              "ENDODONTICS",
+              "SEALANT",
+              "FRACTURE"
+            ],
+            "description": "Código del catálogo de hallazgos",
+            "example": "CARIES"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "EXISTING",
+              "PLANNED",
+              "PERFORMED"
+            ],
+            "description": "Estado del hallazgo",
+            "example": "EXISTING"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas u observaciones del hallazgo",
+            "example": "Fosa oclusal profunda"
+          }
+        },
+        "required": [
+          "toothNumber",
+          "surface",
+          "findingCode",
+          "status"
+        ]
+      },
+      "UpsertOdontogramDto": {
+        "type": "object",
+        "properties": {
+          "hasTemporalDentition": {
+            "type": "boolean",
+            "description": "Indica si se habilita la dentición temporal (dientes 51..85)",
+            "default": false
+          },
+          "findings": {
+            "description": "Lista de hallazgos del odontograma",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToothFindingItemDto"
+            }
+          }
+        },
+        "required": [
+          "findings"
+        ]
+      },
+      "ToothFindingResponseDto": {
+        "type": "object",
+        "properties": {
+          "toothNumber": {
+            "type": "number",
+            "description": "Número de diente FDI",
+            "example": 16
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "OCCLUSAL",
+              "VESTIBULAR",
+              "LINGUAL",
+              "MESIAL",
+              "DISTAL",
+              "WHOLE_TOOTH"
+            ],
+            "description": "Superficie dental",
+            "example": "OCCLUSAL"
+          },
+          "findingCode": {
+            "type": "string",
+            "enum": [
+              "CARIES",
+              "RESIN_RESTORATION",
+              "AMALGAM_RESTORATION",
+              "ABSENT",
+              "EXTRACTION_INDICATED",
+              "CALCULUS",
+              "PERIODONTAL_POCKET",
+              "CROWN",
+              "ENDODONTICS",
+              "SEALANT",
+              "FRACTURE"
+            ],
+            "description": "Código del catálogo",
+            "example": "CARIES"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "EXISTING",
+              "PLANNED",
+              "PERFORMED"
+            ],
+            "description": "Estado",
+            "example": "EXISTING"
+          },
+          "notes": {
+            "type": "object",
+            "description": "Notas",
+            "example": "Fosa distal"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Fecha de registro en ISO"
+          }
+        },
+        "required": [
+          "toothNumber",
+          "surface",
+          "findingCode",
+          "status",
+          "createdAt"
+        ]
+      },
+      "OdontogramResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "odon-123"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-123"
+          },
+          "patientId": {
+            "type": "string",
+            "example": "patient-456"
+          },
+          "hasTemporalDentition": {
+            "type": "boolean",
+            "example": false
+          },
+          "teethState": {
+            "type": "object",
+            "description": "Estructura JSON indexada por número de diente FDI",
+            "additionalProperties": true
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ToothFindingResponseDto"
+            }
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "patientId",
+          "hasTemporalDentition",
+          "teethState",
+          "findings",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateOdontogramSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "description": "Notas u observaciones clínicas de la instantánea",
+            "example": "Instantánea de evolución tras obturación"
+          }
+        }
+      },
+      "OdontogramSnapshotResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "snap-123"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-123"
+          },
+          "patientId": {
+            "type": "string",
+            "example": "patient-456"
+          },
+          "odontogramId": {
+            "type": "string",
+            "example": "odon-123"
+          },
+          "hasTemporalDentition": {
+            "type": "boolean",
+            "example": false
+          },
+          "snapshotData": {
+            "type": "object",
+            "description": "Datos históricos inmutables de la instantánea",
+            "additionalProperties": true
+          },
+          "notes": {
+            "type": "object",
+            "example": "Instantánea inicial"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "patientId",
+          "odontogramId",
+          "hasTemporalDentition",
+          "snapshotData",
+          "createdAt"
         ]
       }
     }
