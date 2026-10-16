@@ -32,10 +32,13 @@ export * from './application/use-cases/create-odontogram-snapshot.use-case';
 export * from './application/use-cases/create-clinical-attention.use-case';
 export * from './application/use-cases/update-clinical-attention.use-case';
 export * from './application/use-cases/add-attention-material-used.use-case';
+export * from './application/use-cases/close-clinical-attention.use-case';
+export * from './application/use-cases/amend-closed-clinical-attention.use-case';
 export * from './application/queries/get-clinical-history-by-patient.query';
 export * from './application/queries/get-odontogram-by-patient.query';
 export * from './application/queries/list-odontogram-snapshots.query';
 export * from './application/queries/list-clinical-attentions-by-patient.query';
 export * from './application/queries/get-clinical-attention-by-id.query';
+export * from './application/queries/list-clinical-attention-versions.query';
 
 export * from './clinical.module';
