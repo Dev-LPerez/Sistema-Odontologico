@@ -43,6 +43,8 @@ describe('Identity Repositories Contract Tests (RC-018)', () => {
     await realPrisma.patientProcedurePrice.deleteMany();
     await realPrisma.procedure.deleteMany();
     await realPrisma.material.deleteMany();
+    await realPrisma.odontogramSnapshot.deleteMany();
+    await realPrisma.odontogram.deleteMany();
     await realPrisma.patient.deleteMany();
     await realPrisma.refreshSession.deleteMany();
     await realPrisma.user.deleteMany();
