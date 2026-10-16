@@ -31,6 +31,7 @@ import { ListClinicalAttentionsByPatientQuery } from './application/queries/list
 import { GetClinicalAttentionByIdQuery } from './application/queries/get-clinical-attention-by-id.query';
 import { ListClinicalAttentionVersionsQuery } from './application/queries/list-clinical-attention-versions.query';
 import { ExportClinicalHistoryPdfQuery } from './application/queries/export-clinical-history-pdf.query';
+import { GetToothMaterialHistoryQuery } from './application/queries/get-tooth-material-history.query';
 import { CLINICAL_HISTORY_PDF_GENERATOR_PORT } from './application/ports/clinical-history-pdf-generator.port';
 import { PdfmakeClinicalHistoryPdfGeneratorAdapter } from './infrastructure/adapters/pdfmake-clinical-history-pdf-generator.adapter';
 import { ClinicalHistoryController } from './presentation/clinical-history.controller';
@@ -83,6 +84,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     GetClinicalAttentionByIdQuery,
     ListClinicalAttentionVersionsQuery,
     ExportClinicalHistoryPdfQuery,
+    GetToothMaterialHistoryQuery,
   ],
   exports: [
     CLINICAL_HISTORY_REPOSITORY_PORT,
@@ -109,6 +111,7 @@ import { ClinicalAttentionsController } from './presentation/clinical-attentions
     GetClinicalAttentionByIdQuery,
     ListClinicalAttentionVersionsQuery,
     ExportClinicalHistoryPdfQuery,
+    GetToothMaterialHistoryQuery,
   ],
 })
 export class ClinicalModule {}

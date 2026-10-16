@@ -1,3 +1,4 @@
+import { AggregateRoot } from '../../../shared/domain/aggregate-root';
 import { ClinicalAttentionStatus } from './clinical-attention-status.enum';
 import {
   InvalidClinicalAttentionDataError,
@@ -7,6 +8,7 @@ import {
 } from './clinical.errors';
 import { AttentionMaterialUsed } from './attention-material-used.entity';
 import { AttentionSnapshotData } from './clinical-attention-version.entity';
+import { AttentionClosedEvent } from './attention-closed.event';
 
 export interface ProcedurePerformed {
   code: string;
@@ -53,10 +55,11 @@ export interface AmendClinicalAttentionProps {
   updatedAt: Date;
 }
 
-export class ClinicalAttention {
+export class ClinicalAttention extends AggregateRoot<string> {
   private readonly _materialsUsed: AttentionMaterialUsed[];
 
   private constructor(private readonly props: ClinicalAttentionProps) {
+    super(props.id);
     this._materialsUsed = props.materialsUsed ? [...props.materialsUsed] : [];
   }
 
@@ -196,6 +199,18 @@ export class ClinicalAttention {
     ClinicalAttention.validateDates(this.props.attendedAt, this.props.createdAt, updatedAt);
     this.props.status = ClinicalAttentionStatus.CLOSED;
     this.props.updatedAt = updatedAt;
+
+    this.addDomainEvent(
+      new AttentionClosedEvent({
+        aggregateId: this.id,
+        occurredOn: updatedAt,
+        clinicId: this.props.clinicId,
+        patientId: this.props.patientId,
+        clinicalHistoryId: this.props.clinicalHistoryId,
+        attendedByUserId: this.props.attendedByUserId,
+        proceduresPerformed: this.props.proceduresPerformed,
+      }),
+    );
   }
 
   public toSnapshotData(): AttentionSnapshotData {

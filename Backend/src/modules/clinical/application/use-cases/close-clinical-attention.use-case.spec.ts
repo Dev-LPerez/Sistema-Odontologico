@@ -4,6 +4,7 @@ import {
 } from './close-clinical-attention.use-case';
 import { ClinicalAttentionRepositoryPort } from '../../domain/clinical-attention.repository.port';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
+import { EventBusPort } from '../../../../shared/application/ports/event-bus.port';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
 import {
@@ -16,6 +17,7 @@ describe('CloseClinicalAttentionUseCase', () => {
   let useCase: CloseClinicalAttentionUseCase;
   let attentionRepo: jest.Mocked<ClinicalAttentionRepositoryPort>;
   let clock: jest.Mocked<ClockPort>;
+  let eventBus: jest.Mocked<EventBusPort>;
 
   const fixedAttendedAt = new Date('2026-10-16T09:00:00.000Z');
   const fixedCreatedAt = new Date('2026-10-16T09:05:00.000Z');
@@ -35,7 +37,12 @@ describe('CloseClinicalAttentionUseCase', () => {
       isSameDayInBogota: jest.fn().mockReturnValue(true),
     };
 
-    useCase = new CloseClinicalAttentionUseCase(attentionRepo, clock);
+    eventBus = {
+      publish: jest.fn(),
+      publishAll: jest.fn().mockResolvedValue(undefined),
+    };
+
+    useCase = new CloseClinicalAttentionUseCase(attentionRepo, clock, eventBus);
   });
 
   const createAttentionWithProcedures = () =>
@@ -77,6 +84,17 @@ describe('CloseClinicalAttentionUseCase', () => {
     expect(result.status).toBe(ClinicalAttentionStatus.CLOSED);
     expect(result.updatedAt).toEqual(closeTime);
     expect(attentionRepo.save).toHaveBeenCalledWith(attention);
+    expect(eventBus.publishAll).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          eventName: 'clinical.attention.closed',
+          aggregateId: 'att-1',
+          clinicId: 'clinic-123',
+          patientId: 'pat-1',
+        }),
+      ]),
+    );
+    expect(result.domainEvents).toHaveLength(0);
 
     // Impedir edición ordinaria posterior
     expect(() =>

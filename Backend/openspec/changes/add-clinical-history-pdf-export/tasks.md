@@ -55,7 +55,7 @@ Cada escenario de `specs/clinical-history-management/spec.md` DEBE estar cubiert
   - Crear la migración `Backend/prisma/migrations/20261016013000_fix_identity_on_delete_restrict/migration.sql` reemplazando las 3 constraints (`users_clinic_id_fkey`, `refresh_sessions_clinic_id_fkey`, `refresh_sessions_user_id_fkey`) con `ON DELETE RESTRICT ON UPDATE CASCADE`, aplicarla con `npx prisma migrate deploy` y ejecutar `pnpm --filter backend prisma:generate`.
   - Hacer commit: `git add Backend/prisma && git commit -m "fix(identity): enforce onDelete Restrict on User and RefreshSession foreign keys"`
 
-- [ ] 6.2 **Saldar deudas del Plan Maestro en `modules/clinical`: Evento `AttentionClosedEvent` (`B-11`) e Historial de Materiales por Diente (`B-10`, `RF-B-026`):**
+- [x] 6.2 **Saldar deudas del Plan Maestro en `modules/clinical`: Evento `AttentionClosedEvent` (`B-11`) e Historial de Materiales por Diente (`B-10`, `RF-B-026`):**
   - **Evento `AttentionClosedEvent` (`RF-B-028`, `RF-B-029`, Stack 3.4):**
     - Crear `Backend/src/modules/clinical/domain/attention-closed.event.ts` implementando `DomainEvent` (`eventName = 'clinical.attention.closed'`, `aggregateId`, `occurredOn`, `clinicId`, `patientId`, `clinicalHistoryId`, `attendedByUserId`, `proceduresPerformed`).
     - Hacer que `ClinicalAttention` extienda `AggregateRoot<string>` y que `ClinicalAttention.close(updatedAt)` invoque `this.addDomainEvent(new AttentionClosedEvent(...))`.

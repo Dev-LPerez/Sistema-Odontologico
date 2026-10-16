@@ -22,6 +22,7 @@ export * from './domain/clinical-attention.entity';
 export * from './domain/clinical-attention.repository.port';
 export * from './domain/clinical-attention-version.entity';
 export * from './domain/clinical-attention-version.repository.port';
+export * from './domain/attention-closed.event';
 
 export * from './application/use-cases/create-clinical-history.use-case';
 export * from './application/use-cases/update-clinical-history.use-case';
@@ -42,5 +43,7 @@ export * from './application/queries/get-clinical-attention-by-id.query';
 export * from './application/queries/list-clinical-attention-versions.query';
 export * from './application/ports/clinical-history-pdf-generator.port';
 export * from './application/queries/export-clinical-history-pdf.query';
+export * from './application/queries/get-tooth-material-history.query';
+export * from './presentation/dto/tooth-material-history-response.dto';
 
 export * from './clinical.module';

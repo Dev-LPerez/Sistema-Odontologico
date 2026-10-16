@@ -7,6 +7,7 @@ import {
   ClinicalAttentionNotClosedError,
 } from './clinical.errors';
 import { AttentionMaterialUsed } from './attention-material-used.entity';
+import { AttentionClosedEvent } from './attention-closed.event';
 
 describe('ClinicalAttention Aggregate', () => {
   const fixedAttendedAt = new Date('2026-10-16T09:00:00.000Z');
@@ -254,7 +255,7 @@ describe('ClinicalAttention Aggregate', () => {
     );
   });
 
-  it('debe permitir cerrar la atención cambiando el estado a CLOSED', () => {
+  it('debe permitir cerrar la atención cambiando el estado a CLOSED y emitiendo AttentionClosedEvent', () => {
     const attention = ClinicalAttention.create(validProps);
     const closeTime = new Date('2026-10-16T13:00:00.000Z');
 
@@ -262,6 +263,13 @@ describe('ClinicalAttention Aggregate', () => {
 
     expect(attention.status).toBe(ClinicalAttentionStatus.CLOSED);
     expect(attention.updatedAt).toEqual(closeTime);
+    expect(attention.domainEvents).toHaveLength(1);
+    const event = attention.domainEvents[0] as AttentionClosedEvent;
+    expect(event.eventName).toBe('clinical.attention.closed');
+    expect(event.aggregateId).toBe(attention.id);
+    expect(event.occurredOn).toEqual(closeTime);
+    expect(event.clinicId).toBe(attention.clinicId);
+    expect(event.patientId).toBe(attention.patientId);
   });
 
   it('debe lanzar IncompleteClinicalAttentionError (422) cuando se intenta cerrar una atención sin procedimientos realizados', () => {

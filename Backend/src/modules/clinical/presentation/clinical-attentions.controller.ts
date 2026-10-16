@@ -27,6 +27,7 @@ import { AmendClosedClinicalAttentionUseCase } from '../application/use-cases/am
 import { ListClinicalAttentionsByPatientQuery } from '../application/queries/list-clinical-attentions-by-patient.query';
 import { GetClinicalAttentionByIdQuery } from '../application/queries/get-clinical-attention-by-id.query';
 import { ListClinicalAttentionVersionsQuery } from '../application/queries/list-clinical-attention-versions.query';
+import { GetToothMaterialHistoryQuery } from '../application/queries/get-tooth-material-history.query';
 import { CreateClinicalAttentionDto } from './dto/create-clinical-attention.dto';
 import { UpdateClinicalAttentionDto } from './dto/update-clinical-attention.dto';
 import { AddAttentionMaterialUsedDto } from './dto/add-attention-material-used.dto';
@@ -35,6 +36,7 @@ import {
   ClinicalAttentionResponseDto,
   ClinicalAttentionVersionResponseDto,
 } from './dto/clinical-attention-response.dto';
+import { ToothMaterialHistoryResponseDto } from './dto/tooth-material-history-response.dto';
 
 @ApiTags('Clinical Attentions')
 @ApiBearerAuth()
@@ -50,6 +52,7 @@ export class ClinicalAttentionsController {
     private readonly listClinicalAttentionsByPatientQuery: ListClinicalAttentionsByPatientQuery,
     private readonly getClinicalAttentionByIdQuery: GetClinicalAttentionByIdQuery,
     private readonly listClinicalAttentionVersionsQuery: ListClinicalAttentionVersionsQuery,
+    private readonly getToothMaterialHistoryQuery: GetToothMaterialHistoryQuery,
   ) {}
 
   @Post()
@@ -252,5 +255,29 @@ export class ClinicalAttentionsController {
     });
 
     return versions.map((v) => ClinicalAttentionVersionResponseDto.fromDomain(v));
+  }
+
+  @Get('patient/:patientId/tooth/:toothNumber/materials')
+  @Roles(UserRole.ADMIN, UserRole.AUXILIARY)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Consultar el historial cronológico de materiales dentales aplicados en un diente específico',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Historial de materiales dentales obtenido exitosamente',
+    type: [ToothMaterialHistoryResponseDto],
+  })
+  async getToothMaterialHistory(
+    @CurrentUser() user: AuthenticatedUserPayload,
+    @Param('patientId', ParseUUIDPipe) patientId: string,
+    @Param('toothNumber') toothNumber: string,
+  ): Promise<ToothMaterialHistoryResponseDto[]> {
+    return this.getToothMaterialHistoryQuery.execute({
+      clinicId: user.clinicId,
+      patientId,
+      toothNumber,
+    });
   }
 }

@@ -4,6 +4,7 @@ import {
   ClinicalAttentionRepositoryPort,
 } from '../../domain/clinical-attention.repository.port';
 import { CLOCK_PORT, ClockPort } from '../../../../shared/application/ports/clock.port';
+import { EVENT_BUS_PORT, EventBusPort } from '../../../../shared/application/ports/event-bus.port';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
 import { ClinicalAttentionNotFoundError } from '../../domain/clinical.errors';
 
@@ -19,6 +20,8 @@ export class CloseClinicalAttentionUseCase {
     private readonly attentionRepository: ClinicalAttentionRepositoryPort,
     @Inject(CLOCK_PORT)
     private readonly clock: ClockPort,
+    @Inject(EVENT_BUS_PORT)
+    private readonly eventBus: EventBusPort,
   ) {}
 
   async execute(command: CloseClinicalAttentionCommand): Promise<ClinicalAttention> {
@@ -30,6 +33,8 @@ export class CloseClinicalAttentionUseCase {
     const now = this.clock.now();
     attention.close(now);
     await this.attentionRepository.save(attention);
+    await this.eventBus.publishAll(attention.domainEvents);
+    attention.clearDomainEvents();
 
     return attention;
   }

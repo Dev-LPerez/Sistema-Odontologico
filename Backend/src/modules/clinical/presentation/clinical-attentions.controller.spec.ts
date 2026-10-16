@@ -7,6 +7,7 @@ import { AmendClosedClinicalAttentionUseCase } from '../application/use-cases/am
 import { ListClinicalAttentionsByPatientQuery } from '../application/queries/list-clinical-attentions-by-patient.query';
 import { GetClinicalAttentionByIdQuery } from '../application/queries/get-clinical-attention-by-id.query';
 import { ListClinicalAttentionVersionsQuery } from '../application/queries/list-clinical-attention-versions.query';
+import { GetToothMaterialHistoryQuery } from '../application/queries/get-tooth-material-history.query';
 import { ClinicalAttention } from '../domain/clinical-attention.entity';
 import { ClinicalAttentionVersion } from '../domain/clinical-attention-version.entity';
 import { AttentionMaterialUsed } from '../domain/attention-material-used.entity';
@@ -28,6 +29,7 @@ describe('ClinicalAttentionsController Unit Tests', () => {
   let listQuery: jest.Mocked<ListClinicalAttentionsByPatientQuery>;
   let getByIdQuery: jest.Mocked<GetClinicalAttentionByIdQuery>;
   let listVersionsQuery: jest.Mocked<ListClinicalAttentionVersionsQuery>;
+  let getToothMaterialHistoryQuery: jest.Mocked<GetToothMaterialHistoryQuery>;
 
   const mockAdminUser: AuthenticatedUserPayload = {
     sub: 'user-admin-1',
@@ -103,6 +105,9 @@ describe('ClinicalAttentionsController Unit Tests', () => {
     listVersionsQuery = {
       execute: jest.fn(),
     } as unknown as jest.Mocked<ListClinicalAttentionVersionsQuery>;
+    getToothMaterialHistoryQuery = {
+      execute: jest.fn(),
+    } as unknown as jest.Mocked<GetToothMaterialHistoryQuery>;
 
     controller = new ClinicalAttentionsController(
       createUseCase,
@@ -113,6 +118,7 @@ describe('ClinicalAttentionsController Unit Tests', () => {
       listQuery,
       getByIdQuery,
       listVersionsQuery,
+      getToothMaterialHistoryQuery,
     );
   });
 
@@ -310,5 +316,32 @@ describe('ClinicalAttentionsController Unit Tests', () => {
     expect(response).toHaveLength(1);
     expect(response[0].id).toBe('ver-123');
     expect(response[0].versionNumber).toBe(1);
+  });
+
+  it('debe consultar el historial de materiales de un diente llamando a getToothMaterialHistory()', async () => {
+    const mockItems = [
+      {
+        attentionId: 'attn-123',
+        attendedAt: fixedDate.toISOString(),
+        materialId: 'mat-1',
+        brand: '3M',
+        reference: 'Filtek Z350 XT',
+        type: 'Resina compuesta',
+        color: 'A2',
+        toothNumber: '16',
+        quantity: 1,
+        notes: 'Restauración oclusal',
+      },
+    ];
+    getToothMaterialHistoryQuery.execute.mockResolvedValue(mockItems);
+
+    const result = await controller.getToothMaterialHistory(mockAuxiliaryUser, 'patient-123', '16');
+
+    expect(result).toEqual(mockItems);
+    expect(getToothMaterialHistoryQuery.execute).toHaveBeenCalledWith({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      toothNumber: '16',
+    });
   });
 });

@@ -621,4 +621,37 @@ describe('Clinical Attentions and Materials Management (e2e) (RF-B-024, RF-B-025
     expect(amendForbiddenRes.body.statusCode).toBe(403);
     expect(amendForbiddenRes.body.errorCode).toBe('FORBIDDEN_ROLE');
   });
+
+  it('debe permitir a ADMIN y AUXILIARY consultar el historial cronológico de materiales por diente (200)', async () => {
+    // 1. ADMIN consulta los materiales del diente 16
+    const resAdmin = await request(app.getHttpServer())
+      .get(`/v1/clinical-attentions/patient/${testPatientId}/tooth/16/materials`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(200);
+
+    expect(Array.isArray(resAdmin.body)).toBe(true);
+    expect(resAdmin.body.length).toBeGreaterThanOrEqual(1);
+    const item = resAdmin.body[0];
+    expect(item.toothNumber).toBe('16');
+    expect(item.materialId).toBe(testMaterial1Id);
+    expect(item.brand).toBe('3M');
+    expect(item.reference).toBe('Filtek Z350');
+    expect(item.quantity).toBe(2);
+
+    // 2. AUXILIARY consulta los materiales del diente 16 (permitido por rol)
+    const resAux = await request(app.getHttpServer())
+      .get(`/v1/clinical-attentions/patient/${testPatientId}/tooth/16/materials`)
+      .set('Authorization', `Bearer ${auxiliaryAccessToken}`)
+      .expect(200);
+
+    expect(resAux.body).toHaveLength(resAdmin.body.length);
+
+    // 3. Validación de número de diente inválido -> 400
+    const resInvalidTooth = await request(app.getHttpServer())
+      .get(`/v1/clinical-attentions/patient/${testPatientId}/tooth/99/materials`)
+      .set('Authorization', `Bearer ${adminAccessToken}`)
+      .expect(400);
+
+    expect(resInvalidTooth.body.errorCode).toBe('INVALID_ODONTOGRAM_DATA');
+  });
 });
