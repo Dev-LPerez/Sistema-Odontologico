@@ -66,3 +66,30 @@ export class DuplicateOdontogramError extends DomainError {
     );
   }
 }
+
+export class InvalidClinicalAttentionDataError extends DomainError {
+  readonly category: DomainErrorCategory = 'VALIDATION';
+  readonly code = 'INVALID_CLINICAL_ATTENTION_DATA';
+
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export class ClinicalAttentionNotFoundError extends DomainError {
+  readonly category: DomainErrorCategory = 'NOT_FOUND';
+  readonly code = 'CLINICAL_ATTENTION_NOT_FOUND';
+
+  constructor(identifier: string) {
+    super(`Atención clínica con identificador '${identifier}' no encontrada`);
+  }
+}
+
+export class ClinicalAttentionClosedError extends DomainError {
+  readonly category: DomainErrorCategory = 'INVARIANT_VIOLATION';
+  readonly code = 'CLINICAL_ATTENTION_CLOSED';
+
+  constructor(identifier: string) {
+    super(`La atención clínica '${identifier}' se encuentra cerrada y no permite modificaciones`);
+  }
+}
