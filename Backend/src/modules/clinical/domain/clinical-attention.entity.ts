@@ -4,7 +4,7 @@ import { AttentionMaterialUsed } from './attention-material-used.entity';
 
 export interface ProcedurePerformed {
   code: string;
-  name?: string;
+  name?: string | null;
   toothNumber?: string | null;
   surface?: string | null;
   notes?: string | null;
