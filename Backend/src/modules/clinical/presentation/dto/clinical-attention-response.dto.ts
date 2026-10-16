@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRole } from '../../../identity';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
 import { ClinicalAttentionVersion } from '../../domain/clinical-attention-version.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
@@ -126,7 +127,10 @@ export class ClinicalAttentionResponseDto {
   })
   materialsUsed!: AttentionMaterialUsedResponseDto[];
 
-  static fromDomain(attention: ClinicalAttention): ClinicalAttentionResponseDto {
+  static fromDomain(
+    attention: ClinicalAttention,
+    viewerRole: UserRole = UserRole.ADMIN,
+  ): ClinicalAttentionResponseDto {
     const dto = new ClinicalAttentionResponseDto();
     dto.id = attention.id;
     dto.clinicId = attention.clinicId;
@@ -138,7 +142,7 @@ export class ClinicalAttentionResponseDto {
     dto.evolutionNotes = attention.evolutionNotes;
     dto.prescription = attention.prescription;
     dto.postOperativeIndications = attention.postOperativeIndications;
-    dto.privateNotes = attention.privateNotes;
+    dto.privateNotes = viewerRole === UserRole.ADMIN ? attention.privateNotes : null;
     dto.attendedAt = attention.attendedAt.toISOString();
     dto.createdAt = attention.createdAt.toISOString();
     dto.updatedAt = attention.updatedAt.toISOString();
@@ -235,13 +239,22 @@ export class ClinicalAttentionVersionResponseDto {
   @ApiProperty({ description: 'Fecha y hora de la enmienda (UTC)' })
   createdAt!: string;
 
-  static fromDomain(version: ClinicalAttentionVersion): ClinicalAttentionVersionResponseDto {
+  static fromDomain(
+    version: ClinicalAttentionVersion,
+    viewerRole: UserRole = UserRole.ADMIN,
+  ): ClinicalAttentionVersionResponseDto {
     const dto = new ClinicalAttentionVersionResponseDto();
     dto.id = version.id;
     dto.clinicId = version.clinicId;
     dto.attentionId = version.attentionId;
     dto.versionNumber = version.versionNumber;
-    dto.previousData = version.previousData as ClinicalAttentionSnapshotResponseDto;
+    dto.previousData = {
+      ...(version.previousData as ClinicalAttentionSnapshotResponseDto),
+      privateNotes:
+        viewerRole === UserRole.ADMIN
+          ? ((version.previousData?.privateNotes as string | null) ?? null)
+          : null,
+    };
     dto.changeReason = version.changeReason;
     dto.amendedByUserId = version.amendedByUserId;
     dto.createdAt = version.createdAt.toISOString();

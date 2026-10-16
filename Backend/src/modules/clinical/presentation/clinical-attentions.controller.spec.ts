@@ -18,6 +18,10 @@ import { CreateClinicalAttentionDto } from './dto/create-clinical-attention.dto'
 import { UpdateClinicalAttentionDto } from './dto/update-clinical-attention.dto';
 import { AddAttentionMaterialUsedDto } from './dto/add-attention-material-used.dto';
 import { AmendClinicalAttentionDto } from './dto/amend-clinical-attention.dto';
+import {
+  ClinicalAttentionResponseDto,
+  ClinicalAttentionVersionResponseDto,
+} from './dto/clinical-attention-response.dto';
 
 describe('ClinicalAttentionsController Unit Tests', () => {
   let controller: ClinicalAttentionsController;
@@ -343,5 +347,59 @@ describe('ClinicalAttentionsController Unit Tests', () => {
       patientId: 'patient-123',
       toothNumber: '16',
     });
+  });
+
+  it('debe ocultar privateNotes en la entidad y en ClinicalAttentionResponseDto/ClinicalAttentionVersionResponseDto cuando viewerRole no es ADMIN', async () => {
+    // 1. Direct DTO fromDomain masking verification
+    const attentionDtoAdmin = ClinicalAttentionResponseDto.fromDomain(
+      sampleAttention,
+      UserRole.ADMIN,
+    );
+    expect(attentionDtoAdmin.privateNotes).toBe('Paciente con ligera ansiedad');
+
+    const attentionDtoAux = ClinicalAttentionResponseDto.fromDomain(
+      sampleAttention,
+      UserRole.AUXILIARY,
+    );
+    expect(attentionDtoAux.privateNotes).toBeNull();
+
+    const sampleVersion = ClinicalAttentionVersion.create({
+      id: 'ver-123',
+      clinicId: 'clinic-123',
+      attentionId: 'attn-123',
+      versionNumber: 1,
+      previousData: sampleAttention.toSnapshotData(),
+      changeReason: 'Razón de prueba',
+      amendedByUserId: 'user-admin-1',
+      createdAt: fixedDate,
+    });
+
+    const versionDtoAdmin = ClinicalAttentionVersionResponseDto.fromDomain(
+      sampleVersion,
+      UserRole.ADMIN,
+    );
+    expect(versionDtoAdmin.previousData.privateNotes).toBe('Paciente con ligera ansiedad');
+
+    const versionDtoAux = ClinicalAttentionVersionResponseDto.fromDomain(
+      sampleVersion,
+      UserRole.AUXILIARY,
+    );
+    expect(versionDtoAux.previousData.privateNotes).toBeNull();
+
+    // 2. Controller endpoint execution with AUXILIARY user
+    getByIdQuery.execute.mockResolvedValue(
+      sampleAttention.maskPrivateNotesForViewer(UserRole.AUXILIARY),
+    );
+    const controllerGetResult = await controller.getById(mockAuxiliaryUser, 'attn-123');
+    expect(controllerGetResult.privateNotes).toBeNull();
+
+    listVersionsQuery.execute.mockResolvedValue([
+      sampleVersion.maskPrivateNotesForViewer(UserRole.AUXILIARY),
+    ]);
+    const controllerListVersionsResult = await controller.listVersions(
+      mockAuxiliaryUser,
+      'attn-123',
+    );
+    expect(controllerListVersionsResult[0].previousData.privateNotes).toBeNull();
   });
 });

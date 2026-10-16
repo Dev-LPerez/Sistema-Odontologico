@@ -25,28 +25,6 @@ export class ListClinicalAttentionsByPatientQuery {
       params.patientId,
     );
 
-    if (params.viewerRole === UserRole.ADMIN) {
-      return attentions;
-    }
-
-    return attentions.map((attention) =>
-      ClinicalAttention.create({
-        id: attention.id,
-        clinicId: attention.clinicId,
-        patientId: attention.patientId,
-        clinicalHistoryId: attention.clinicalHistoryId,
-        attendedByUserId: attention.attendedByUserId,
-        status: attention.status,
-        proceduresPerformed: attention.proceduresPerformed,
-        evolutionNotes: attention.evolutionNotes,
-        prescription: attention.prescription,
-        postOperativeIndications: attention.postOperativeIndications,
-        privateNotes: null,
-        attendedAt: attention.attendedAt,
-        createdAt: attention.createdAt,
-        updatedAt: attention.updatedAt,
-        materialsUsed: attention.materialsUsed,
-      }),
-    );
+    return attentions.map((attention) => attention.maskPrivateNotesForViewer(params.viewerRole));
   }
 }

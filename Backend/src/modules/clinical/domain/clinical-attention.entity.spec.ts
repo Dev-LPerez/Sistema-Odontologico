@@ -382,4 +382,20 @@ describe('ClinicalAttention Aggregate', () => {
     expect(attention.updatedAt).toEqual(amendTime);
     expect(attention.status).toBe(ClinicalAttentionStatus.CLOSED);
   });
+
+  it('debe ocultar privateNotes en la entidad y en ClinicalAttentionResponseDto/ClinicalAttentionVersionResponseDto cuando viewerRole no es ADMIN', () => {
+    const attention = ClinicalAttention.create(validProps);
+    expect(attention.privateNotes).toBe('Paciente con ansiedad dental moderada');
+
+    const adminView = attention.maskPrivateNotesForViewer('ADMIN');
+    expect(adminView.privateNotes).toBe('Paciente con ansiedad dental moderada');
+
+    const auxiliaryView = attention.maskPrivateNotesForViewer('AUXILIARY');
+    expect(auxiliaryView.privateNotes).toBeNull();
+    expect(auxiliaryView.id).toBe(attention.id);
+    expect(auxiliaryView.evolutionNotes).toBe(attention.evolutionNotes);
+
+    const otherRoleView = attention.maskPrivateNotesForViewer('OTHER');
+    expect(otherRoleView.privateNotes).toBeNull();
+  });
 });

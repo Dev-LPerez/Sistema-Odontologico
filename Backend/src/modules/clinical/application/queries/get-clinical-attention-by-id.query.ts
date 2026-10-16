@@ -26,26 +26,6 @@ export class GetClinicalAttentionByIdQuery {
       throw new ClinicalAttentionNotFoundError(params.id);
     }
 
-    if (params.viewerRole === UserRole.ADMIN) {
-      return attention;
-    }
-
-    return ClinicalAttention.create({
-      id: attention.id,
-      clinicId: attention.clinicId,
-      patientId: attention.patientId,
-      clinicalHistoryId: attention.clinicalHistoryId,
-      attendedByUserId: attention.attendedByUserId,
-      status: attention.status,
-      proceduresPerformed: attention.proceduresPerformed,
-      evolutionNotes: attention.evolutionNotes,
-      prescription: attention.prescription,
-      postOperativeIndications: attention.postOperativeIndications,
-      privateNotes: null,
-      attendedAt: attention.attendedAt,
-      createdAt: attention.createdAt,
-      updatedAt: attention.updatedAt,
-      materialsUsed: attention.materialsUsed,
-    });
+    return attention.maskPrivateNotesForViewer(params.viewerRole);
   }
 }

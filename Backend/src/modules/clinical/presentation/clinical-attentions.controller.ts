@@ -80,7 +80,7 @@ export class ClinicalAttentionsController {
       attendedAt: dto.attendedAt ? new Date(dto.attendedAt) : undefined,
     });
 
-    return ClinicalAttentionResponseDto.fromDomain(attention);
+    return ClinicalAttentionResponseDto.fromDomain(attention, user.role as UserRole);
   }
 
   @Patch(':id')
@@ -107,7 +107,7 @@ export class ClinicalAttentionsController {
       proceduresPerformed: dto.proceduresPerformed,
     });
 
-    return ClinicalAttentionResponseDto.fromDomain(attention);
+    return ClinicalAttentionResponseDto.fromDomain(attention, user.role as UserRole);
   }
 
   @Post(':id/materials')
@@ -133,7 +133,7 @@ export class ClinicalAttentionsController {
       notes: dto.notes,
     });
 
-    return ClinicalAttentionResponseDto.fromDomain(attention);
+    return ClinicalAttentionResponseDto.fromDomain(attention, user.role as UserRole);
   }
 
   @Get('patient/:patientId')
@@ -155,7 +155,7 @@ export class ClinicalAttentionsController {
       viewerRole: user.role as UserRole,
     });
 
-    return attentions.map((a) => ClinicalAttentionResponseDto.fromDomain(a));
+    return attentions.map((a) => ClinicalAttentionResponseDto.fromDomain(a, user.role as UserRole));
   }
 
   @Get(':id')
@@ -177,7 +177,7 @@ export class ClinicalAttentionsController {
       viewerRole: user.role as UserRole,
     });
 
-    return ClinicalAttentionResponseDto.fromDomain(attention);
+    return ClinicalAttentionResponseDto.fromDomain(attention, user.role as UserRole);
   }
 
   @Post(':id/close')
@@ -198,7 +198,7 @@ export class ClinicalAttentionsController {
       id,
     });
 
-    return ClinicalAttentionResponseDto.fromDomain(attention);
+    return ClinicalAttentionResponseDto.fromDomain(attention, user.role as UserRole);
   }
 
   @Post(':id/amend')
@@ -230,7 +230,7 @@ export class ClinicalAttentionsController {
       proceduresPerformed: dto.proceduresPerformed,
     });
 
-    return ClinicalAttentionResponseDto.fromDomain(attention);
+    return ClinicalAttentionResponseDto.fromDomain(attention, user.role as UserRole);
   }
 
   @Get(':id/versions')
@@ -254,7 +254,9 @@ export class ClinicalAttentionsController {
       viewerRole: user.role as UserRole,
     });
 
-    return versions.map((v) => ClinicalAttentionVersionResponseDto.fromDomain(v));
+    return versions.map((v) =>
+      ClinicalAttentionVersionResponseDto.fromDomain(v, user.role as UserRole),
+    );
   }
 
   @Get('patient/:patientId/tooth/:toothNumber/materials')

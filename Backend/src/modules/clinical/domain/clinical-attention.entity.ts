@@ -237,6 +237,17 @@ export class ClinicalAttention extends AggregateRoot<string> {
     });
   }
 
+  public maskPrivateNotesForViewer(viewerRole: string): ClinicalAttention {
+    if (viewerRole === 'ADMIN') {
+      return this;
+    }
+    return new ClinicalAttention({
+      ...this.props,
+      privateNotes: null,
+      materialsUsed: this._materialsUsed,
+    });
+  }
+
   public amend(data: AmendClinicalAttentionProps): void {
     this.validateAmendPreconditions(data);
     this.applyAmendedEvolutionNotes(data.evolutionNotes);
