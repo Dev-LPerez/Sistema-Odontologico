@@ -10,7 +10,7 @@ export interface ToothFindingProps {
   findingCode: FindingCatalogCode;
   status: FindingStatus;
   notes?: string | null;
-  createdAt?: Date;
+  createdAt: Date;
 }
 
 export interface PlainToothFinding {
@@ -20,6 +20,20 @@ export interface PlainToothFinding {
   status: string;
   notes: string | null;
   createdAt: string;
+}
+
+function validateToothNumber(toothNumber: unknown): ToothNumber {
+  if (!toothNumber || !(toothNumber instanceof ToothNumber)) {
+    throw new InvalidOdontogramDataError('El número de diente FDI es obligatorio');
+  }
+  return toothNumber;
+}
+
+function validateCreatedAt(date: unknown): Date {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    throw new InvalidOdontogramDataError('La fecha de creación del hallazgo es obligatoria');
+  }
+  return date;
 }
 
 export class ToothFinding {
@@ -33,9 +47,8 @@ export class ToothFinding {
   ) {}
 
   static create(props: ToothFindingProps): ToothFinding {
-    if (!props.toothNumber || !(props.toothNumber instanceof ToothNumber)) {
-      throw new InvalidOdontogramDataError('El número de diente FDI es obligatorio');
-    }
+    const toothNumber = validateToothNumber(props.toothNumber);
+    const createdAt = validateCreatedAt(props.createdAt);
 
     if (!Object.values(ToothSurface).includes(props.surface)) {
       throw new InvalidOdontogramDataError(`La superficie '${props.surface}' es inválida`);
@@ -52,10 +65,9 @@ export class ToothFinding {
     }
 
     const notes = props.notes && props.notes.trim() !== '' ? props.notes.trim() : null;
-    const createdAt = props.createdAt ?? new Date();
 
     return new ToothFinding(
-      props.toothNumber,
+      toothNumber,
       props.surface,
       props.findingCode,
       props.status,

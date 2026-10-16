@@ -38,106 +38,106 @@
 > backend@0.0.1 test:cov C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
 > jest --coverage
 
-PASS src/modules/patients/infrastructure/queries/patients-queries.contract.spec.ts (14.886 s)
-PASS src/modules/clinical/infrastructure/repositories/odontogram-repositories.contract.spec.ts (6.958 s)
-PASS src/modules/clinical/presentation/clinical-history.controller.spec.ts (6.236 s)
+PASS src/modules/patients/infrastructure/queries/patients-queries.contract.spec.ts (12.04 s)
+PASS src/modules/clinical/infrastructure/repositories/odontogram-repositories.contract.spec.ts (5.308 s)
 PASS src/modules/catalogs/infrastructure/repositories/catalogs-repositories.contract.spec.ts
-PASS src/configure-app.spec.ts
-PASS src/modules/identity/presentation/users.controller.spec.ts
-PASS src/modules/catalogs/application/use-cases/set-patient-procedure-price.use-case.spec.ts
-PASS src/modules/identity/infrastructure/repositories/identity-repositories.contract.spec.ts
-PASS src/modules/patients/infrastructure/repositories/patients-repository.contract.spec.ts
-PASS src/modules/clinical/application/use-cases/create-clinical-history.use-case.spec.ts
-PASS src/modules/clinical/application/use-cases/upsert-patient-odontogram.use-case.spec.ts
-PASS src/modules/clinical/application/use-cases/create-odontogram-snapshot.use-case.spec.ts
-PASS src/modules/clinical/infrastructure/repositories/clinical-history-repository.contract.spec.ts
-PASS src/modules/identity/infrastructure/adapters/argon2-password-hasher.adapter.spec.ts
-PASS src/modules/patients/presentation/patients.controller.spec.ts
+PASS src/modules/clinical/presentation/clinical-history.controller.spec.ts
 PASS src/modules/clinical/presentation/odontogram.controller.spec.ts
-PASS src/modules/catalogs/presentation/catalogs.controller.spec.ts
-PASS src/modules/clinical/application/queries/list-odontogram-snapshots.query.spec.ts
-PASS src/modules/identity/presentation/clinic.controller.spec.ts
-PASS src/modules/clinical/application/use-cases/add-treatment-plan-item.use-case.spec.ts
-PASS src/modules/patients/presentation/dto/search-patients-query.dto.spec.ts
 PASS src/health/health.controller.spec.ts
-PASS src/shared/presentation/guards/roles.guard.spec.ts
+PASS src/modules/clinical/infrastructure/repositories/clinical-history-repository.contract.spec.ts
+PASS src/modules/catalogs/application/use-cases/set-patient-procedure-price.use-case.spec.ts
+PASS src/modules/patients/infrastructure/repositories/patients-repository.contract.spec.ts
+PASS src/modules/catalogs/presentation/catalogs.controller.spec.ts
+PASS src/modules/clinical/application/use-cases/create-clinical-history.use-case.spec.ts
+PASS src/modules/identity/infrastructure/adapters/argon2-password-hasher.adapter.spec.ts
+PASS src/modules/clinical/application/use-cases/add-treatment-plan-item.use-case.spec.ts
+PASS src/modules/clinical/application/use-cases/upsert-patient-odontogram.use-case.spec.ts
+PASS src/modules/clinical/application/queries/list-odontogram-snapshots.query.spec.ts
+PASS src/modules/clinical/application/use-cases/create-odontogram-snapshot.use-case.spec.ts
+PASS src/modules/patients/presentation/patients.controller.spec.ts
+PASS src/modules/identity/infrastructure/repositories/identity-repositories.contract.spec.ts
+PASS src/configure-app.spec.ts
+PASS src/modules/identity/presentation/clinic.controller.spec.ts
 PASS src/shared/presentation/guards/jwt-auth.guard.spec.ts
-PASS src/modules/identity/application/use-cases/create-user.use-case.spec.ts
+PASS src/modules/identity/presentation/users.controller.spec.ts
+PASS src/modules/patients/presentation/dto/search-patients-query.dto.spec.ts
+PASS src/shared/infrastructure/adapters/prisma-unit-of-work.adapter.spec.ts
+PASS src/modules/identity/infrastructure/adapters/jwt-token-service.adapter.spec.ts
 PASS src/shared/infrastructure/adapters/nest-event-bus.adapter.spec.ts
 PASS src/shared/infrastructure/prisma/prisma.service.spec.ts
-[Nest] 9636  - 16/10/2026, 12:21:28 a. m.     LOG [PrismaService] Prisma conectado exitosamente a PostgreSQL
-[Nest] 9636  - 16/10/2026, 12:21:29 a. m.    WARN [PrismaService] No se pudo conectar a la base de datos al iniciar: Connection error
-PASS src/modules/identity/infrastructure/adapters/jwt-token-service.adapter.spec.ts
-PASS src/modules/clinical/application/queries/get-odontogram-by-patient.query.spec.ts
+[Nest] 22020  - 16/10/2026, 12:55:38 a. m.     LOG [PrismaService] Prisma conectado exitosamente a PostgreSQL
+[Nest] 22020  - 16/10/2026, 12:55:38 a. m.    WARN [PrismaService] No se pudo conectar a la base de datos al iniciar: Connection error
+PASS src/shared/presentation/guards/roles.guard.spec.ts
+PASS src/shared/infrastructure/adapters/uuid-generator.adapter.spec.ts
 PASS src/modules/patients/application/use-cases/update-patient.use-case.spec.ts
+PASS src/modules/identity/application/use-cases/change-user-status.use-case.spec.ts
+PASS src/modules/patients/application/queries/get-patient-by-id.query.spec.ts
+PASS src/modules/catalogs/application/use-cases/consume-material-stock.use-case.spec.ts
+PASS src/modules/identity/application/use-cases/create-user.use-case.spec.ts
+PASS src/modules/patients/application/queries/detect-duplicate-patients.query.spec.ts
+PASS src/modules/identity/application/queries/list-clinic-users.query.spec.ts
+PASS src/modules/clinical/application/use-cases/update-clinical-history.use-case.spec.ts
+PASS src/modules/patients/application/use-cases/create-patient.use-case.spec.ts
+PASS src/modules/catalogs/application/use-cases/create-procedure.use-case.spec.ts
+PASS src/modules/catalogs/application/queries/list-materials.query.spec.ts
+PASS src/modules/identity/application/use-cases/refresh-session.use-case.spec.ts
 PASS src/modules/identity/application/use-cases/login.use-case.spec.ts
 PASS src/modules/patients/application/use-cases/change-patient-status.use-case.spec.ts
-PASS src/modules/patients/application/queries/get-patient-by-id.query.spec.ts
-PASS src/shared/infrastructure/adapters/system-clock.adapter.spec.ts
-PASS src/modules/identity/application/use-cases/refresh-session.use-case.spec.ts
-PASS src/modules/clinical/application/queries/get-clinical-history-by-patient.query.spec.ts
-PASS src/modules/identity/application/use-cases/update-user.use-case.spec.ts
-PASS src/shared/infrastructure/adapters/prisma-unit-of-work.adapter.spec.ts
-PASS src/modules/catalogs/domain/procedure.entity.spec.ts
-PASS src/modules/identity/application/queries/get-authenticated-user.query.spec.ts
-PASS src/modules/catalogs/application/use-cases/consume-material-stock.use-case.spec.ts
-PASS src/modules/patients/application/queries/detect-duplicate-patients.query.spec.ts
-PASS src/modules/identity/application/use-cases/change-user-status.use-case.spec.ts
-PASS src/modules/clinical/application/use-cases/update-treatment-plan-item-status.use-case.spec.ts
+PASS src/modules/clinical/application/queries/get-odontogram-by-patient.query.spec.ts
 PASS src/modules/identity/application/use-cases/update-clinic-profile.use-case.spec.ts
-PASS src/modules/patients/application/use-cases/create-patient.use-case.spec.ts
+PASS src/modules/patients/application/queries/list-patients.query.spec.ts
 PASS src/modules/catalogs/application/use-cases/update-material.use-case.spec.ts
+PASS src/modules/clinical/application/use-cases/update-treatment-plan-item-status.use-case.spec.ts
+PASS src/modules/identity/application/queries/get-authenticated-user.query.spec.ts
+PASS src/shared/infrastructure/middleware/correlation-id.middleware.spec.ts
+PASS src/modules/identity/application/use-cases/update-user.use-case.spec.ts
 PASS src/shared/presentation/filters/domain-exception.filter.spec.ts
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_VALIDATION]: Mensaje para VALIDATION
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_UNAUTHORIZED]: Mensaje para UNAUTHORIZED
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_FORBIDDEN]: Mensaje para FORBIDDEN
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_NOT_FOUND]: Mensaje para NOT_FOUND
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_CONFLICT]: Mensaje para CONFLICT
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_INVARIANT_VIOLATION]: Mensaje para INVARIANT_VIOLATION
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-from-header] DomainError [RESOURCE_NOT_FOUND]: No encontrado
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [req-id-fallback] DomainError [CONFLICT_CODE]: Conflicto
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [unknown] DomainError [INVALID_INPUT]: Datos inválidos
-[Nest] 9636  - 16/10/2026, 12:21:42 a. m.    WARN [DomainExceptionFilter] [corr-fallback-500] DomainError [UNKNOWN_ERR]: Error desconocido
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_VALIDATION]: Mensaje para VALIDATION
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_UNAUTHORIZED]: Mensaje para UNAUTHORIZED
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_FORBIDDEN]: Mensaje para FORBIDDEN
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_NOT_FOUND]: Mensaje para NOT_FOUND
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_CONFLICT]: Mensaje para CONFLICT
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-xyz-789] DomainError [ERR_INVARIANT_VIOLATION]: Mensaje para INVARIANT_VIOLATION
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-from-header] DomainError [RESOURCE_NOT_FOUND]: No encontrado
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [req-id-fallback] DomainError [CONFLICT_CODE]: Conflicto
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [unknown] DomainError [INVALID_INPUT]: Datos inválidos
+[Nest] 22020  - 16/10/2026, 12:55:49 a. m.    WARN [DomainExceptionFilter] [corr-fallback-500] DomainError [UNKNOWN_ERR]: Error desconocido
 PASS src/modules/identity/application/queries/get-clinic-profile.query.spec.ts
 PASS src/modules/catalogs/application/use-cases/create-material.use-case.spec.ts
-PASS src/modules/catalogs/application/use-cases/create-procedure.use-case.spec.ts
-PASS src/modules/clinical/application/use-cases/update-clinical-history.use-case.spec.ts
-PASS src/shared/infrastructure/adapters/uuid-generator.adapter.spec.ts
-PASS src/modules/patients/application/queries/list-patients.query.spec.ts
-PASS src/modules/catalogs/application/queries/list-materials.query.spec.ts
+PASS src/modules/catalogs/application/use-cases/update-procedure.use-case.spec.ts
+PASS src/modules/identity/application/use-cases/logout.use-case.spec.ts
+PASS src/modules/catalogs/application/queries/list-patient-procedure-prices.query.spec.ts
+PASS src/modules/clinical/application/queries/get-clinical-history-by-patient.query.spec.ts
+PASS src/shared/infrastructure/adapters/system-clock.adapter.spec.ts
 PASS src/modules/catalogs/application/queries/list-procedures.query.spec.ts
 PASS src/modules/patients/application/queries/search-patients.query.spec.ts
-PASS src/shared/infrastructure/middleware/correlation-id.middleware.spec.ts
-PASS src/modules/catalogs/application/use-cases/update-procedure.use-case.spec.ts
-PASS src/modules/identity/application/queries/list-clinic-users.query.spec.ts
-PASS src/modules/catalogs/application/queries/list-patient-procedure-prices.query.spec.ts
-PASS src/modules/identity/application/use-cases/logout.use-case.spec.ts
-PASS src/modules/clinical/domain/tooth-finding.vo.spec.ts
 PASS src/shared/infrastructure/logger/logger.redact.spec.ts
-PASS src/modules/patients/domain/phone-number.vo.spec.ts
-PASS src/shared/domain/domain-error.spec.ts
-PASS src/modules/identity/domain/email.vo.spec.ts
-PASS src/modules/catalogs/domain/money.vo.spec.ts
-PASS src/modules/patients/domain/document-identity.vo.spec.ts
-PASS src/modules/patients/domain/emergency-contact.vo.spec.ts
-PASS src/shared/domain/aggregate-root.spec.ts
-PASS src/modules/patients/domain/patient.entity.spec.ts
 PASS src/modules/clinical/domain/tooth-number.vo.spec.ts
+PASS src/modules/clinical/domain/odontogram.entity.spec.ts
+PASS src/modules/clinical/domain/tooth-finding.vo.spec.ts
+PASS src/modules/clinical/domain/medical-antecedents.vo.spec.ts
 PASS src/modules/clinical/domain/odontogram-snapshot.entity.spec.ts
-PASS src/modules/identity/domain/user.entity.spec.ts
+PASS src/modules/identity/domain/clinic.entity.spec.ts
+PASS src/modules/patients/domain/emergency-contact.vo.spec.ts
 PASS src/modules/catalogs/domain/material.entity.spec.ts
+PASS src/modules/clinical/domain/treatment-plan-item.entity.spec.ts
+PASS src/shared/domain/aggregate-root.spec.ts
+PASS src/modules/identity/domain/email.vo.spec.ts
+PASS src/modules/patients/domain/document-identity.vo.spec.ts
+PASS src/modules/patients/domain/patient.entity.spec.ts
 PASS src/modules/identity/domain/refresh-session.entity.spec.ts
 PASS src/modules/clinical/domain/clinical-history.entity.spec.ts
+PASS src/modules/catalogs/domain/money.vo.spec.ts
+PASS src/modules/catalogs/domain/procedure.entity.spec.ts
 PASS src/modules/catalogs/domain/patient-procedure-price.entity.spec.ts
-PASS src/modules/clinical/domain/treatment-plan-item.entity.spec.ts
-PASS src/modules/identity/domain/clinic.entity.spec.ts
-PASS src/modules/clinical/domain/medical-antecedents.vo.spec.ts
-PASS src/modules/clinical/domain/odontogram.entity.spec.ts
+PASS src/modules/identity/domain/user.entity.spec.ts
+PASS src/shared/domain/domain-error.spec.ts
+PASS src/modules/patients/domain/phone-number.vo.spec.ts
 PASS src/shared/infrastructure/sentry/sentry.sanitizer.spec.ts
 --------------------------------------------------|---------|----------|---------|---------|----------------------------------------
 File                                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                      
 --------------------------------------------------|---------|----------|---------|---------|----------------------------------------
-All files                                         |   97.76 |    91.39 |    95.5 |   97.65 |                                        
+All files                                         |   97.94 |    92.21 |   95.89 |   97.84 |                                        
  src                                              |     100 |      100 |     100 |     100 |                                        
   configure-app.ts                                |     100 |      100 |     100 |     100 |                                        
  src/health                                       |     100 |      100 |     100 |     100 |                                        
@@ -187,16 +187,16 @@ All files                                         |   97.76 |    91.39 |    95.5
   update-clinical-history.use-case.ts             |     100 |      100 |     100 |     100 |                                        
   update-treatment-plan-item-status.use-case.ts   |     100 |      100 |     100 |     100 |                                        
   upsert-patient-odontogram.use-case.ts           |     100 |      100 |     100 |     100 |                                        
- src/modules/clinical/domain                      |   97.62 |     92.1 |   96.72 |   97.59 |                                        
+ src/modules/clinical/domain                      |   99.33 |    97.45 |     100 |   99.32 |                                        
   clinical-history.entity.ts                      |     100 |      100 |     100 |     100 |                                        
   clinical.errors.ts                              |     100 |      100 |     100 |     100 |                                        
   finding-catalog.enum.ts                         |     100 |      100 |     100 |     100 |                                        
   finding-status.enum.ts                          |     100 |      100 |     100 |     100 |                                        
   medical-antecedents.vo.ts                       |     100 |      100 |     100 |     100 |                                        
   odontogram-snapshot.entity.ts                   |   95.65 |       90 |     100 |   95.65 | 41                                     
-  odontogram.entity.ts                            |   97.72 |    71.42 |     100 |   97.61 | 22                                     
-  tooth-finding.vo.ts                             |   95.83 |    91.66 |     100 |   95.83 | 37                                     
-  tooth-number.vo.ts                              |    82.6 |    85.71 |   66.66 |    82.6 | 24-28,39,55                            
+  odontogram.entity.ts                            |     100 |      100 |     100 |     100 |                                        
+  tooth-finding.vo.ts                             |   96.55 |    92.85 |     100 |   96.55 | 27                                     
+  tooth-number.vo.ts                              |     100 |      100 |     100 |     100 |                                        
   tooth-surface.enum.ts                           |     100 |      100 |     100 |     100 |                                        
   treatment-item-status.enum.ts                   |     100 |      100 |     100 |     100 |                                        
   treatment-plan-item.entity.ts                   |     100 |    94.11 |     100 |     100 | 68                                     
@@ -215,14 +215,14 @@ All files                                         |   97.76 |    91.39 |    95.5
   odontogram.controller.ts                        |     100 |      100 |     100 |     100 |                                        
  src/modules/clinical/presentation/dto            |   97.22 |      100 |   55.55 |   97.22 |                                        
   add-treatment-plan-item.dto.ts                  |     100 |      100 |     100 |     100 |                                        
-  clinical-history-response.dto.ts                |   96.87 |      100 |   66.66 |   96.87 | 125                                    
+  clinical-history-response.dto.ts                |   96.87 |      100 |   66.66 |   96.87 | 128                                    
   create-clinical-history.dto.ts                  |    92.3 |      100 |       0 |    92.3 | 26                                     
   create-odontogram-snapshot.dto.ts               |     100 |      100 |     100 |     100 |                                        
   medical-antecedents.dto.ts                      |     100 |      100 |     100 |     100 |                                        
   odontogram-response.dto.ts                      |     100 |      100 |     100 |     100 |                                        
   update-clinical-history.dto.ts                  |   91.66 |      100 |       0 |   91.66 | 28                                     
   update-treatment-item-status.dto.ts             |     100 |      100 |     100 |     100 |                                        
-  upsert-odontogram.dto.ts                        |   93.75 |      100 |       0 |   93.75 | 72                                     
+  upsert-odontogram.dto.ts                        |   93.75 |      100 |       0 |   93.75 | 74                                     
  src/modules/identity/application/queries         |     100 |      100 |     100 |     100 |                                        
   get-authenticated-user.query.ts                 |     100 |      100 |     100 |     100 |                                        
   get-clinic-profile.query.ts                     |     100 |      100 |     100 |     100 |                                        
@@ -332,9 +332,9 @@ All files                                         |   97.76 |    91.39 |    95.5
 --------------------------------------------------|---------|----------|---------|---------|----------------------------------------
 
 Test Suites: 84 passed, 84 total
-Tests:       416 passed, 416 total
+Tests:       422 passed, 422 total
 Snapshots:   0 total
-Time:        95.262 s
+Time:        68.217 s, estimated 74 s
 Ran all test suites.
 ```
 
@@ -343,17 +343,17 @@ Ran all test suites.
 > backend@0.0.1 test:e2e C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
 > jest --config ./test/jest-e2e.json
 
-PASS test/clinical-history.e2e-spec.ts (17.191 s)
+PASS test/clinical-history.e2e-spec.ts (17.512 s)
 PASS test/catalogs.e2e-spec.ts
-PASS test/odontogram.e2e-spec.ts (13.782 s)
 PASS test/auth.e2e-spec.ts
-PASS test/patients.e2e-spec.ts
-PASS test/health.e2e-spec.ts
 PASS test/users-and-clinic.e2e-spec.ts
+PASS test/patients.e2e-spec.ts
+PASS test/odontogram.e2e-spec.ts
+PASS test/health.e2e-spec.ts
 
 Test Suites: 7 passed, 7 total
 Tests:       59 passed, 59 total
 Snapshots:   0 total
-Time:        37.075 s
+Time:        28.06 s, estimated 37 s
 Ran all test suites.
 ```

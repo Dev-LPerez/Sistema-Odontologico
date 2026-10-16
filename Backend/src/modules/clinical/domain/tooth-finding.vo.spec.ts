@@ -7,6 +7,7 @@ import { InvalidOdontogramDataError } from './clinical.errors';
 
 describe('ToothFinding Value Object', () => {
   const tooth16 = ToothNumber.of(16);
+  const fixedDate = new Date('2026-10-15T10:00:00.000Z');
 
   it('debe crear exitosamente un hallazgo con superficie, código de catálogo y estado válidos', () => {
     const finding = ToothFinding.create({
@@ -15,6 +16,7 @@ describe('ToothFinding Value Object', () => {
       findingCode: FindingCatalogCode.CARIES,
       status: FindingStatus.EXISTING,
       notes: 'Caries de fosa oclusal profunda',
+      createdAt: fixedDate,
     });
 
     expect(finding.toothNumber.value).toBe(16);
@@ -22,7 +24,7 @@ describe('ToothFinding Value Object', () => {
     expect(finding.findingCode).toBe(FindingCatalogCode.CARIES);
     expect(finding.status).toBe(FindingStatus.EXISTING);
     expect(finding.notes).toBe('Caries de fosa oclusal profunda');
-    expect(finding.createdAt).toBeInstanceOf(Date);
+    expect(finding.createdAt).toEqual(fixedDate);
   });
 
   it('debe crear hallazgos para toda la pieza dental con WHOLE_TOOTH', () => {
@@ -31,6 +33,7 @@ describe('ToothFinding Value Object', () => {
       surface: ToothSurface.WHOLE_TOOTH,
       findingCode: FindingCatalogCode.ABSENT,
       status: FindingStatus.EXISTING,
+      createdAt: fixedDate,
     });
 
     expect(finding.surface).toBe(ToothSurface.WHOLE_TOOTH);
@@ -45,6 +48,7 @@ describe('ToothFinding Value Object', () => {
         surface: ToothSurface.OCCLUSAL,
         findingCode: 'UNKNOWN_CODE' as unknown as FindingCatalogCode,
         status: FindingStatus.EXISTING,
+        createdAt: fixedDate,
       }),
     ).toThrow(InvalidOdontogramDataError);
   });
@@ -56,6 +60,7 @@ describe('ToothFinding Value Object', () => {
         surface: 'INVALID_SURFACE' as unknown as ToothSurface,
         findingCode: FindingCatalogCode.CARIES,
         status: FindingStatus.EXISTING,
+        createdAt: fixedDate,
       }),
     ).toThrow(InvalidOdontogramDataError);
   });
@@ -67,6 +72,29 @@ describe('ToothFinding Value Object', () => {
         surface: ToothSurface.OCCLUSAL,
         findingCode: FindingCatalogCode.CARIES,
         status: 'INVALID_STATUS' as unknown as FindingStatus,
+        createdAt: fixedDate,
+      }),
+    ).toThrow(InvalidOdontogramDataError);
+  });
+
+  it('debe rechazar una fecha de creación inválida o nula', () => {
+    expect(() =>
+      ToothFinding.create({
+        toothNumber: tooth16,
+        surface: ToothSurface.OCCLUSAL,
+        findingCode: FindingCatalogCode.CARIES,
+        status: FindingStatus.EXISTING,
+        createdAt: null as unknown as Date,
+      }),
+    ).toThrow(InvalidOdontogramDataError);
+
+    expect(() =>
+      ToothFinding.create({
+        toothNumber: tooth16,
+        surface: ToothSurface.OCCLUSAL,
+        findingCode: FindingCatalogCode.CARIES,
+        status: FindingStatus.EXISTING,
+        createdAt: new Date('invalid-date'),
       }),
     ).toThrow(InvalidOdontogramDataError);
   });
@@ -78,6 +106,7 @@ describe('ToothFinding Value Object', () => {
       findingCode: FindingCatalogCode.RESIN_RESTORATION,
       status: FindingStatus.PERFORMED,
       notes: 'Resina fotocurada clase II',
+      createdAt: fixedDate,
     });
 
     const plain = finding.toPlainObject();
@@ -87,7 +116,7 @@ describe('ToothFinding Value Object', () => {
       findingCode: 'RESIN_RESTORATION',
       status: 'PERFORMED',
       notes: 'Resina fotocurada clase II',
-      createdAt: finding.createdAt.toISOString(),
+      createdAt: fixedDate.toISOString(),
     });
   });
 });

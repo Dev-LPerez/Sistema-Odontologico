@@ -47,12 +47,14 @@ export class ToothFindingItemDto {
   status!: FindingStatus;
 
   @ApiPropertyOptional({
+    type: String,
+    nullable: true,
     description: 'Notas u observaciones del hallazgo',
     example: 'Fosa oclusal profunda',
   })
   @IsOptional()
   @IsString()
-  notes?: string;
+  notes?: string | null;
 }
 
 export class UpsertOdontogramDto {

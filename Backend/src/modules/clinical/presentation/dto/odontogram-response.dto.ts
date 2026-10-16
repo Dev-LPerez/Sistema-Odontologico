@@ -30,7 +30,12 @@ export class ToothFindingResponseDto {
   })
   status!: FindingStatus;
 
-  @ApiPropertyOptional({ description: 'Notas', example: 'Fosa distal' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    description: 'Notas',
+    example: 'Fosa distal',
+  })
   notes!: string | null;
 
   @ApiProperty({ description: 'Fecha de registro en ISO' })
@@ -111,7 +116,11 @@ export class OdontogramSnapshotResponseDto {
   })
   snapshotData!: Record<string, unknown>;
 
-  @ApiPropertyOptional({ example: 'Instantánea inicial' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'Instantánea inicial',
+  })
   notes!: string | null;
 
   @ApiProperty()

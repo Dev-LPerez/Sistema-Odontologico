@@ -27,7 +27,7 @@ export class OdontogramMapper {
                 findingCode: item.findingCode as FindingCatalogCode,
                 status: item.status as FindingStatus,
                 notes: item.notes,
-                createdAt: item.createdAt ? new Date(item.createdAt) : undefined,
+                createdAt: item.createdAt ? new Date(item.createdAt) : raw.createdAt,
               }),
             );
           }

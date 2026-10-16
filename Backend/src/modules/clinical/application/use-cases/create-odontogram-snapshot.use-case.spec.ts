@@ -68,6 +68,7 @@ describe('CreateOdontogramSnapshotUseCase', () => {
       surface: ToothSurface.OCCLUSAL,
       findingCode: FindingCatalogCode.CARIES,
       status: FindingStatus.EXISTING,
+      createdAt: fixedDate,
     });
 
     const activeOdontogram = Odontogram.create({
@@ -101,6 +102,7 @@ describe('CreateOdontogramSnapshotUseCase', () => {
       surface: ToothSurface.OCCLUSAL,
       findingCode: FindingCatalogCode.RESIN_RESTORATION,
       status: FindingStatus.PERFORMED,
+      createdAt: new Date('2026-10-15T15:00:00.000Z'),
     });
     activeOdontogram.updateFindings([newFinding], false, new Date('2026-10-15T15:00:00.000Z'));
 

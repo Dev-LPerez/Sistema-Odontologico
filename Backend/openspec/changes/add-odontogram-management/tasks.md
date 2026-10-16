@@ -48,6 +48,24 @@ Cada escenario de `specs/odontogram-management/spec.md` DEBE estar cubierto por 
 - [x] 6.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/add-odontogram-management/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura).
 - [x] 6.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record B-09 odontogram evidence"` dejando `git status` limpio.
 
+## 7. Remediación de Hallazgos de Auditoría Basada en Evidencia (Bloqueantes antes de archivar)
+
+- [x] 7.1 **Eliminar uso de `new Date()` en la capa `domain` (`RC-012`, `RC-016`, `Backend/openspec/config.yaml`):**
+  - En `Backend/src/modules/clinical/domain/tooth-finding.vo.ts`, hacer que `createdAt: Date` sea obligatorio en `ToothFindingProps` (o recibirlo siempre sin hacer `new Date()`), actualizando `odontogram.mapper.ts` (`new Date(item.createdAt)`) y las pruebas unitarias (`tooth-finding.vo.spec.ts`, `odontogram.entity.spec.ts`, `create-odontogram-snapshot.use-case.spec.ts`) para pasar una fecha explícita determinista.
+  - En `Backend/src/modules/clinical/domain/odontogram.entity.ts`, hacer que `updatedAt: Date` sea un parámetro obligatorio en `updateFindings(newFindings: ToothFinding[], hasTemporalDentition: boolean | undefined, updatedAt: Date)` eliminando `updatedAt ?? new Date()`.
+- [x] 7.2 **Corregir campos anulables con `"type": "object"` en `Backend/openapi.json` (Tarea 6.1):**
+  - En `Backend/src/modules/clinical/presentation/dto/odontogram-response.dto.ts`, declarar `@ApiPropertyOptional({ type: String, nullable: true, description: 'Notas', example: 'Fosa distal' })` en `ToothFindingResponseDto.notes` y `@ApiPropertyOptional({ type: String, nullable: true, example: 'Instantánea inicial' })` en `OdontogramSnapshotResponseDto.notes`.
+  - En `Backend/src/modules/clinical/presentation/dto/create-odontogram-snapshot.dto.ts` y `upsert-odontogram.dto.ts`, declarar `@ApiPropertyOptional({ type: String, nullable: true, ... })` en `notes?: string | null`.
+  - En `Backend/src/modules/clinical/presentation/dto/clinical-history-response.dto.ts`, agregar `type: [Object]` en `@ApiProperty({ type: [Object], example: ... })` de `diagnoses`.
+  - Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) y comprobar que `ToothFindingResponseDto.notes` y `OdontogramSnapshotResponseDto.notes` tengan `"type": "string", "nullable": true`.
+- [x] 7.3 **Subir cobertura de `tooth-number.vo.ts` y `odontogram.entity.ts` por encima del 95 % (`RC-002`):**
+  - En `Backend/src/modules/clinical/domain/tooth-number.vo.spec.ts`, agregar pruebas para los getters `quadrant` y `position`, para `ToothNumber.of(NaN)` y para `equals(null)`.
+  - En `Backend/src/modules/clinical/domain/odontogram.entity.spec.ts`, agregar pruebas para validación de `id`/`clinicId`/`patientId` vacíos, creación sin `findings` (`undefined`) y llamada a `updateFindings(newFindings, undefined, updatedAt)` conservando el valor previo de `hasTemporalDentition`.
+- [x] 7.4 **Actualizar `evidence.md` con las salidas literales de consola y hacer commit:**
+  - Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`.
+  - Actualizar `Backend/openspec/changes/add-odontogram-management/evidence.md` con la salida **literal e íntegra** de los 5 comandos (incluyendo las líneas `> backend@0.0.1 ...`, los `PASS ...` y la nueva tabla ASCII de cobertura).
+  - Confirmar con commit: `git add -A && git commit -m "fix(clinical): remove new Date from domain, fix nullable OpenAPI types and increase odontogram domain coverage"` dejando `git status` limpio.
+
 ## Workflow follow-up
 
-Realiza la auditoría antes de ejecutar `/opsx-sync` y `/opsx-archive`.
+Pasa `evidence.md` al Arquitecto para auditoría antes de ejecutar `/opsx-sync` y `/opsx-archive`.

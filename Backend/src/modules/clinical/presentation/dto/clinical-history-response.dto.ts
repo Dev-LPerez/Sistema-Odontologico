@@ -95,7 +95,10 @@ export class ClinicalHistoryResponseDto {
   @ApiProperty({ example: 'Caries cavitada en 16', type: String, nullable: true })
   clinicalExamination!: string | null;
 
-  @ApiProperty({ example: [{ code: 'K02.1', description: 'Caries de la dentina' }] })
+  @ApiProperty({
+    type: [Object],
+    example: [{ code: 'K02.1', description: 'Caries de la dentina' }],
+  })
   diagnoses!: unknown[];
 
   @ApiProperty({ type: [TreatmentPlanItemResponseDto] })

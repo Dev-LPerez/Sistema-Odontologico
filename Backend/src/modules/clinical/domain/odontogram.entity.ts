@@ -85,8 +85,8 @@ export class Odontogram extends AggregateRoot<string> {
 
   updateFindings(
     newFindings: ToothFinding[],
-    hasTemporalDentition?: boolean,
-    updatedAt?: Date,
+    hasTemporalDentition: boolean | undefined,
+    updatedAt: Date,
   ): void {
     const nextHasTemporal =
       hasTemporalDentition !== undefined ? hasTemporalDentition : this._hasTemporalDentition;
@@ -100,10 +100,14 @@ export class Odontogram extends AggregateRoot<string> {
       }
     }
 
+    if (!updatedAt || !(updatedAt instanceof Date) || isNaN(updatedAt.getTime())) {
+      throw new InvalidOdontogramDataError('La fecha de actualización es obligatoria');
+    }
+
     this._hasTemporalDentition = nextHasTemporal;
     this._findings.length = 0;
     this._findings.push(...newFindings);
-    this._updatedAt = updatedAt ?? new Date();
+    this._updatedAt = updatedAt;
   }
 
   toStructuredJson(): StructuredOdontogramJson {

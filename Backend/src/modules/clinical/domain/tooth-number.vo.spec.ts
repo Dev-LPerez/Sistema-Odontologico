@@ -44,12 +44,24 @@ describe('ToothNumber Value Object', () => {
     expect(count).toBe(20);
   });
 
+  it('debe retornar cuadrante y posición correctamente mediante getters', () => {
+    const tooth16 = ToothNumber.of(16);
+    expect(tooth16.quadrant).toBe(1);
+    expect(tooth16.position).toBe(6);
+
+    const tooth55 = ToothNumber.of(55);
+    expect(tooth55.quadrant).toBe(5);
+    expect(tooth55.position).toBe(5);
+  });
+
   it('debe lanzar InvalidOdontogramDataError cuando el número de diente FDI es inválido o se registra un diente temporal con hasTemporalDentition en false', () => {
     const invalidNumbers = [0, 10, 19, 29, 39, 49, 50, 56, 60, 66, 70, 76, 80, 86, 90, 99, -1, 100];
 
     for (const invalid of invalidNumbers) {
       expect(() => ToothNumber.of(invalid)).toThrow(InvalidOdontogramDataError);
     }
+
+    expect(() => ToothNumber.of(NaN)).toThrow(InvalidOdontogramDataError);
   });
 
   it('debe aceptar números en formato string numérico válido y rechazar strings inválidos', () => {
@@ -61,12 +73,15 @@ describe('ToothNumber Value Object', () => {
     expect(() => ToothNumber.of('')).toThrow(InvalidOdontogramDataError);
   });
 
-  it('debe comparar igualdad por valor entre dos objetos de valor ToothNumber', () => {
+  it('debe comparar igualdad por valor entre dos objetos de valor ToothNumber y manejar nulos', () => {
     const toothA = ToothNumber.of(16);
     const toothB = ToothNumber.of('16');
     const toothC = ToothNumber.of(26);
 
     expect(toothA.equals(toothB)).toBe(true);
     expect(toothA.equals(toothC)).toBe(false);
+    expect(toothA.equals(null)).toBe(false);
+    expect(toothA.equals(undefined)).toBe(false);
+    expect(toothA.equals({} as unknown as ToothNumber)).toBe(false);
   });
 });

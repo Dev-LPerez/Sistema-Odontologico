@@ -2939,7 +2939,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "object"
             }
           },
           "treatmentItems": {
@@ -3177,6 +3177,7 @@
           },
           "notes": {
             "type": "string",
+            "nullable": true,
             "description": "Notas u observaciones del hallazgo",
             "example": "Fosa oclusal profunda"
           }
@@ -3258,7 +3259,8 @@
             "example": "EXISTING"
           },
           "notes": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "description": "Notas",
             "example": "Fosa distal"
           },
@@ -3328,6 +3330,7 @@
         "properties": {
           "notes": {
             "type": "string",
+            "nullable": true,
             "description": "Notas u observaciones clínicas de la instantánea",
             "example": "Instantánea de evolución tras obturación"
           }
@@ -3362,7 +3365,8 @@
             "additionalProperties": true
           },
           "notes": {
-            "type": "object",
+            "type": "string",
+            "nullable": true,
             "example": "Instantánea inicial"
           },
           "createdAt": {
