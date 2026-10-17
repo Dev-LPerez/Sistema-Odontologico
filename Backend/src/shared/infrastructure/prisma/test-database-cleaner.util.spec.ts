@@ -108,6 +108,9 @@ describe('test-database-cleaner.util', () => {
       });
 
       const mockPrisma = {
+        appointment: createDeleteMock('appointment'),
+        scheduleBlock: createDeleteMock('scheduleBlock'),
+        availabilityConfig: createDeleteMock('availabilityConfig'),
         clinicalHistoryVersion: createDeleteMock('clinicalHistoryVersion'),
         clinicalAttentionVersion: createDeleteMock('clinicalAttentionVersion'),
         attentionMaterialUsed: createDeleteMock('attentionMaterialUsed'),
@@ -131,6 +134,9 @@ describe('test-database-cleaner.util', () => {
       await cleanDatabaseForContractTests(mockPrisma);
 
       expect(deletedTables).toEqual([
+        'appointment',
+        'scheduleBlock',
+        'availabilityConfig',
         'clinicalHistoryVersion',
         'clinicalAttentionVersion',
         'attentionMaterialUsed',

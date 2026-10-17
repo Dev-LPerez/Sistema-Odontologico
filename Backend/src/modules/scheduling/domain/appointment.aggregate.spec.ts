@@ -116,4 +116,72 @@ describe('Appointment Aggregate', () => {
       InvalidAppointmentStatusTransitionException,
     );
   });
+
+  it('should no-op when changing status to current status', () => {
+    const appointment = createBaseAppointment();
+    appointment.clearDomainEvents();
+    appointment.changeStatus(AppointmentStatus.SCHEDULED, new Date());
+    expect(appointment.domainEvents).toHaveLength(0);
+  });
+
+  it('should reject changeStatus to CANCELLED and require cancel method instead', () => {
+    const appointment = createBaseAppointment();
+    expect(() => appointment.changeStatus(AppointmentStatus.CANCELLED, new Date())).toThrow(
+      InvalidAppointmentStatusTransitionException,
+    );
+  });
+
+  it('should reject reschedule with null or undefined time slot', () => {
+    const appointment = createBaseAppointment();
+    expect(() => appointment.reschedule(null as unknown as TimeSlot, new Date())).toThrow();
+  });
+
+  it('should validate all mandatory properties on create', () => {
+    const validSlot = TimeSlot.create(new Date('2026-10-20T14:00:00.000Z'), 60);
+    expect(() =>
+      Appointment.create({
+        id: '',
+        clinicId: 'c-1',
+        patientId: 'p-1',
+        procedureId: 'proc-1',
+        timeSlot: validSlot,
+      }),
+    ).toThrow();
+    expect(() =>
+      Appointment.create({
+        id: 'a-1',
+        clinicId: '',
+        patientId: 'p-1',
+        procedureId: 'proc-1',
+        timeSlot: validSlot,
+      }),
+    ).toThrow();
+    expect(() =>
+      Appointment.create({
+        id: 'a-1',
+        clinicId: 'c-1',
+        patientId: '',
+        procedureId: 'proc-1',
+        timeSlot: validSlot,
+      }),
+    ).toThrow();
+    expect(() =>
+      Appointment.create({
+        id: 'a-1',
+        clinicId: 'c-1',
+        patientId: 'p-1',
+        procedureId: '',
+        timeSlot: validSlot,
+      }),
+    ).toThrow();
+    expect(() =>
+      Appointment.create({
+        id: 'a-1',
+        clinicId: 'c-1',
+        patientId: 'p-1',
+        procedureId: 'proc-1',
+        timeSlot: null as unknown as TimeSlot,
+      }),
+    ).toThrow();
+  });
 });

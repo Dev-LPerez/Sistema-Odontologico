@@ -44,11 +44,11 @@
 
 ## 5. OpenAPI, Evidencia Literal y Cierre de Change
 
-- [ ] 5.1 Regenerar `Backend/openapi.json` con `pnpm --filter backend openapi:generate` y verificar esquemas de `/v1/scheduling/...`.
-- [ ] 5.2 Ejecutar comandos de verificación completos capturando salidas literales en `evidence.md`:
+- [x] 5.1 Regenerar `Backend/openapi.json` con `pnpm --filter backend openapi:generate` y verificar esquemas de `/v1/scheduling/...`.
+- [x] 5.2 Ejecutar comandos de verificación completos capturando salidas literales en `evidence.md`:
   - `pnpm --filter backend lint`
   - `pnpm --filter backend typecheck`
   - `pnpm --filter backend deps:check`
   - `pnpm --filter backend test:cov` (con cobertura >= 90% en domain/application y >= 80% global)
   - `pnpm --filter backend test:e2e`
-- [ ] 5.3 Marcar todas las tareas en `tasks.md`, verificar consistencia de artefactos y realizar commit `chore(scheduling): regenerate openapi.json and record B-13 literal evidence`.
+- [x] 5.3 Marcar todas las tareas en `tasks.md`, verificar consistencia de artefactos y realizar commit `chore(scheduling): regenerate openapi.json and record B-13 literal evidence`.

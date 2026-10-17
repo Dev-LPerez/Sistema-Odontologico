@@ -48,6 +48,54 @@ describe('ScheduleBlock Entity', () => {
         updatedAt: new Date(),
       }),
     ).toThrow(InvalidScheduleBlockDataError);
+
+    expect(() =>
+      ScheduleBlock.create({
+        id: '  ',
+        clinicId: 'clinic-123',
+        startDate: new Date('2026-12-20T00:00:00.000Z'),
+        endDate: new Date('2026-12-25T00:00:00.000Z'),
+        reason: 'Motivo',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    ).toThrow(InvalidScheduleBlockDataError);
+
+    expect(() =>
+      ScheduleBlock.create({
+        id: 'block-1',
+        clinicId: '  ',
+        startDate: new Date('2026-12-20T00:00:00.000Z'),
+        endDate: new Date('2026-12-25T00:00:00.000Z'),
+        reason: 'Motivo',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    ).toThrow(InvalidScheduleBlockDataError);
+
+    expect(() =>
+      ScheduleBlock.create({
+        id: 'block-1',
+        clinicId: 'clinic-123',
+        startDate: new Date('invalid'),
+        endDate: new Date('2026-12-25T00:00:00.000Z'),
+        reason: 'Motivo',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    ).toThrow(InvalidScheduleBlockDataError);
+
+    expect(() =>
+      ScheduleBlock.create({
+        id: 'block-1',
+        clinicId: 'clinic-123',
+        startDate: new Date('2026-12-20T00:00:00.000Z'),
+        endDate: new Date('invalid'),
+        reason: 'Motivo',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    ).toThrow(InvalidScheduleBlockDataError);
   });
 
   it('should detect collision with a TimeSlot', () => {

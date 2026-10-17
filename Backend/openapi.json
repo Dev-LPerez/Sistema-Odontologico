@@ -1921,6 +1921,430 @@
         ]
       }
     },
+    "/v1/scheduling/availability": {
+      "put": {
+        "operationId": "SchedulingController_configureAvailability",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigureAvailabilityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Configurar disponibilidad semanal de atención",
+        "tags": [
+          "Scheduling"
+        ]
+      },
+      "get": {
+        "operationId": "SchedulingController_getAvailability",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailabilityResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar disponibilidad semanal de atención",
+        "tags": [
+          "Scheduling"
+        ]
+      }
+    },
+    "/v1/scheduling/blocks": {
+      "post": {
+        "operationId": "SchedulingController_createScheduleBlock",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateScheduleBlockDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleBlockResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Registrar un bloqueo temporal de agenda",
+        "tags": [
+          "Scheduling"
+        ]
+      },
+      "get": {
+        "operationId": "SchedulingController_listScheduleBlocks",
+        "parameters": [
+          {
+            "name": "fromDate",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar bloqueos activos a partir de esta fecha ISO8601",
+            "schema": {
+              "example": "2026-12-01T00:00:00.000Z",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleBlockResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar bloqueos temporales de agenda",
+        "tags": [
+          "Scheduling"
+        ]
+      }
+    },
+    "/v1/scheduling/appointments": {
+      "post": {
+        "operationId": "SchedulingController_scheduleAppointment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Agendar una nueva cita odontológica",
+        "tags": [
+          "Scheduling"
+        ]
+      },
+      "get": {
+        "operationId": "SchedulingController_listAppointments",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": false,
+            "in": "query",
+            "description": "Fecha inicio de rango de búsqueda ISO8601",
+            "schema": {
+              "example": "2026-10-01T00:00:00.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": false,
+            "in": "query",
+            "description": "Fecha fin de rango de búsqueda ISO8601",
+            "schema": {
+              "example": "2026-10-31T23:59:59.000Z",
+              "type": "string"
+            }
+          },
+          {
+            "name": "patientId",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por paciente",
+            "schema": {
+              "example": "d0b8f1c8-27b2-4d22-8d76-5fa4f9712a80",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por estado",
+            "schema": {
+              "enum": [
+                "SCHEDULED",
+                "CONFIRMED",
+                "ATTENDED",
+                "NO_SHOW",
+                "CANCELLED"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppointmentResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Listar y filtrar citas odontológicas",
+        "tags": [
+          "Scheduling"
+        ]
+      }
+    },
+    "/v1/scheduling/appointments/{id}": {
+      "get": {
+        "operationId": "SchedulingController_getAppointmentById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Obtener detalle de una cita odontológica",
+        "tags": [
+          "Scheduling"
+        ]
+      }
+    },
+    "/v1/scheduling/appointments/{id}/reschedule": {
+      "patch": {
+        "operationId": "SchedulingController_rescheduleAppointment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reprogramar una cita odontológica",
+        "tags": [
+          "Scheduling"
+        ]
+      }
+    },
+    "/v1/scheduling/appointments/{id}/cancel": {
+      "patch": {
+        "operationId": "SchedulingController_cancelAppointment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelAppointmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancelar una cita odontológica",
+        "tags": [
+          "Scheduling"
+        ]
+      }
+    },
+    "/v1/scheduling/appointments/{id}/status": {
+      "patch": {
+        "operationId": "SchedulingController_changeAppointmentStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAppointmentStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppointmentResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cambiar el estado de una cita odontológica",
+        "tags": [
+          "Scheduling"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_getHealth",
@@ -4436,6 +4860,321 @@
           "color",
           "toothNumber",
           "quantity"
+        ]
+      },
+      "AvailabilitySlotDto": {
+        "type": "object",
+        "properties": {
+          "dayOfWeek": {
+            "type": "number",
+            "description": "Día de la semana: 1 (Lunes) a 7 (Domingo)",
+            "example": 1,
+            "minimum": 1,
+            "maximum": 7
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Hora de inicio en formato HH:MM (mínimo 09:00)",
+            "example": "09:00"
+          },
+          "endTime": {
+            "type": "string",
+            "description": "Hora de fin en formato HH:MM",
+            "example": "18:00"
+          }
+        },
+        "required": [
+          "dayOfWeek",
+          "startTime",
+          "endTime"
+        ]
+      },
+      "ConfigureAvailabilityDto": {
+        "type": "object",
+        "properties": {
+          "slots": {
+            "description": "Franjas semanales de atención",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlotDto"
+            }
+          },
+          "maxDailyAppointments": {
+            "type": "number",
+            "description": "Tope máximo de citas por jornada (1 a 10)",
+            "example": 4,
+            "default": 4
+          }
+        },
+        "required": [
+          "slots"
+        ]
+      },
+      "AvailabilityResponseDto": {
+        "type": "object",
+        "properties": {
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-uuid"
+          },
+          "maxDailyAppointments": {
+            "type": "number",
+            "example": 4
+          },
+          "slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AvailabilitySlotDto"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-20T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-20T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "clinicId",
+          "maxDailyAppointments",
+          "slots",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateScheduleBlockDto": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "description": "Fecha y hora de inicio en formato ISO8601",
+            "example": "2026-12-20T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "description": "Fecha y hora de fin en formato ISO8601",
+            "example": "2026-12-25T23:59:59.000Z"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Motivo del bloqueo temporal",
+            "example": "Vacaciones de fin de año",
+            "maxLength": 255
+          }
+        },
+        "required": [
+          "startDate",
+          "endDate",
+          "reason"
+        ]
+      },
+      "ScheduleBlockResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "block-uuid"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-uuid"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "2026-12-20T00:00:00.000Z"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "2026-12-25T23:59:59.000Z"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Vacaciones de fin de año"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-20T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-20T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "startDate",
+          "endDate",
+          "reason",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "patientId": {
+            "type": "string",
+            "description": "Identificador del paciente",
+            "example": "d0b8f1c8-27b2-4d22-8d76-5fa4f9712a80"
+          },
+          "procedureId": {
+            "type": "string",
+            "description": "Identificador del procedimiento",
+            "example": "e1c9f2d9-38c3-4e33-9e87-6ab5f0823b91"
+          },
+          "startTime": {
+            "type": "string",
+            "description": "Fecha y hora de inicio de la cita en formato ISO8601",
+            "example": "2026-10-20T14:00:00.000Z"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "description": "Duración en minutos (15 a 480)",
+            "example": 60,
+            "minimum": 15,
+            "maximum": 480
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas opcionales de la cita",
+            "example": "Primera consulta de valoración",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "patientId",
+          "procedureId",
+          "startTime",
+          "durationMinutes"
+        ]
+      },
+      "AppointmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "appt-uuid"
+          },
+          "clinicId": {
+            "type": "string",
+            "example": "clinic-uuid"
+          },
+          "patientId": {
+            "type": "string",
+            "example": "patient-uuid"
+          },
+          "procedureId": {
+            "type": "string",
+            "example": "procedure-uuid"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "2026-10-20T14:00:00.000Z"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "2026-10-20T15:00:00.000Z"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "example": 60
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "CONFIRMED",
+              "ATTENDED",
+              "NO_SHOW",
+              "CANCELLED"
+            ],
+            "example": "SCHEDULED"
+          },
+          "cancellationReason": {
+            "type": "object",
+            "example": null
+          },
+          "notes": {
+            "type": "object",
+            "example": "Primera consulta"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-10-20T10:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "example": "2026-10-20T10:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "patientId",
+          "procedureId",
+          "startTime",
+          "endTime",
+          "durationMinutes",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "RescheduleAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "newStartTime": {
+            "type": "string",
+            "description": "Nueva fecha y hora de inicio en formato ISO8601",
+            "example": "2026-10-21T15:00:00.000Z"
+          },
+          "newDurationMinutes": {
+            "type": "number",
+            "description": "Nueva duración en minutos (15 a 480)",
+            "example": 60,
+            "minimum": 15,
+            "maximum": 480
+          }
+        },
+        "required": [
+          "newStartTime"
+        ]
+      },
+      "CancelAppointmentDto": {
+        "type": "object",
+        "properties": {
+          "cancellationReason": {
+            "type": "string",
+            "description": "Motivo obligatorio de cancelación de la cita",
+            "example": "Paciente solicitó cancelar por viaje",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "cancellationReason"
+        ]
+      },
+      "ChangeAppointmentStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "CONFIRMED",
+              "ATTENDED",
+              "NO_SHOW",
+              "CANCELLED"
+            ],
+            "description": "Nuevo estado de la cita",
+            "example": "CONFIRMED"
+          }
+        },
+        "required": [
+          "status"
         ]
       }
     }

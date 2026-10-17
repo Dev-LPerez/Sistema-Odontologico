@@ -81,4 +81,49 @@ describe('TimeSlot Value Object', () => {
     expect(dayStartUtc.toISOString()).toBe('2026-10-20T05:00:00.000Z');
     expect(dayEndUtc.toISOString()).toBe('2026-10-21T04:59:59.999Z');
   });
+
+  describe('fromRange', () => {
+    it('should create TimeSlot from valid start and end dates', () => {
+      const start = new Date('2026-10-20T14:00:00.000Z');
+      const end = new Date('2026-10-20T15:00:00.000Z');
+      const slot = TimeSlot.fromRange(start, end);
+      expect(slot.durationMinutes).toBe(60);
+      expect(slot.startTime).toEqual(start);
+      expect(slot.endTime).toEqual(end);
+    });
+
+    it('should throw when start date is invalid', () => {
+      expect(() =>
+        TimeSlot.fromRange(new Date('invalid'), new Date('2026-10-20T15:00:00.000Z')),
+      ).toThrow(InvalidTimeSlotError);
+    });
+
+    it('should throw when end date is invalid', () => {
+      expect(() =>
+        TimeSlot.fromRange(new Date('2026-10-20T14:00:00.000Z'), new Date('invalid')),
+      ).toThrow(InvalidTimeSlotError);
+    });
+
+    it('should throw when end date is equal or before start date', () => {
+      const start = new Date('2026-10-20T14:00:00.000Z');
+      const before = new Date('2026-10-20T13:00:00.000Z');
+      expect(() => TimeSlot.fromRange(start, before)).toThrow(InvalidTimeSlotError);
+    });
+
+    it('should return correct Bogota day of week for all 7 weekdays', () => {
+      const days = [
+        { date: '2026-10-19T14:00:00.000Z', expected: 1 }, // Mon
+        { date: '2026-10-20T14:00:00.000Z', expected: 2 }, // Tue
+        { date: '2026-10-21T14:00:00.000Z', expected: 3 }, // Wed
+        { date: '2026-10-22T14:00:00.000Z', expected: 4 }, // Thu
+        { date: '2026-10-23T14:00:00.000Z', expected: 5 }, // Fri
+        { date: '2026-10-24T14:00:00.000Z', expected: 6 }, // Sat
+        { date: '2026-10-25T14:00:00.000Z', expected: 7 }, // Sun
+      ];
+      for (const d of days) {
+        const slot = TimeSlot.create(new Date(d.date), 60);
+        expect(slot.getBogotaDayOfWeek()).toBe(d.expected);
+      }
+    });
+  });
 });
