@@ -186,4 +186,23 @@ describe('UpsertPatientOdontogramUseCase', () => {
       new Date('2026-10-15T10:00:00.000Z'),
     );
   });
+
+  it('debe rechazar con OdontogramConflictError cuando se provee expectedUpdatedAt pero el odontograma no existe previamente', async () => {
+    patientRepo.findById.mockResolvedValue({
+      id: 'patient-123',
+      clinicId: 'clinic-123',
+    } as unknown as Patient);
+    odontogramRepo.findByPatientId.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute({
+        clinicId: 'clinic-123',
+        patientId: 'patient-123',
+        findings: [],
+        expectedUpdatedAt: '2026-10-15T10:00:00.000Z',
+      }),
+    ).rejects.toThrow(OdontogramConflictError);
+
+    expect(odontogramRepo.save).not.toHaveBeenCalled();
+  });
 });

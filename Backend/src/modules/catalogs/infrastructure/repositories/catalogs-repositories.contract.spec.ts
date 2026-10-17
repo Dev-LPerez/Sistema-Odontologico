@@ -16,6 +16,8 @@ import {
   DuplicateProcedureCodeError,
   DuplicateMaterialCatalogError,
   InsufficientMaterialStockError,
+  MaterialNotFoundError,
+  InvalidCatalogDataError,
 } from '../../domain/catalogs.errors';
 import { Prisma } from '@prisma/client';
 
@@ -666,6 +668,43 @@ describe('Catalogs Repositories Contract Tests (RC-018, RC-050, RC-055)', () => 
           const persisted = await materialRepo.findById('clinic-cat-1', 'mat-concurrent-test');
           expect(persisted).not.toBeNull();
           expect(persisted?.currentStock).toBe(2);
+        });
+
+        it('debe lanzar MaterialNotFoundError si el material no existe al consumir existencias atómicamente', async () => {
+          await expect(
+            materialRepo.consumeStockAtomically(
+              'clinic-cat-1',
+              'mat-non-existent-999',
+              1,
+              new Date('2026-10-15T12:00:00.000Z'),
+            ),
+          ).rejects.toThrow(MaterialNotFoundError);
+        });
+
+        it('debe lanzar InvalidCatalogDataError si el material está inactivo al consumir existencias atómicamente', async () => {
+          const inactiveMaterial = Material.create({
+            id: 'mat-inactive-atomic',
+            clinicId: 'clinic-cat-1',
+            brand: '3M Inactive',
+            reference: 'Filtek Inactive',
+            type: 'RESIN',
+            color: 'A2',
+            currentStock: 10,
+            minStock: 1,
+            isActive: false,
+            createdAt: fixedNow,
+            updatedAt: fixedNow,
+          });
+          await materialRepo.save(inactiveMaterial);
+
+          await expect(
+            materialRepo.consumeStockAtomically(
+              'clinic-cat-1',
+              'mat-inactive-atomic',
+              1,
+              new Date('2026-10-15T12:00:00.000Z'),
+            ),
+          ).rejects.toThrow(InvalidCatalogDataError);
         });
       });
     });

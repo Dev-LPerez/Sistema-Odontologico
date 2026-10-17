@@ -10,7 +10,10 @@ import { ClinicalHistoryVersion } from '../../domain/clinical-history-version.en
 import { MedicalAntecedents } from '../../domain/medical-antecedents.vo';
 import { TreatmentPlanItem } from '../../domain/treatment-plan-item.entity';
 import { TreatmentItemStatus } from '../../domain/treatment-item-status.enum';
-import { DuplicateClinicalHistoryError } from '../../domain/clinical.errors';
+import {
+  DuplicateClinicalHistoryError,
+  DuplicateClinicalHistoryVersionError,
+} from '../../domain/clinical.errors';
 import { Prisma } from '@prisma/client';
 
 interface RepositoryFactory {
@@ -200,6 +203,52 @@ describe('ClinicalHistory Repository Contract Tests (RC-018, RC-050, RC-055)', (
 
         const reloaded = await repo.findById('clinic-contract-1', history.id);
         expect(reloaded?.chiefComplaint).toBe('Sin dolor tras tratamiento');
+      });
+
+      it('debe rechazar con DuplicateClinicalHistoryVersionError al intentar guardar una versión con número duplicado', async () => {
+        const history = ClinicalHistory.create({
+          id: 'hist-contract-ver-dup',
+          clinicId: 'clinic-contract-1',
+          patientId: 'pat-contract-1',
+          chiefComplaint: 'Dolor inicial',
+          currentIllness: 'Evolución de 2 días',
+          medicalAntecedents: MedicalAntecedents.create({
+            hypertension: false,
+            diabetes: false,
+            allergies: false,
+            medications: false,
+            bleedingDisorders: false,
+            pregnancy: false,
+          }),
+          createdAt: fixedNow,
+          updatedAt: fixedNow,
+        });
+        await repo.save(history);
+
+        const version1 = ClinicalHistoryVersion.create({
+          id: 'ver-contract-dup-1',
+          clinicId: 'clinic-contract-1',
+          clinicalHistoryId: history.id,
+          versionNumber: 1,
+          previousData: history.toSnapshotData(),
+          changeReason: 'Primera versión',
+          createdAt: fixedNow,
+        });
+        await versionRepo.save(version1);
+
+        const versionDuplicate = ClinicalHistoryVersion.create({
+          id: 'ver-contract-dup-2',
+          clinicId: 'clinic-contract-1',
+          clinicalHistoryId: history.id,
+          versionNumber: 1,
+          previousData: history.toSnapshotData(),
+          changeReason: 'Versión duplicada con el mismo versionNumber',
+          createdAt: fixedNow,
+        });
+
+        await expect(versionRepo.save(versionDuplicate)).rejects.toThrow(
+          DuplicateClinicalHistoryVersionError,
+        );
       });
 
       it('debe crear, actualizar y consultar la historia clínica con antecedentes y diagnósticos aislando por clinicId', async () => {

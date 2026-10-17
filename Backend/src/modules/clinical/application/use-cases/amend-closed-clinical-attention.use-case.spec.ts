@@ -16,6 +16,7 @@ import {
   ClinicalAttentionNotClosedError,
   InvalidClinicalAttentionDataError,
 } from '../../domain/clinical.errors';
+import { Procedure, ProcedureNotFoundError } from '../../../catalogs';
 import { UserRole } from '../../../identity';
 
 describe('AmendClosedClinicalAttentionUseCase', () => {
@@ -258,6 +259,57 @@ describe('AmendClosedClinicalAttentionUseCase', () => {
 
     await expect(useCase.execute(command)).rejects.toThrow(ClinicalAttentionNotFoundError);
     expect(unitOfWork.execute).toHaveBeenCalled();
+    expect(versionRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('debe actualizar los procedimientos asignando el nombre desde el catálogo o respetando el provisto', async () => {
+    const attention = createClosedAttention();
+    attentionRepo.findById.mockResolvedValue(attention);
+    versionRepo.findAllByAttentionId.mockResolvedValue([]);
+    procedureRepo.findByCode.mockImplementation(async (_clinicId, code) => {
+      if (code === 'RES-01') {
+        return {
+          id: 'proc-1',
+          clinicId: 'clinic-123',
+          code: 'RES-01',
+          name: 'Resina Simple',
+        } as unknown as Procedure;
+      }
+      return null;
+    });
+
+    const command: AmendClosedClinicalAttentionCommand = {
+      clinicId: 'clinic-123',
+      id: 'att-1',
+      amendedByUserId: 'usr-admin-1',
+      changeReason: 'Actualización de procedimiento',
+      proceduresPerformed: [
+        { code: 'RES-01', toothNumber: '16', surface: 'OCCLUSAL' },
+        { code: 'RES-01', name: 'Resina Especial', toothNumber: '17', surface: 'DISTAL' },
+      ],
+    };
+
+    const result = await useCase.execute(command);
+    expect(result.proceduresPerformed).toHaveLength(2);
+    expect(result.proceduresPerformed[0].name).toBe('Resina Simple');
+    expect(result.proceduresPerformed[1].name).toBe('Resina Especial');
+  });
+
+  it('debe lanzar ProcedureNotFoundError si alguno de los procedimientos no existe en el catálogo', async () => {
+    const attention = createClosedAttention();
+    attentionRepo.findById.mockResolvedValue(attention);
+    versionRepo.findAllByAttentionId.mockResolvedValue([]);
+    procedureRepo.findByCode.mockResolvedValue(null);
+
+    const command: AmendClosedClinicalAttentionCommand = {
+      clinicId: 'clinic-123',
+      id: 'att-1',
+      amendedByUserId: 'usr-admin-1',
+      changeReason: 'Procedimiento inexistente',
+      proceduresPerformed: [{ code: 'INEXISTENTE-99' }],
+    };
+
+    await expect(useCase.execute(command)).rejects.toThrow(ProcedureNotFoundError);
     expect(versionRepo.save).not.toHaveBeenCalled();
   });
 });

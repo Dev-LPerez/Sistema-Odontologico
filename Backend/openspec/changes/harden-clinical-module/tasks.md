@@ -71,9 +71,9 @@ Cada escenario de las especificaciones delta de `harden-clinical-module` DEBE es
 
 ## 7. Contrato OpenAPI y evidencia literal (`evidence.md`)
 
-- [ ] 7.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) verificando que no existan campos anulables con `"type": "object"` (corrigiendo también `@ApiPropertyOptional({ type: String, nullable: true })` en `ToothMaterialHistoryResponseDto.notes`).
-- [ ] 7.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/harden-clinical-module/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura con $\ge 90\%$ en todas las subcarpetas de `domain` y `application`).
-- [ ] 7.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record harden-clinical-module literal evidence"` dejando `git status` limpio.
+- [x] 7.1 Regenerar `Backend/openapi.json` (`pnpm --filter backend openapi:generate`) verificando que no existan campos anulables con `"type": "object"` (corrigiendo también `@ApiPropertyOptional({ type: String, nullable: true })` en `ToothMaterialHistoryResponseDto.notes`).
+- [x] 7.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/harden-clinical-module/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura con $\ge 90\%$ en todas las subcarpetas de `domain` y `application`).
+- [x] 7.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record harden-clinical-module literal evidence"` dejando `git status` limpio.
 
 ## Workflow follow-up
 

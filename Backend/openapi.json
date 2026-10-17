@@ -1206,6 +1206,45 @@
         ]
       }
     },
+    "/v1/clinical-histories/patient/{patientId}/versions": {
+      "get": {
+        "operationId": "ClinicalHistoryController_listVersions",
+        "parameters": [
+          {
+            "name": "patientId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de versiones de la historia clínica obtenido exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicalHistoryVersionResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Consultar el historial de versiones inmutables de la historia clínica",
+        "tags": [
+          "Clinical Histories"
+        ]
+      }
+    },
     "/v1/clinical-histories/patient/{patientId}/treatment-plan-items": {
       "post": {
         "operationId": "ClinicalHistoryController_addTreatmentPlanItem",
@@ -3163,6 +3202,25 @@
           "pregnancy"
         ]
       },
+      "ClinicalDiagnosisDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Código de diagnóstico CIE-10 u odontológico (opcional)",
+            "example": "K02.1",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Descripción clínica del diagnóstico",
+            "example": "Caries de la dentina"
+          }
+        },
+        "required": [
+          "description"
+        ]
+      },
       "CreateClinicalHistoryDto": {
         "type": "object",
         "properties": {
@@ -3211,7 +3269,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ClinicalDiagnosisDto"
             }
           }
         },
@@ -3352,7 +3410,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ClinicalDiagnosisDto"
             }
           },
           "treatmentItems": {
@@ -3486,10 +3544,62 @@
             ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ClinicalDiagnosisDto"
             }
+          },
+          "changeReason": {
+            "type": "string",
+            "description": "Motivo del cambio en la historia clínica",
+            "example": "Ajuste de antecedentes tras nueva consulta"
           }
         }
+      },
+      "ClinicalHistoryVersionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID de la versión histórica de la historia clínica"
+          },
+          "clinicId": {
+            "type": "string",
+            "description": "ID del consultorio"
+          },
+          "clinicalHistoryId": {
+            "type": "string",
+            "description": "ID de la historia clínica"
+          },
+          "versionNumber": {
+            "type": "number",
+            "description": "Número correlativo de versión (iniciando en 1)"
+          },
+          "previousData": {
+            "type": "object",
+            "description": "Instantánea inmutable del estado previo a la modificación"
+          },
+          "changeReason": {
+            "type": "string",
+            "description": "Motivo de la modificación",
+            "nullable": true
+          },
+          "updatedByUserId": {
+            "type": "string",
+            "description": "ID del usuario que realizó la modificación",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Fecha y hora de creación de la versión (UTC)"
+          }
+        },
+        "required": [
+          "id",
+          "clinicId",
+          "clinicalHistoryId",
+          "versionNumber",
+          "previousData",
+          "createdAt"
+        ]
       },
       "AddTreatmentPlanItemDto": {
         "type": "object",
@@ -3609,6 +3719,11 @@
             "type": "boolean",
             "description": "Indica si se habilita la dentición temporal (dientes 51..85)",
             "default": false
+          },
+          "expectedUpdatedAt": {
+            "type": "string",
+            "description": "Marca de tiempo esperada de la última actualización para control de concurrencia optimista (ISO-8601)",
+            "example": "2026-10-15T10:00:00.000Z"
           },
           "findings": {
             "description": "Lista de hallazgos del odontograma",
@@ -4305,7 +4420,7 @@
             "example": 1
           },
           "notes": {
-            "type": "object",
+            "type": "string",
             "description": "Notas adicionales del uso del material",
             "example": "Restauración en cara oclusal con aislamiento absoluto",
             "nullable": true

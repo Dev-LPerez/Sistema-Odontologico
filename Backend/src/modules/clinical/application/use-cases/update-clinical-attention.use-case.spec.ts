@@ -3,7 +3,7 @@ import {
   UpdateClinicalAttentionCommand,
 } from './update-clinical-attention.use-case';
 import { ClinicalAttentionRepositoryPort } from '../../domain/clinical-attention.repository.port';
-import { ProcedureRepositoryPort } from '../../../catalogs';
+import { ProcedureRepositoryPort, Procedure, ProcedureNotFoundError } from '../../../catalogs';
 import { ClockPort } from '../../../../shared/application/ports/clock.port';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
@@ -149,5 +149,38 @@ describe('UpdateClinicalAttentionUseCase', () => {
         evolutionNotes: '   ',
       }),
     ).rejects.toThrow(InvalidClinicalAttentionDataError);
+  });
+
+  it('debe lanzar ProcedureNotFoundError si un procedimiento a actualizar no existe en el catálogo', async () => {
+    attentionRepo.findById.mockResolvedValue(baseAttention);
+    procedureRepo.findByCode.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute({
+        clinicId: 'clinic-123',
+        id: 'att-1',
+        proceduresPerformed: [{ code: 'NO-EXISTE' }],
+      }),
+    ).rejects.toThrow(ProcedureNotFoundError);
+
+    expect(attentionRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('debe mantener el nombre provisto en proceduresPerformed si ya fue especificado', async () => {
+    attentionRepo.findById.mockResolvedValue(baseAttention);
+    procedureRepo.findByCode.mockResolvedValue({
+      id: 'proc-1',
+      clinicId: 'clinic-123',
+      code: 'RES-01',
+      name: 'Resina Catálogo',
+    } as unknown as Procedure);
+
+    const updated = await useCase.execute({
+      clinicId: 'clinic-123',
+      id: 'att-1',
+      proceduresPerformed: [{ code: 'RES-01', name: 'Nombre Personalizado' }],
+    });
+
+    expect(updated.proceduresPerformed[0].name).toBe('Nombre Personalizado');
   });
 });

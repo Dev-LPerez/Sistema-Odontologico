@@ -443,4 +443,19 @@ describe('ClinicalAttention Aggregate', () => {
     });
     expect(attention.proceduresPerformed[0].surface).toBe(ToothSurface.OCCLUSAL);
   });
+
+  it('debe normalizar toothNumber y surface a null si se envían como cadenas vacías o espacios', () => {
+    const attention = ClinicalAttention.create({
+      ...validProps,
+      proceduresPerformed: [
+        {
+          code: 'RES-01',
+          toothNumber: '   ',
+          surface: '   ',
+        },
+      ],
+    });
+    expect(attention.proceduresPerformed[0].toothNumber).toBeNull();
+    expect(attention.proceduresPerformed[0].surface).toBeNull();
+  });
 });
