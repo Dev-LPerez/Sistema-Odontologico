@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ProcedurePerformedDto } from './create-clinical-attention.dto';
 
 export class UpdateClinicalAttentionDto {
@@ -45,10 +46,12 @@ export class UpdateClinicalAttentionDto {
 
   @ApiPropertyOptional({
     description: 'Procedimientos clínicos realizados',
-    type: [Object],
+    type: () => [ProcedurePerformedDto],
     example: [{ code: 'PUL-01', toothNumber: '16' }],
   })
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProcedurePerformedDto)
   proceduresPerformed?: ProcedurePerformedDto[];
 }

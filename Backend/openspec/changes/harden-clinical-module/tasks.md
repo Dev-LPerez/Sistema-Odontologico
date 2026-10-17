@@ -75,6 +75,26 @@ Cada escenario de las especificaciones delta de `harden-clinical-module` DEBE es
 - [x] 7.2 Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`, y crear `Backend/openspec/changes/harden-clinical-module/evidence.md` con la Matriz de Trazabilidad 1:1 completada y la salida **literal e íntegra** de consola de los 5 comandos (incluyendo la tabla ASCII completa de cobertura con $\ge 90\%$ en todas las subcarpetas de `domain` y `application`).
 - [x] 7.3 Confirmar todos los archivos con un commit: `git add -A && git commit -m "chore(clinical): regenerate openapi.json and record harden-clinical-module literal evidence"` dejando `git status` limpio.
 
+---
+
+## 8. Pulido Quirúrgico de Auditoría Final (3 detalles menores antes de `/opsx-archive`)
+
+- [x] 8.1 **Tipado estricto y `@ValidateNested` en DTOs de `diagnoses` y `proceduresPerformed` (`RC-011`, `RC-070`):**
+  - En `Backend/src/modules/clinical/presentation/dto/create-clinical-history.dto.ts` y `update-clinical-history.dto.ts`, cambiar `diagnoses?: unknown[]` por `diagnoses?: ClinicalDiagnosisDto[]` agregando `@ValidateNested({ each: true })` y `@Type(() => ClinicalDiagnosisDto)`. En `CreateClinicalHistoryCommand` y `UpdateClinicalHistoryCommand` (`create-clinical-history.use-case.ts` y `update-clinical-history.use-case.ts`), cambiar `diagnoses?: unknown[]` por `diagnoses?: Array<PlainClinicalDiagnosis | string>`.
+  - En `Backend/src/modules/clinical/presentation/dto/create-clinical-attention.dto.ts`, `update-clinical-attention.dto.ts` y `amend-clinical-attention.dto.ts`, cambiar `@ApiPropertyOptional({ ..., type: [Object] })` en `proceduresPerformed` por `@ApiPropertyOptional({ ..., type: () => [ProcedurePerformedDto] })` y agregar `@ValidateNested({ each: true })` + `@Type(() => ProcedurePerformedDto)`.
+  - En `Backend/src/modules/clinical/presentation/dto/clinical-attention-response.dto.ts`, cambiar `proceduresPerformed!: unknown[]` (y `type: [Object]`) por `proceduresPerformed!: ProcedurePerformedDto[]` (`type: () => [ProcedurePerformedDto]`) tanto en `ClinicalAttentionResponseDto` como en `ClinicalAttentionSnapshotResponseDto`.
+  - En `Backend/src/modules/catalogs/presentation/dto/patient-procedure-price.dto.ts`, agregar `@IsUUID()` a `patientId` dentro de `ListPatientProcedurePricesQueryDto`.
+
+- [x] 8.2 **Subir `% Branch` de `upsert-patient-odontogram.use-case.ts` y `clinical-attention.entity.ts` por encima del 90 % y `% Branch` global (`All files`) $\ge 90\%$ (`RC-002`):**
+  - En `upsert-patient-odontogram.use-case.spec.ts`, agregar una prueba o aserción pasando `expectedUpdatedAt` como instancia `Date` (o normalizar en `UpsertPatientOdontogramUseCase` con `new Date(command.expectedUpdatedAt)`) para que `upsert-patient-odontogram.use-case.ts` alcance `100%` en `% Branch`.
+  - En `clinical-attention.entity.spec.ts`, agregar pruebas para las ramas defensivas de `validateAndNormalizeProcedures` (pasar `null as unknown as ProcedurePerformed[]` y un elemento sin `name`/`notes`) y `amend()` (cuando `evolutionNotes` es vacío tras trim o `proceduresPerformed` es vacío `[]`), subiendo `clinical-attention.entity.ts` por encima del `92%` en `% Branch` y `All files` por encima del `90%` en `% Branch`.
+
+- [x] 8.3 **Regenerar `Backend/openapi.json`, actualizar `evidence.md` y hacer commit:**
+  - Ejecutar `pnpm --filter backend openapi:generate` verificando que `ProcedurePerformedDto` aparezca referenciado con `$ref` en `Backend/openapi.json`.
+  - Ejecutar `pnpm --filter backend lint`, `pnpm --filter backend typecheck`, `pnpm --filter backend deps:check`, `pnpm --filter backend test:cov` y `pnpm --filter backend test:e2e`.
+  - Actualizar `Backend/openspec/changes/harden-clinical-module/evidence.md` con la salida **literal e íntegra** de los 5 comandos.
+  - Hacer commit: `git add -A && git commit -m "fix(clinical): enforce ValidateNested on DTO arrays, remove remaining unknown[] and raise branch coverage above 90%"` dejando `git status` limpio.
+
 ## Workflow follow-up
 
-- Pasa `evidence.md` al Arquitecto para auditoría antes de ejecutar `/opsx-sync` y `/opsx-archive` y pasar a `B-13` (`add-appointments-scheduling`).
+- Una vez completada la Sección 8, ejecutar `/opsx-sync` y `/opsx-archive` para archivar `harden-clinical-module` y pasar a `B-13` (`add-appointments-scheduling`).

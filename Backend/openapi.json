@@ -3911,6 +3911,43 @@
           "createdAt"
         ]
       },
+      "ProcedurePerformedDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Código del procedimiento",
+            "example": "RES-01"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nombre del procedimiento",
+            "example": "Resina de fotocurado",
+            "nullable": true
+          },
+          "toothNumber": {
+            "type": "string",
+            "description": "Diente FDI tratado",
+            "example": "16",
+            "nullable": true
+          },
+          "surface": {
+            "type": "string",
+            "description": "Superficie tratada",
+            "example": "OCCLUSAL",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notas del procedimiento",
+            "example": "Cavidad profunda",
+            "nullable": true
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
       "CreateClinicalAttentionDto": {
         "type": "object",
         "properties": {
@@ -3953,7 +3990,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ProcedurePerformedDto"
             }
           },
           "attendedAt": {
@@ -4084,7 +4121,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ProcedurePerformedDto"
             }
           },
           "evolutionNotes": {
@@ -4181,7 +4218,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ProcedurePerformedDto"
             }
           }
         }
@@ -4259,7 +4296,7 @@
             ],
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ProcedurePerformedDto"
             }
           }
         },
@@ -4274,7 +4311,7 @@
             "description": "Procedimientos clínicos realizados en la versión previa",
             "type": "array",
             "items": {
-              "type": "object"
+              "$ref": "#/components/schemas/ProcedurePerformedDto"
             }
           },
           "evolutionNotes": {

@@ -205,4 +205,35 @@ describe('UpsertPatientOdontogramUseCase', () => {
 
     expect(odontogramRepo.save).not.toHaveBeenCalled();
   });
+
+  it('debe aceptar expectedUpdatedAt como instancia Date directa', async () => {
+    const existingOdontogram = Odontogram.create({
+      id: 'odon-1',
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      hasTemporalDentition: false,
+      findings: [],
+      createdAt: new Date('2026-10-15T10:00:00.000Z'),
+      updatedAt: new Date('2026-10-15T10:00:00.000Z'),
+    });
+
+    patientRepo.findById.mockResolvedValue({
+      id: 'patient-123',
+      clinicId: 'clinic-123',
+    } as unknown as Patient);
+    odontogramRepo.findByPatientId.mockResolvedValue(existingOdontogram);
+    clock.now.mockReturnValue(new Date('2026-10-15T12:00:00.000Z'));
+
+    const expectedDate = new Date('2026-10-15T10:00:00.000Z');
+    const updated = await useCase.execute({
+      clinicId: 'clinic-123',
+      patientId: 'patient-123',
+      hasTemporalDentition: false,
+      findings: [],
+      expectedUpdatedAt: expectedDate,
+    });
+
+    expect(updated).toBeDefined();
+    expect(odontogramRepo.save).toHaveBeenCalledWith(existingOdontogram, expectedDate);
+  });
 });

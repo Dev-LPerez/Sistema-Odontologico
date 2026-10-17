@@ -1,4 +1,4 @@
-import { ClinicalAttention } from './clinical-attention.entity';
+import { ClinicalAttention, ProcedurePerformed } from './clinical-attention.entity';
 import { ClinicalAttentionStatus } from './clinical-attention-status.enum';
 import {
   InvalidClinicalAttentionDataError,
@@ -457,5 +457,67 @@ describe('ClinicalAttention Aggregate', () => {
     });
     expect(attention.proceduresPerformed[0].toothNumber).toBeNull();
     expect(attention.proceduresPerformed[0].surface).toBeNull();
+  });
+
+  it('debe manejar ramas defensivas de validateAndNormalizeProcedures con arrays nulos o ítems sin name/notes', () => {
+    expect(
+      ClinicalAttention.validateAndNormalizeProcedures(null as unknown as ProcedurePerformed[]),
+    ).toEqual([]);
+    expect(
+      ClinicalAttention.validateAndNormalizeProcedures(
+        undefined as unknown as ProcedurePerformed[],
+      ),
+    ).toEqual([]);
+
+    const normalized = ClinicalAttention.validateAndNormalizeProcedures([
+      {
+        code: 'RES-01',
+      },
+    ]);
+    expect(normalized).toHaveLength(1);
+    expect(normalized[0].name).toBeNull();
+    expect(normalized[0].notes).toBeNull();
+  });
+
+  it('debe rechazar el cierre de la atención si las notas de evolución se encuentran vacías o en blanco en el estado interno', () => {
+    const attention = ClinicalAttention.create(validProps);
+    (attention as unknown as { props: { evolutionNotes: string } }).props.evolutionNotes = '   ';
+
+    expect(() => attention.close(new Date('2026-10-16T10:00:00.000Z'))).toThrow(
+      IncompleteClinicalAttentionError,
+    );
+  });
+
+  it('debe rechazar enmiendas con evolutionNotes vacías o con lista de procedimientos vacía o no array', () => {
+    const closedAttention = ClinicalAttention.create({
+      ...validProps,
+      status: ClinicalAttentionStatus.CLOSED,
+    });
+
+    const amendTime = new Date('2026-10-16T11:00:00.000Z');
+
+    expect(() =>
+      closedAttention.amend({
+        changeReason: 'Corrección',
+        evolutionNotes: '   ',
+        updatedAt: amendTime,
+      }),
+    ).toThrow(InvalidClinicalAttentionDataError);
+
+    expect(() =>
+      closedAttention.amend({
+        changeReason: 'Corrección',
+        proceduresPerformed: [],
+        updatedAt: amendTime,
+      }),
+    ).toThrow(IncompleteClinicalAttentionError);
+
+    expect(() =>
+      closedAttention.amend({
+        changeReason: 'Corrección',
+        proceduresPerformed: null as unknown as ProcedurePerformed[],
+        updatedAt: amendTime,
+      }),
+    ).toThrow(IncompleteClinicalAttentionError);
   });
 });

@@ -16,6 +16,7 @@ import {
 } from '../../../../shared/application/ports/id-generator.port';
 import { ClinicalHistory } from '../../domain/clinical-history.entity';
 import { MedicalAntecedents, MedicalAntecedentsProps } from '../../domain/medical-antecedents.vo';
+import { PlainClinicalDiagnosis } from '../../domain/clinical-diagnosis.vo';
 
 export interface CreateClinicalHistoryCommand {
   clinicId: string;
@@ -35,7 +36,7 @@ export interface CreateClinicalHistoryCommand {
   };
   familyAntecedents?: string | null;
   clinicalExamination?: string | null;
-  diagnoses?: unknown[];
+  diagnoses?: Array<PlainClinicalDiagnosis | string>;
 }
 
 function buildMedicalAntecedents(command: CreateClinicalHistoryCommand): MedicalAntecedents {

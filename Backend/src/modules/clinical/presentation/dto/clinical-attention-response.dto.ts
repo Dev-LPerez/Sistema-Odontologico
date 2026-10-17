@@ -3,6 +3,7 @@ import { UserRole } from '../../../identity';
 import { ClinicalAttention } from '../../domain/clinical-attention.entity';
 import { ClinicalAttentionVersion } from '../../domain/clinical-attention-version.entity';
 import { ClinicalAttentionStatus } from '../../domain/clinical-attention-status.enum';
+import { ProcedurePerformedDto } from './create-clinical-attention.dto';
 
 export class AttentionMaterialUsedResponseDto {
   @ApiProperty({ description: 'ID del registro de material usado' })
@@ -77,10 +78,10 @@ export class ClinicalAttentionResponseDto {
 
   @ApiProperty({
     description: 'Procedimientos clínicos realizados',
-    type: [Object],
+    type: () => [ProcedurePerformedDto],
     example: [{ code: 'RES-01', toothNumber: '16', surface: 'OCCLUSAL' }],
   })
-  proceduresPerformed!: unknown[];
+  proceduresPerformed!: ProcedurePerformedDto[];
 
   @ApiProperty({
     description: 'Notas de evolución clínica',
@@ -170,9 +171,9 @@ export class ClinicalAttentionResponseDto {
 export class ClinicalAttentionSnapshotResponseDto {
   @ApiProperty({
     description: 'Procedimientos clínicos realizados en la versión previa',
-    type: [Object],
+    type: () => [ProcedurePerformedDto],
   })
-  proceduresPerformed!: unknown[];
+  proceduresPerformed!: ProcedurePerformedDto[];
 
   @ApiProperty({ description: 'Notas de evolución clínica previas' })
   evolutionNotes!: string;

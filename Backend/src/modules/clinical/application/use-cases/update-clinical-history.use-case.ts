@@ -20,6 +20,7 @@ import { CLOCK_PORT, ClockPort } from '../../../../shared/application/ports/cloc
 import { ClinicalHistory } from '../../domain/clinical-history.entity';
 import { ClinicalHistoryVersion } from '../../domain/clinical-history-version.entity';
 import { MedicalAntecedents, MedicalAntecedentsProps } from '../../domain/medical-antecedents.vo';
+import { PlainClinicalDiagnosis } from '../../domain/clinical-diagnosis.vo';
 
 export interface UpdateClinicalHistoryCommand {
   clinicId: string;
@@ -39,7 +40,7 @@ export interface UpdateClinicalHistoryCommand {
   };
   familyAntecedents?: string | null;
   clinicalExamination?: string | null;
-  diagnoses?: unknown[];
+  diagnoses?: Array<PlainClinicalDiagnosis | string>;
   changeReason?: string;
   updatedByUserId?: string;
 }

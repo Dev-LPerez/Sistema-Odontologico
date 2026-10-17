@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsArray,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class ProcedurePerformedDto {
   @ApiProperty({ description: 'Código del procedimiento', example: 'RES-01' })
@@ -94,11 +103,13 @@ export class CreateClinicalAttentionDto {
 
   @ApiPropertyOptional({
     description: 'Procedimientos clínicos realizados en la atención',
-    type: [Object],
+    type: () => [ProcedurePerformedDto],
     example: [{ code: 'RES-01', toothNumber: '16', surface: 'OCCLUSAL' }],
   })
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProcedurePerformedDto)
   proceduresPerformed?: ProcedurePerformedDto[];
 
   @ApiPropertyOptional({

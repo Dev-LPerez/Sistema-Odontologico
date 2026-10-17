@@ -56,7 +56,9 @@ export class UpdateClinicalHistoryDto {
   })
   @IsOptional()
   @IsArray()
-  diagnoses?: unknown[];
+  @ValidateNested({ each: true })
+  @Type(() => ClinicalDiagnosisDto)
+  diagnoses?: ClinicalDiagnosisDto[];
 
   @ApiPropertyOptional({
     description: 'Motivo del cambio en la historia clínica',

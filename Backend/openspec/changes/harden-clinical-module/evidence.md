@@ -45,7 +45,7 @@ OpenAPI schema generado exitosamente en C:\Users\LUIS PEREZ\OneDrive\Desktop\Sis
 > backend@0.0.1 deps:check C:\Users\LUIS PEREZ\OneDrive\Desktop\Sistema Odontologico\Backend
 > depcruise --config .dependency-cruiser.js src
 
-✔ no dependency violations found (353 modules, 1789 dependencies cruised)
+✔ no dependency violations found (355 modules, 1799 dependencies cruised)
 ```
 
 ### 2.5 Test Coverage (`pnpm --filter backend test:cov`)
@@ -164,7 +164,7 @@ PASS src/modules/catalogs/infrastructure/repositories/catalogs-repositories.cont
 -----------------------------------------------------|---------|----------|---------|---------|----------------------------------------
 File                                                 | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                      
 -----------------------------------------------------|---------|----------|---------|---------|----------------------------------------
-All files                                            |   97.84 |    89.94 |   95.92 |   97.89 |                                        
+All files                                            |    97.7 |    90.35 |   94.71 |   97.74 |                                        
  src                                                 |     100 |      100 |     100 |     100 |                                        
   configure-app.ts                                   |     100 |      100 |     100 |     100 |                                        
  src/health                                          |     100 |      100 |     100 |     100 |                                        
@@ -215,24 +215,24 @@ All files                                            |   97.84 |    89.94 |   95
   list-clinical-attentions-by-patient.query.ts       |     100 |      100 |     100 |     100 |                                        
   list-clinical-history-versions.query.ts            |     100 |      100 |     100 |     100 |                                        
   list-odontogram-snapshots.query.ts                 |     100 |      100 |     100 |     100 |                                        
- src/modules/clinical/application/use-cases          |     100 |    97.33 |     100 |     100 |                                        
+ src/modules/clinical/application/use-cases          |     100 |    98.66 |     100 |     100 |                                        
   add-attention-material-used.use-case.ts            |     100 |      100 |     100 |     100 |                                        
   add-treatment-plan-item.use-case.ts                |     100 |      100 |     100 |     100 |                                        
   amend-closed-clinical-attention.use-case.ts        |     100 |      100 |     100 |     100 |                                        
   close-clinical-attention.use-case.ts               |     100 |      100 |     100 |     100 |                                        
   create-clinical-attention.use-case.ts              |     100 |      100 |     100 |     100 |                                        
-  create-clinical-history.use-case.ts                |     100 |    92.85 |     100 |     100 | 42                                     
+  create-clinical-history.use-case.ts                |     100 |    92.85 |     100 |     100 | 43                                     
   create-odontogram-snapshot.use-case.ts             |     100 |      100 |     100 |     100 |                                        
   update-clinical-attention.use-case.ts              |     100 |      100 |     100 |     100 |                                        
   update-clinical-history.use-case.ts                |     100 |      100 |     100 |     100 |                                        
   update-treatment-plan-item-status.use-case.ts      |     100 |      100 |     100 |     100 |                                        
-  upsert-patient-odontogram.use-case.ts              |     100 |    88.88 |     100 |     100 | 76                                     
- src/modules/clinical/domain                         |   98.99 |    94.28 |     100 |   98.98 |                                        
+  upsert-patient-odontogram.use-case.ts              |     100 |      100 |     100 |     100 |                                     
+ src/modules/clinical/domain                         |   99.66 |    95.55 |     100 |   99.66 |                                        
   attention-closed.event.ts                          |     100 |      100 |     100 |     100 |                                        
   attention-material-used.entity.ts                  |     100 |      100 |     100 |     100 |                                        
   clinical-attention-status.enum.ts                  |     100 |      100 |     100 |     100 |                                        
   clinical-attention-version.entity.ts               |     100 |      100 |     100 |     100 |                                        
-  clinical-attention.entity.ts                       |   96.66 |    88.57 |     100 |   96.66 | 175,257,344,355                        
+  clinical-attention.entity.ts                       |     100 |    92.38 |     100 |     100 | 66,83,179,205,211,367,371,377          
   clinical-diagnosis.vo.ts                           |     100 |      100 |     100 |     100 |                                        
   clinical-history-version.entity.ts                 |     100 |      100 |     100 |     100 |                                        
   clinical-history.entity.ts                         |     100 |    93.93 |     100 |     100 | 112,191                                
@@ -397,7 +397,7 @@ All files                                            |   97.84 |    89.94 |   95
 -----------------------------------------------------|---------|----------|---------|---------|----------------------------------------
 
 Test Suites: 106 passed, 106 total
-Tests:       594 passed, 594 total
+Tests:       598 passed, 598 total
 Snapshots:   0 total
 Time:        83.656 s
 Ran all test suites.

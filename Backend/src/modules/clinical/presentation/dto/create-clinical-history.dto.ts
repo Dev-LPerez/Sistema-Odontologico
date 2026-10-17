@@ -54,5 +54,7 @@ export class CreateClinicalHistoryDto {
   })
   @IsOptional()
   @IsArray()
-  diagnoses?: unknown[];
+  @ValidateNested({ each: true })
+  @Type(() => ClinicalDiagnosisDto)
+  diagnoses?: ClinicalDiagnosisDto[];
 }
