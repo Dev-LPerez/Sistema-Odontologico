@@ -2,11 +2,11 @@
 
 ## 1. Capa Domain: Entidades, Value Objects, Errores y Puertos
 
-- [ ] 1.1 Crear enumeraciones `AppointmentStatus`, `DayOfWeek` y VO inmutable `TimeSlot` (`startTime`, `endTime`, `durationMinutes`) con validaciones en zona `America/Bogota` (RC-054) y verificar con pruebas unitarias en `src/modules/scheduling/domain/time-slot.vo.spec.ts`.
-- [ ] 1.2 Crear entidad `WeeklyAvailability` con reglas de horario (inicio >= 09:00 a. m.) y `ScheduleBlock` con validaciones de fechas no vacías, y verificar con pruebas en `weekly-availability.entity.spec.ts` y `schedule-block.entity.spec.ts`.
-- [ ] 1.3 Crear agregado raíz `Appointment` con máquina de estados estricta y emisión de eventos de dominio (`AppointmentScheduledEvent`, `AppointmentRescheduledEvent`, `AppointmentCancelledEvent`, `AppointmentStatusChangedEvent`), verificando con pruebas en `appointment.aggregate.spec.ts`.
-- [ ] 1.4 Definir excepciones de dominio tipadas (`AppointmentOverlapConflictException`, `DailyAppointmentsLimitExceededException`, `ScheduleBlockConflictException`, etc.) y puertos `AppointmentRepositoryPort`, `AppointmentQueriesPort`, `AvailabilityRepositoryPort` y `ScheduleBlockRepositoryPort`.
-- [ ] 1.5 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas unitarias de dominio en verde, realizando commit `feat(scheduling): add domain models, value objects and ports`.
+- [x] 1.1 Crear enumeraciones `AppointmentStatus`, `DayOfWeek` y VO inmutable `TimeSlot` (`startTime`, `endTime`, `durationMinutes`) con validaciones en zona `America/Bogota` (RC-054) y verificar con pruebas unitarias en `src/modules/scheduling/domain/time-slot.vo.spec.ts`.
+- [x] 1.2 Crear entidad `WeeklyAvailability` con reglas de horario (inicio >= 09:00 a. m.) y `ScheduleBlock` con validaciones de fechas no vacías, y verificar con pruebas en `weekly-availability.entity.spec.ts` y `schedule-block.entity.spec.ts`.
+- [x] 1.3 Crear agregado raíz `Appointment` con máquina de estados estricta y emisión de eventos de dominio (`AppointmentScheduledEvent`, `AppointmentRescheduledEvent`, `AppointmentCancelledEvent`, `AppointmentStatusChangedEvent`), verificando con pruebas en `appointment.aggregate.spec.ts`.
+- [x] 1.4 Definir excepciones de dominio tipadas (`AppointmentOverlapConflictException`, `DailyAppointmentsLimitExceededException`, `ScheduleBlockConflictException`, etc.) y puertos `AppointmentRepositoryPort`, `AppointmentQueriesPort`, `AvailabilityRepositoryPort` y `ScheduleBlockRepositoryPort`.
+- [x] 1.5 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas unitarias de dominio en verde, realizando commit `feat(scheduling): add domain models, value objects and ports`.
 
 ## 2. Capa Infrastructure: Modelos Prisma, Repositorios y Pruebas de Contrato
 
