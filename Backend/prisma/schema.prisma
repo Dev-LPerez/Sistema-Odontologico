@@ -45,6 +45,9 @@ model Clinic {
   attentionMaterialsUsed    AttentionMaterialUsed[]
   clinicalAttentionVersions ClinicalAttentionVersion[]
   clinicalHistoryVersions   ClinicalHistoryVersion[]
+  availabilityConfig        AvailabilityConfig?
+  scheduleBlocks            ScheduleBlock[]
+  appointments              Appointment[]
 
   @@map("clinics")
 }
@@ -127,6 +130,7 @@ model Patient {
   odontograms         Odontogram[]
   odontogramSnapshots OdontogramSnapshot[]
   clinicalAttentions  ClinicalAttention[]
+  appointments        Appointment[]
 
   @@unique([clinicId, documentType, documentNumber])
   @@index([clinicId, isActive])
@@ -147,6 +151,7 @@ model Procedure {
   clinic             Clinic                  @relation(fields: [clinicId], references: [id], onDelete: Restrict)
   patientPrices      PatientProcedurePrice[]
   treatmentPlanItems TreatmentPlanItem[]
+  appointments       Appointment[]
 
   @@unique([clinicId, code])
   @@index([clinicId, isActive])
@@ -365,5 +370,65 @@ model ClinicalHistoryVersion {
   @@unique([clinicId, clinicalHistoryId, versionNumber], map: "clinical_history_versions_clinic_history_version_key")
   @@index([clinicId, clinicalHistoryId])
   @@map("clinical_history_versions")
+}
+
+model AvailabilityConfig {
+  id                   String   @id @default(uuid())
+  clinicId             String   @unique @map("clinic_id")
+  maxDailyAppointments Int      @default(4) @map("max_daily_appointments")
+  slotsJson            Json     @map("slots_json")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId])
+  @@map("availability_configs")
+}
+
+model ScheduleBlock {
+  id        String   @id @default(uuid())
+  clinicId  String   @map("clinic_id")
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  reason    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, startDate, endDate])
+  @@map("schedule_blocks")
+}
+
+enum AppointmentStatusDb {
+  SCHEDULED
+  CONFIRMED
+  ATTENDED
+  NO_SHOW
+  CANCELLED
+}
+
+model Appointment {
+  id                 String              @id @default(uuid())
+  clinicId           String              @map("clinic_id")
+  patientId          String              @map("patient_id")
+  procedureId        String              @map("procedure_id")
+  startTime          DateTime            @map("start_time")
+  endTime            DateTime            @map("end_time")
+  durationMinutes    Int                 @map("duration_minutes")
+  status             AppointmentStatusDb @default(SCHEDULED)
+  cancellationReason String?             @map("cancellation_reason")
+  notes              String?
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+
+  clinic    Clinic    @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  procedure Procedure @relation(fields: [procedureId], references: [id], onDelete: Restrict)
+
+  @@index([clinicId, startTime, endTime])
+  @@index([clinicId, patientId])
+  @@map("appointments")
 }
 

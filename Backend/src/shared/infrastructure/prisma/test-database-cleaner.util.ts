@@ -59,6 +59,9 @@ export async function cleanDatabaseForContractTests(prisma: PrismaService): Prom
   assertSafeTestDatabase(process.env.DATABASE_URL, process.env.NODE_ENV);
 
   // Orden jerárquico estricto: dependientes e hijas primero
+  await prisma.appointment.deleteMany();
+  await prisma.scheduleBlock.deleteMany();
+  await prisma.availabilityConfig.deleteMany();
   await prisma.clinicalHistoryVersion.deleteMany();
   await prisma.clinicalAttentionVersion.deleteMany();
   await prisma.attentionMaterialUsed.deleteMany();

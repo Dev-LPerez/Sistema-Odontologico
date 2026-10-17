@@ -10,11 +10,11 @@
 
 ## 2. Capa Infrastructure: Modelos Prisma, Repositorios y Pruebas de Contrato
 
-- [ ] 2.1 Agregar modelos `AvailabilityConfig`, `ScheduleBlock` y `Appointment` en `Backend/prisma/schema.prisma` con claves foráneas `onDelete: Restrict` hacia `Clinic`, `Patient` y `Procedure`, y ejecutar `pnpm --filter backend prisma:generate` y migración de desarrollo.
-- [ ] 2.2 Implementar adaptadores en memoria `InMemoryAppointmentRepository`, `InMemoryAvailabilityRepository` e `InMemoryScheduleBlockRepository`.
-- [ ] 2.3 Implementar adaptadores Prisma `PrismaAppointmentRepository`, `PrismaAvailabilityRepository` y `PrismaScheduleBlockRepository` con mapeo de `P2002` a `DomainError` de categoría `CONFLICT` (`409`).
-- [ ] 2.4 Crear suites de contrato `appointment.repository.contract.spec.ts`, `availability.repository.contract.spec.ts` y `schedule-block.repository.contract.spec.ts` contra `InMemory` y contra PostgreSQL real usando `cleanDatabaseForContractTests(prisma)`.
-- [ ] 2.5 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas de contrato en verde, realizando commit `feat(scheduling): add prisma schema, repositories and contract tests`.
+- [x] 2.1 Agregar modelos `AvailabilityConfig`, `ScheduleBlock` y `Appointment` en `Backend/prisma/schema.prisma` con claves foráneas `onDelete: Restrict` hacia `Clinic`, `Patient` y `Procedure`, y ejecutar `pnpm --filter backend prisma:generate` y migración de desarrollo.
+- [x] 2.2 Implementar adaptadores en memoria `InMemoryAppointmentRepository`, `InMemoryAvailabilityRepository` e `InMemoryScheduleBlockRepository`.
+- [x] 2.3 Implementar adaptadores Prisma `PrismaAppointmentRepository`, `PrismaAvailabilityRepository` y `PrismaScheduleBlockRepository` con mapeo de `P2002` a `DomainError` de categoría `CONFLICT` (`409`).
+- [x] 2.4 Crear suites de contrato `appointment.repository.contract.spec.ts`, `availability.repository.contract.spec.ts` y `schedule-block.repository.contract.spec.ts` contra `InMemory` y contra PostgreSQL real usando `cleanDatabaseForContractTests(prisma)`.
+- [x] 2.5 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas de contrato en verde, realizando commit `feat(scheduling): add prisma schema, repositories and contract tests`.
 
 ## 3. Capa Application: Casos de Uso y Consultas
 
