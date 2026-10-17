@@ -72,4 +72,13 @@ describe('TimeSlot Value Object', () => {
     // Ends after availability
     expect(slot.isWithinAvailability(2, '09:00', '09:30')).toBe(false);
   });
+
+  it('should return correct UTC day bounds for Bogota timezone', () => {
+    // 2026-10-20 at 14:00 UTC is 2026-10-20 09:00 Bogota
+    const date = new Date('2026-10-20T14:00:00.000Z');
+    const { dayStartUtc, dayEndUtc } = TimeSlot.getBogotaDayBoundsUtc(date);
+
+    expect(dayStartUtc.toISOString()).toBe('2026-10-20T05:00:00.000Z');
+    expect(dayEndUtc.toISOString()).toBe('2026-10-21T04:59:59.999Z');
+  });
 });

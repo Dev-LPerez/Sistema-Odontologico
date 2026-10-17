@@ -18,10 +18,10 @@
 
 ## 3. Capa Application: Casos de Uso y Consultas
 
-- [ ] 3.1 Implementar casos de uso de disponibilidad y bloqueos (`ConfigureAvailabilityUseCase`, `GetAvailabilityQuery`, `CreateScheduleBlockUseCase`, `ListScheduleBlocksQuery`) inyectando `ClockPort` e `IdGeneratorPort`, y verificar en `src/modules/scheduling/application/use-cases/*.spec.ts`.
-- [ ] 3.2 Implementar `ScheduleAppointmentUseCase` con validación estricta de solapamiento, tope diario de citas (máx. 4) y bloqueos activos, verificando con pruebas en `schedule-appointment.use-case.spec.ts`.
-- [ ] 3.3 Implementar casos de uso del ciclo de vida (`RescheduleAppointmentUseCase`, `CancelAppointmentUseCase`, `ChangeAppointmentStatusUseCase`) y consultas (`GetAppointmentByIdQuery`, `ListAppointmentsQuery`), verificando con pruebas unitarias.
-- [ ] 3.4 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas de aplicación en verde, realizando commit `feat(scheduling): implement scheduling use cases and queries`.
+- [x] 3.1 Implementar casos de uso de disponibilidad y bloqueos (`ConfigureAvailabilityUseCase`, `GetAvailabilityQuery`, `CreateScheduleBlockUseCase`, `ListScheduleBlocksQuery`) inyectando `ClockPort` e `IdGeneratorPort`, y verificar en `src/modules/scheduling/application/use-cases/*.spec.ts`.
+- [x] 3.2 Implementar `ScheduleAppointmentUseCase` con validación estricta de solapamiento, tope diario de citas (máx. 4) y bloqueos activos, verificando con pruebas en `schedule-appointment.use-case.spec.ts`.
+- [x] 3.3 Implementar casos de uso del ciclo de vida (`RescheduleAppointmentUseCase`, `CancelAppointmentUseCase`, `ChangeAppointmentStatusUseCase`) y consultas (`GetAppointmentByIdQuery`, `ListAppointmentsQuery`), verificando con pruebas unitarias.
+- [x] 3.4 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas de aplicación en verde, realizando commit `feat(scheduling): implement scheduling use cases and queries`.
 
 ## 4. Capa Presentation: Controladores REST, DTOs y Pruebas E2E
 

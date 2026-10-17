@@ -87,6 +87,20 @@ export class TimeSlot {
     return formatter.format(this.startTime);
   }
 
+  static getBogotaDayBoundsUtc(date: Date): { dayStartUtc: Date; dayEndUtc: Date } {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: BOGOTA_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const dateStr = formatter.format(date);
+    const [year, month, day] = dateStr.split('-').map((v) => parseInt(v, 10));
+    const dayStartUtc = new Date(Date.UTC(year, month - 1, day, 5, 0, 0, 0));
+    const dayEndUtc = new Date(Date.UTC(year, month - 1, day + 1, 4, 59, 59, 999));
+    return { dayStartUtc, dayEndUtc };
+  }
+
   getBogotaDayOfWeek(): number {
     // en-US weekday short: Mon, Tue, Wed, Thu, Fri, Sat, Sun
     const formatter = new Intl.DateTimeFormat('en-US', {
