@@ -6,6 +6,7 @@ import { IdentityModule } from './modules/identity';
 import { PatientsModule } from './modules/patients';
 import { CatalogsModule } from './modules/catalogs';
 import { ClinicalModule } from './modules/clinical';
+import { SchedulingModule } from './modules/scheduling';
 import { SharedModule, CorrelationIdMiddleware, createPinoHttpConfig } from './shared';
 
 @Module({
@@ -24,6 +25,7 @@ import { SharedModule, CorrelationIdMiddleware, createPinoHttpConfig } from './s
     PatientsModule,
     CatalogsModule,
     ClinicalModule,
+    SchedulingModule,
     HealthModule,
   ],
 })

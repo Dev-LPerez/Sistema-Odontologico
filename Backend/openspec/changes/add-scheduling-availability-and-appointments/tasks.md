@@ -25,9 +25,9 @@
 
 ## 4. Capa Presentation: Controladores REST, DTOs y Pruebas E2E
 
-- [ ] 4.1 Crear DTOs con `class-validator` y `SchedulingController` con decoradores `@Roles('ADMIN')` y `@Roles('ADMIN', 'AUXILIARY')` bajo prefijo `/v1/scheduling/`.
-- [ ] 4.2 Configurar `SchedulingModule` en NestJS ensamblando puertos y adaptadores con tokens de inyección, registrar en `AppModule` y exponer API pública en `src/modules/scheduling/index.ts`.
-- [ ] 4.3 Implementar suite E2E en `test/scheduling.e2e-spec.ts` inicializando con `configureApp(app)` y verificando los 12 escenarios de `spec.md`:
+- [x] 4.1 Crear DTOs con `class-validator` y `SchedulingController` con decoradores `@Roles('ADMIN')` y `@Roles('ADMIN', 'AUXILIARY')` bajo prefijo `/v1/scheduling/`.
+- [x] 4.2 Configurar `SchedulingModule` en NestJS ensamblando puertos y adaptadores con tokens de inyección, registrar en `AppModule` y exponer API pública en `src/modules/scheduling/index.ts`.
+- [x] 4.3 Implementar suite E2E en `test/scheduling.e2e-spec.ts` inicializando con `configureApp(app)` y verificando los 12 escenarios de `spec.md`:
   - `Administradora configura disponibilidad semanal válida y auxiliar la consulta` -> `it('should configure weekly availability as ADMIN and allow AUXILIARY to view it')`
   - `Rechazo por hora de inicio anterior a las 09:00 a. m. o tope fuera de rango` -> `it('should reject availability with start time before 09:00 or invalid max appointments')`
   - `Bloqueo a rol AUXILIARY para modificar disponibilidad semanal` -> `it('should reject AUXILIARY attempt to configure availability with 403 FORBIDDEN')`
@@ -40,7 +40,7 @@
   - `Cancelación de cita con motivo obligatorio` -> `it('should cancel appointment when valid cancellation reason is provided')`
   - `Transición exitosa de estado de la cita a confirmada y atendida` -> `it('should transition appointment status through SCHEDULED, CONFIRMED and ATTENDED')`
   - `Rechazo de transición inválida en cita cancelada` -> `it('should reject invalid status transition on cancelled appointment with 400')`
-- [ ] 4.4 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas E2E en verde, realizando commit `feat(scheduling): expose scheduling REST endpoints and E2E tests`.
+- [x] 4.4 Ejecutar `pnpm --filter backend lint`, `typecheck`, `deps:check` y pruebas E2E en verde, realizando commit `feat(scheduling): expose scheduling REST endpoints and E2E tests`.
 
 ## 5. OpenAPI, Evidencia Literal y Cierre de Change
 
